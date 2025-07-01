@@ -36,7 +36,6 @@ try:
 except ImportError:
     HAS_POLARS = False
 
-# test
 
 def indices_along_diagonal(D: int) -> List:
     """This functions generates a list of indices that will go along
@@ -56,6 +55,8 @@ def indices_along_diagonal(D: int) -> List:
             K.append((K[-1] + j))
     return K
 
+
+# test
 
 @nb.jit(
     [
