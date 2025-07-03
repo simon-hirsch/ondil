@@ -56,8 +56,6 @@ def indices_along_diagonal(D: int) -> List:
     return K
 
 
-# test
-
 @nb.jit(
     [
         "float32[:, :](float32[:], float32[:], float32[:, :], boolean)",
@@ -389,6 +387,7 @@ class MultivariateOnlineDistributionalRegressionPath(
 
         return theta
 
+<<<<<<< HEAD
     def _handle_path_regularization(self, theta, p: int, a: int):
         if self.distribution._regularization_allowed[p]:
             mask = (
@@ -401,6 +400,81 @@ class MultivariateOnlineDistributionalRegressionPath(
         else:
             # If no regularization is allowed, we just return the theta
             return theta
+=======
+
+      
+    def _make_initial_eta(self, theta: np.ndarray):
+
+        eta = {
+            a: {
+                p: 0
+                for p in range(self.distribution.n_params)
+            }
+            for a in range(self.A)
+        }
+
+        # Handle AD-R Regularization
+        for a in range(self.adr_steps_):
+            for p in range(self.distribution.n_params):
+                if self.distribution._regularization_allowed[p]:
+                    if self.distribution._regularization == "adr":
+                        mask = (
+                            self._adr_distance[p]
+                            >= self._adr_mapping_index_to_max_distance[p][a]
+                        )
+                        regularized = self.distribution.cube_to_flat(theta[a][p], p)
+                        regularized[:, mask] = regularized[:, mask] = 0
+                        theta[a][p] = self.distribution.flat_to_cube(regularized, p)
+                    if self.distribution._regularization == "low_rank":
+                        mask = (
+                            self._adr_distance[p]
+                            >= self._adr_mapping_index_to_max_distance[p][a]
+                        )
+
+                        regularized = self.distribution.cube_to_flat(theta[a][p], p)
+                        regularized[:, mask] = regularized[:, mask] = 0
+                        theta[a][p] = self.distribution.flat_to_cube(regularized, p)
+        return eta
+
+
+
+
+      
+    def _make_initial_eta(self, theta: np.ndarray):
+
+        eta = {
+            a: {
+                p: 0
+                for p in range(self.distribution.n_params)
+            }
+            for a in range(self.A)
+        }
+
+        # Handle AD-R Regularization
+        for a in range(self.A):
+            for p in range(self.distribution.n_params):
+                if self.distribution._regularization_allowed[p]:
+                    if self.distribution._regularization == "adr":
+                        mask = (
+                            self.adr_distance[p]
+                            >= self.adr_mapping_index_to_max_distance[p][a]
+                        )
+                        regularized = self.distribution.cube_to_flat(theta[a][p], p)
+                        regularized[:, mask] = regularized[:, mask] = 0
+                        theta[a][p] = self.distribution.flat_to_cube(regularized, p)
+                    if self.distribution._regularization == "low_rank":
+                        mask = (
+                            self.adr_distance[p]
+                            >= self.adr_mapping_index_to_max_distance[p][a]
+                        )
+
+                        regularized = self.distribution.cube_to_flat(theta[a][p], p)
+                        regularized[:, mask] = regularized[:, mask] = 0
+                        theta[a][p] = self.distribution.flat_to_cube(regularized, p)
+        return eta
+
+
+>>>>>>> 86f0732 (Add bivariate copula implementation)
 
     # Only MV
     def _is_element_adr_regularized(self, p: int, k: int, a: int):
@@ -644,7 +718,6 @@ class MultivariateOnlineDistributionalRegressionPath(
 
         self._prepare_adr_regularization()
         theta = self._make_initial_theta(y)
-
         # Current information
         self._current_likelihood = np.array(
             [
@@ -709,7 +782,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         return self
 
     def _outer_fit(self, X, y, theta):
-
         adr_start = time.time()
 
         for a in range(self.adr_steps_):
@@ -948,7 +1020,10 @@ class MultivariateOnlineDistributionalRegressionPath(
 
             # If the likelihood is at some point decreasing, we're breaking
             # Hence we need to store previous iteration values:
-            if (inner_iteration > 0) | (outer_iteration > 0):
+            if (inner_iteration == 0) and (outer_iteration == 0):
+                eta = self._make_initial_eta(theta)
+
+            elif (inner_iteration > 0) or (outer_iteration > 0):
                 prev_theta = copy.copy(theta)
                 prev_x_gram = copy.copy(self._x_gram[p])
                 prev_y_gram = copy.copy(self._y_gram[p])
@@ -972,34 +1047,110 @@ class MultivariateOnlineDistributionalRegressionPath(
                         (self._lambda_n[p], self.n_features_[p][k])
                     )
                 else:
+<<<<<<< HEAD
                     eta = self.distribution.link_function(theta[a][p], p)
                     eta = self.distribution.cube_to_flat(eta, param=p)
+=======
+                    if self.copula == True:
 
-                    # Derivatives wrt to the parameter
-                    dl1dp1 = self.distribution.element_dl1_dp1(
-                        y, theta=theta[a], param=p, k=k
-                    )
-                    dl2dp2 = self.distribution.element_dl2_dp2(
-                        y, theta=theta[a], param=p, k=k, clip=False
-                    )
+                        if (inner_iteration == 0) and (outer_iteration == 0):
+                                theta[a] = self.distribution.set_initial_guess(theta[a], p)
+                                tau = self._make_initial_eta(theta)
+                                tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
+>>>>>>> 86f0732 (Add bivariate copula implementation)
 
-                    dl1_link = self.distribution.link_function_derivative(
-                        theta[a][p], p
-                    )
-                    dl2_link = self.distribution.link_function_second_derivative(
-                        theta[a][p],
-                        p,
-                    )
-                    dl1_link = self.distribution.cube_to_flat(dl1_link, param=p)
-                    dl1_link = dl1_link[:, k]
-                    dl2_link = self.distribution.cube_to_flat(dl2_link, param=p)
-                    dl2_link = dl2_link[:, k]
+                            #uniforms = np.column_stack([self.distribution[0].cdf(y), self.distribution[1].cdf(y)])
 
-                    dl1_deta1 = dl1dp1 * (1 / dl1_link)
-                    dl2_deta2 = (dl2dp2 * dl1_link - dl1dp1 * dl2_link) / dl1_link**3
+                        tau = self._make_initial_eta(theta)
+                        eta = self._make_initial_eta(theta)
+                        tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
+                        eta[a][p] = self.distribution.link_function(tau[a][p], p)
+                        eta[a][p] = self.distribution.cube_to_flat(eta[a][p], p)
 
-                    wt = np.fmax(-dl2_deta2, 1e-10)
-                    wv = eta[:, k] + dl1_deta1 / wt
+                        # Derivatives wrt to the parameter
+                        dl1dp1 = self.distribution.element_dl1_dp1(
+                            y, theta=theta[a], param=p, k=k
+                        )
+
+                        # Second derivatives wrt to the parameter
+                        dl2dp2 = self.distribution.element_dl2_dp2(
+                            y, theta=theta[a], param=p, k=k
+                        )
+
+                        dl1_link = self.distribution.link_function_derivative(
+                            eta[a][p], p
+                        ).squeeze()
+                        
+                        dl2_link = self.distribution.link_function_second_derivative(
+                            eta[a][p], p,
+                        ).squeeze()
+
+                        dp = self.distribution.log_likelihood(y, theta = theta[a])
+                        dl1_link = self.distribution.cube_to_flat(dl1_link, param=p)
+                        dl1_link = dl1_link
+                        dl2_link = self.distribution.cube_to_flat(dl2_link, param=p)
+                        dl2_link = dl2_link
+                        u = dl1dp1 * dl1_link
+                        u = u * self.distribution.param_link_function_derivative(tau[a][p]).squeeze()
+
+                        wt = (
+                            self.distribution.param_link_function_derivative(tau[a][p]).squeeze() ** 2
+                            * (dl1_link**2 * (dl2dp2 / dp - dl1dp1**2) + dl2_link * dl1dp1)
+                            + self.distribution.param_link_function_second_derivative(tau[a][p]).squeeze() * dl1dp1 * dl1_link
+                        )
+
+                        sel = (~np.isnan(wt)) & (wt > 0)
+
+                        if not np.any(sel):
+                            wt = (1 + theta[a][p] ** 2) / (1 - theta[a][p] ** 2) ** 2
+                            wt = (dl1_link * self.distribution.param_link_function_derivative(tau[a][p]).squeeze()) ** 2 * wt
+                        else:
+                            wt[~sel] = np.mean(wt[sel])
+
+                        # dl1_deta1 = dl1dp1 * (1.0 / dl1_link)
+
+                        # dl2_deta2 = (
+                        # dl2dp2 * dl1_link - dl1dp1 * dl2_link
+                        # ) / dl1_link**3
+
+                        # Compute quantiles for clipping
+                        ratio = u / wt
+                        qq = np.quantile(ratio, [0.025, 0.975])
+                        # Clip the ratio to the quantiles
+                        clipped = np.clip(ratio, qq[0], qq[1])
+                        wv = eta[a][p].squeeze() + clipped
+                    else:    
+                        if (inner_iteration == 0) and (outer_iteration == 0):
+                            theta[a] = self.distribution.set_initial_guess(theta[a], p)
+
+                        eta  = self.distribution.link_function(theta[a][p], p)
+                        eta  = self.distribution.cube_to_flat(eta, param=p)
+
+                        # Derivatives wrt to the parameter
+                        dl1dp1 = self.distribution.element_dl1_dp1(
+                            y, theta=theta[a], param=p, k=k
+                        )
+                        dl2dp2 = self.distribution.element_dl2_dp2(
+                            y, theta=theta[a], param=p, k=k, clip=False
+                        )
+
+                        dl1_link = self.distribution.link_function_derivative(
+                            theta[a][p], p
+                        )
+                        dl2_link = self.distribution.link_function_second_derivative(
+                            theta[a][p],
+                            p,
+                        )
+                        dl1_link = self.distribution.cube_to_flat(dl1_link, param=p)
+                        dl1_link = dl1_link[:, k]
+                        dl2_link = self.distribution.cube_to_flat(dl2_link, param=p)
+                        dl2_link = dl2_link[:, k]
+
+                        dl1_deta1 = dl1dp1 * (1 / dl1_link)
+                        dl2_deta2 = (dl2dp2 * dl1_link - dl1dp1 * dl2_link) / dl1_link**3
+
+                        wt = np.fmax(-dl2_deta2, 1e-10)
+                        wv = eta[:, k] + dl1_deta1 / wt
 
                     # Create the more arrays
                     x = make_model_array(

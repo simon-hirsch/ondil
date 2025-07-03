@@ -11,8 +11,9 @@ from .link import LinkFunction
 
 
 class Distribution(ABC):
-    def __init__(self, links: dict[int, LinkFunction]) -> None:
+    def __init__(self, links, param_links: dict[int, LinkFunction]) -> None:
         self.links = links
+        self.param_links = param_links
         self._validate_links()
 
     def __call__(self, *args, **kwds):

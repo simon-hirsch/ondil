@@ -55,7 +55,8 @@ class Normal(ScipyMixin, Distribution):
             links={
                 0: loc_link,
                 1: scale_link,
-            }
+            },
+            param_links = {},
         )
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
