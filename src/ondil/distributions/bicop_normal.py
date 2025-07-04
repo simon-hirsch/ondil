@@ -3,22 +3,15 @@
 from typing import Dict
 
 import numpy as np
-import scipy.special as sp
 import scipy.stats as st
-from scipy.stats import norm
 
 
-from ..base import Distribution, LinkFunction, MultivariateDistributionMixin
-from ..link import  FisherZLink, TauToPar
+from ..base import Distribution, LinkFunction, CopulaMixin
+from ..link import  FisherZLink, KendallsTauToParameter
 from ..types import ParameterShapes
 
 
-class BiCopNormal(MultivariateDistributionMixin, Distribution):
-
-    # The cholesky decomposition of
-    # COV = L @ L.T
-    # PRC = (L^-1) @ (L^-1).T
-    # The inverse of the cholesky decomposition is used to parametrize the covariance matrix.
+class BivariateCopulaNormal(CopulaMixin, Distribution):
 
     corresponding_gamlss: str = None
     parameter_names = {0: "rho"}
@@ -30,7 +23,7 @@ class BiCopNormal(MultivariateDistributionMixin, Distribution):
     def __init__(
         self, 
         link: LinkFunction = FisherZLink(), 
-        param_link: LinkFunction = TauToPar(),
+        param_link: LinkFunction = KendallsTauToParameter(),
     ):
         super().__init__(
             links={0: link},
@@ -73,7 +66,11 @@ class BiCopNormal(MultivariateDistributionMixin, Distribution):
         return theta
 
     def theta_to_params(self, theta):
-        chol = theta
+        if len(theta) > 1:
+            chol = theta
+        else:
+            chol = theta[0]
+
         return chol
 
     def set_initial_guess(self, theta, param):
@@ -117,10 +114,10 @@ class BiCopNormal(MultivariateDistributionMixin, Distribution):
         Returns:
             derivative: The 2nd derivatives.
         """
-        chol = self.theta_to_params(theta)
+        fitted_loc = self.theta_to_params(theta)
 
         deriv = _derivative_2nd(
-                y=y, chol=chol
+                y=y, fitted_loc=fitted_loc
         )
         return deriv
 
@@ -139,47 +136,16 @@ class BiCopNormal(MultivariateDistributionMixin, Distribution):
         return deriv
 
     def element_dl2_dp2(self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False):
-        chol = self.theta_to_params(theta)
+        fitted_loc = self.theta_to_params(theta)
               
         deriv = _derivative_2nd(
-                    y, chol
+                    y, fitted_loc
                 )
         return deriv
 
     def dl2_dpp(self, y: np.ndarray, theta: Dict, param: int = 0):
         raise NotImplementedError("Not implemented.")
 
-
-    def param_link_function(self, y, param=0):
-        return self.param_links[param].link(y)
-
-    def param_link_inverse(self, y, param=0):
-        return self.param_links[param].inverse(y)
-
-    def param_link_function_derivative(self, y, param=0):
-        return self.param_links[param].link_derivative(y)
-
-    def param_link_function_second_derivative(self, y, param=0):
-        return self.param_links[param].link_second_derivative(y)
-
-    def param_link_inverse_derivative(self, y, param=0):
-        return self.param_links[param].inverse_derivative(y)
-
-
-    def link_function(self, y, param=0):
-        return self.links[param].link(y)
-
-    def link_inverse(self, y, param=0):
-        return self.links[param].inverse(y)
-
-    def link_function_derivative(self, y, param=0):
-        return self.links[param].link_derivative(y)
-
-    def link_function_second_derivative(self, y, param=0):
-        return self.links[param].link_second_derivative(y)
-
-    def link_inverse_derivative(self, y, param=0):
-        return self.links[param].inverse_derivative(y)
 
     def element_link_function(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
@@ -250,9 +216,6 @@ class BiCopNormal(MultivariateDistributionMixin, Distribution):
         }
         return out
 
-    @staticmethod
-    def log_likelihood(y: np.ndarray, theta):
-        return _log_likelihood(y,theta[0])
 
     def cdf(self, y, theta):
         raise NotImplementedError("Not implemented")
@@ -270,7 +233,8 @@ class BiCopNormal(MultivariateDistributionMixin, Distribution):
         raise NotImplementedError("Not implemented")
 
     def logpdf(self, y, theta):
-        return np.log(_log_likelihood(y, theta[0]))
+        test = self.theta_to_params(theta)
+        return np.log(_log_likelihood(y, test))
 
     def logpmf(self, y, theta):
         raise NotImplementedError("Not implemented")
@@ -290,15 +254,14 @@ class BiCopNormal(MultivariateDistributionMixin, Distribution):
 def _log_likelihood(y, mod_chol):
     M = y.shape[0]
     f = np.empty(M)
-
     # Ensure y values are strictly between 0 and 1 for numerical stability
     UMIN = 1e-12
     UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)
-    u = norm.ppf(y_clipped[:, 0])
-    v = norm.ppf(y_clipped[:, 1])
-    for m in range(M):  
-        if M == 1: 
+    u = st.norm().ppf(y_clipped[:, 0])
+    v = st.norm().ppf(y_clipped[:, 1])
+    for m in range(M):
+        if M == 1:
             rho = mod_chol
         else: 
             rho = mod_chol[m]
@@ -329,17 +292,15 @@ def _derivative_1st(y, chol):
     """
     M = y.shape[0]
     deriv = np.empty((M, 1), dtype=np.float64)
-
-    
     eps = np.finfo(float).eps
     y = np.clip(y, eps, 1 - eps)
-    u = norm.ppf(y[:, 0])
-    v = norm.ppf(y[:, 1])
+    u = st.norm().ppf(y[:, 0])
+    v = st.norm().ppf(y[:, 1])
     for m in range(M):
         if M == 1:
-            theta  = chol[0]
+            theta  = chol
         else:
-            theta = chol[0][m]
+            theta = chol[m]
         t3 = theta*theta
         t4 = 1.0-t3
         t5 =  u[m]*u[m]
@@ -357,14 +318,14 @@ def _derivative_2nd(y, fitted_loc):
     # Ensure y values are strictly between 0 and 1 for numerical stability
     eps = np.finfo(float).eps
     y = np.clip(y, eps, 1 - eps)
-    u = norm.ppf(y[:, 0])
-    v = norm.ppf(y[:, 1])
+    u = st.norm().ppf(y[:, 0])
+    v = st.norm().ppf(y[:, 1])
 
     for m in range(M):
         if M == 1:
-            theta  = fitted_loc[0]
+            theta  = fitted_loc
         else:
-            theta = fitted_loc[0][m]
+            theta = fitted_loc[m]
         t6 = u[m]
         t7 = v[m]
         t1 = t6 * t7

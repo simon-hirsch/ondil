@@ -6,14 +6,13 @@ import numpy as np
 import scipy.special as sp
 import scipy.stats as st
 
-from ..base import Distribution, LinkFunction, MultivariateDistributionMixin
+from ..base import Distribution, LinkFunction , MarginalCopulaMixin
 from ..types import ParameterShapes
 
-
-class MarginalCopula(MultivariateDistributionMixin, Distribution):
+class MarginalCopula(MarginalCopulaMixin):
 
     corresponding_gamlss: str = None
-    parameter_names = {0: "marginal_I", 1: "marginal_II", 2: "copula"}
+    parameter_names = {0: "marginal_0", 1: "marginal_1", 2: "dependence"}
     parameter_support = {0: (-np.inf, np.inf), 1: (-np.inf, np.inf), 2: (-1, 1)}
     distribution_support = (-np.inf, np.inf)
     parameter_shape = {
@@ -24,15 +23,18 @@ class MarginalCopula(MultivariateDistributionMixin, Distribution):
 
     def __init__(
         self,
-        marginal_I,
-        marginal_II,
-        copula,
+        marginal_0,
+        marginal_1,
+        dependence,
     ):
+        self.marginal_0 = marginal_0
+        self.marginal_1 = marginal_1
+        self.dependence = dependence
         super().__init__(
             distributions={
-                0: marginal_I,
-                1: marginal_II,
-                2: copula,
+                0: self.marginal_0,
+                1: self.marginal_1,
+                2: self.dependence,
             }
         )
         self.is_multivariate = True
@@ -40,11 +42,10 @@ class MarginalCopula(MultivariateDistributionMixin, Distribution):
         self._regularization_allowed = {0: False, 1: False, 2: False}
         self._regularization = "adr"  # or adr
         self._scoring = "fisher"
-
-    @staticmethod
-    def fitted_elements(self, dim: int):
-        return {0: self.marginal_I.parameter_support , 1: self.marginal_II.parameter_support, 2: self.copula.parameter_support} # depends on the marginal distribution here
     
+    def fitted_elements(self, dim):
+        return {0: len(self.distributions[0].parameter_support), 1: len(self.distributions[1].parameter_support), 2: len(self.distributions[2].parameter_support)}
+
     @property
     def param_structure(self):
         return self._param_structure
@@ -86,7 +87,7 @@ class MarginalCopula(MultivariateDistributionMixin, Distribution):
     def theta_to_params(self, theta):
         marg_1 = theta[0]
         marg_2 = theta[1]
-        copula = theta[2].squeeze()
+        copula = theta[2]
         return marg_1, marg_2, copula
 
     def dl1_dp1(self, y: np.ndarray, theta: Dict, param: int = 0):
@@ -101,31 +102,34 @@ class MarginalCopula(MultivariateDistributionMixin, Distribution):
     def element_hessian(self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0):
         return self.element_dl2_dp2(y=y, theta=theta, param=param, k=k)
 
-    def link_function(self, y, param=0):
-        return self.links[param].link(y)
+    def link_function(self, y, param=0 , k=0):
+        return self.distributions[param].links[k].link(y)
 
-    def link_inverse(self, y, param=0):
-        return self.links[param].inverse(y)
+    def link_inverse(self, y, param=0 , k=0):
+        return self.distributions[param].links[k].inverse(y)
 
-    def link_function_derivative(self, y, param=0):
-        return self.links[param].link_derivative(y)
+    def link_function_derivative(self, y, param=0 , k=0):
+        return self.distributions[param].links[k].link_derivative(y)
 
-    def link_function_second_derivative(self, y, param=0):
-        return self.links[param].link_second_derivative(y)
+    def link_function_second_derivative(self, y, param=0 , k=0):
+        return self.distributions[param].links[k].link_second_derivative(y)
 
-    def link_inverse_derivative(self, y, param=0):
-        return self.links[param].inverse_derivative(y)
+    def link_inverse_derivative(self, y, param=0 , k=0):
+        return self.distributions[param].links[k].inverse_derivative(y)
 
     def element_dl1_dp1(
         self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip: bool = False
     ):
         marg_1, marg_2, copula = self.theta_to_params(theta)
         if param == 0:
-            deriv = self.distribution[param].dl1_dp1(y, marg_1[:,k], param=k)
+            deriv = self.distributions[param].dl1_dp1(y[:,0], marg_1, param=k)
         if param == 1:
-            deriv = self.distribution[param].dl1_dp1(y, marg_2[:,k], param=k)
+            deriv = self.distributions[param].dl1_dp1(y[:,1], marg_2, param=k)
         if param == 2:
-            deriv = self.distribution[param].dl1_dp1(y, copula, param=0)
+            y_transformed_0= self.distributions[0].cdf(y[:,0], marg_1)
+            y_transformed_1= self.distributions[1].cdf(y[:,1], marg_2)
+            y_transformed = np.column_stack([y_transformed_0, y_transformed_1])
+            deriv = self.distributions[param].dl1_dp1(y_transformed, copula, param=0)
         return deriv
 
     def element_dl2_dp2(
@@ -133,11 +137,14 @@ class MarginalCopula(MultivariateDistributionMixin, Distribution):
     ):
         marg_1, marg_2, copula = self.theta_to_params(theta)
         if param == 0:
-            deriv = self.distribution[param].dl2_dp2(y, marg_1[:,k], param=k)
+            deriv = self.distributions[param].dl2_dp2(y[:,0], marg_1, param=k)
         if param == 1:
-            deriv = self.distribution[param].dl2_dp2(y, marg_2[:,k], param=k)
+            deriv = self.distributions[param].dl2_dp2(y[:,1], marg_2, param=k)
         if param == 2:
-            deriv = self.distribution[param].dl2_dp2(y, copula, param=0)
+            y_transformed_0= self.distributions[0].cdf(y[:,0],marg_1)
+            y_transformed_1= self.distributions[1].cdf(y[:,1],marg_2)
+            y_transformed = np.column_stack([y_transformed_0, y_transformed_1])
+            deriv = self.distributions[param].dl2_dp2(y_transformed, copula, param=0)
         if clip:
             deriv = np.clip(deriv, -np.inf, -1e-5)
 
@@ -149,30 +156,30 @@ class MarginalCopula(MultivariateDistributionMixin, Distribution):
     def element_link_function(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
     ) -> np.ndarray:
-        return self.distribution[param].links[k](y)
+        return self.distributions[param].links[k](y)
   
     def element_link_function_derivative(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
     ) -> np.ndarray:
-        return self.distribution[param].links[k].link_derivative(y)
+        return self.distributions[param].links[k].link_derivative(y)
 
     def element_link_function_second_derivative(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
     ) -> np.ndarray:
-        return self.distribution[param].links[k].link_second_derivative(y)
+        return self.distributions[param].links[k].link_second_derivative(y)
 
     def element_link_inverse(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
     ) -> np.ndarray:
-        return self.distribution[param].links[k].inverse(y)
+        return self.distributions[param].links[k].inverse(y)
 
     def element_link_inverse_derivative(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
     ) -> np.ndarray:
-        return self.distribution[param].links[k].inverse_derivative(y)
+        return self.distributions[param].links[k].inverse_derivative(y)
 
     def initial_values(self, y, param):
-            return self.distribution[param].intial_values(y)
+            return self.distributions[param].initial_values(y)
    
     def set_initial_guess(self, theta, param):
         if param < 2:
@@ -208,9 +215,9 @@ class MarginalCopula(MultivariateDistributionMixin, Distribution):
            # out[:, i[1], i[0]] = x
             #return out
 
-    def log_likelihood(self, y: np.ndarray, theta: Dict[int, np.ndarray]):
+    def logpdf(self, y: np.ndarray, theta: Dict[int, np.ndarray]):
         marg_1, marg_2, copula = self.theta_to_params(theta)
-        return batched_log_likelihood(y, marg_1, marg_2, copula)
+        return batched_log_likelihood(self,y, marg_1, marg_2, copula)
 
     def cdf(self, y, theta):
         raise NotImplementedError("Not implemented")
@@ -227,9 +234,6 @@ class MarginalCopula(MultivariateDistributionMixin, Distribution):
     def logcdf(self, y, theta):
         raise NotImplementedError("Not implemented")
 
-    def logpdf(self, y, theta):
-        raise NotImplementedError("Not implemented")
-
     def logpmf(self, y, theta):
         raise NotImplementedError("Not implemented")
 
@@ -241,12 +245,14 @@ class MarginalCopula(MultivariateDistributionMixin, Distribution):
     ) -> Dict[int, np.ndarray]:
         raise NotImplementedError("Not implemented")
 
-
 def batched_log_likelihood(self, y, marg_1, marg_2, copula):
+    y_transformed_0= self.distributions[0].cdf(y[:,0], marg_1)
+    y_transformed_1= self.distributions[1].cdf(y[:,1], marg_2)
+    y_transformed = np.column_stack([y_transformed_0, y_transformed_1])
     return (
-          self.distribution[0].logpdf(y, marg_1)
-        + self.distribution[1].logpdf(y, marg_2)
-        + self.distribution[2].log_likelihood(y, copula)  
+        self.distributions[0].logpdf(y[:, 0], marg_1)
+        + self.distributions[1].logpdf(y[:, 1], marg_2)
+        + self.distributions[2].logpdf(y_transformed, copula)
     )
 
 

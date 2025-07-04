@@ -47,14 +47,12 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
         self,
         loc_link: LinkFunction = Identity(),
         scale_link: LinkFunction = MatrixDiagTriu(Log(), Identity()),
-        param_link: LinkFunction = {},
     ):
         super().__init__(
             links={
                 0: loc_link,
                 1: scale_link,
             },
-            param_links=param_link,
         )
         self._regularization_allowed = {0: False, 1: True}
 

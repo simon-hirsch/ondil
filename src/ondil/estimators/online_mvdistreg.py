@@ -11,7 +11,7 @@ from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import check_is_fitted, validate_data
 
-from ..base import Distribution, OndilEstimatorMixin
+from ..base import Distribution, OndilEstimatorMixin, CopulaMixin, MarginalCopulaMixin
 from ..design_matrix import make_intercept
 from ..distributions import MultivariateNormalInverseCholesky
 from ..gram import init_forget_vector
@@ -1048,6 +1048,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                     )
                 else:
 <<<<<<< HEAD
+<<<<<<< HEAD
                     eta = self.distribution.link_function(theta[a][p], p)
                     eta = self.distribution.cube_to_flat(eta, param=p)
 =======
@@ -1060,6 +1061,17 @@ class MultivariateOnlineDistributionalRegressionPath(
 >>>>>>> 86f0732 (Add bivariate copula implementation)
 
                             #uniforms = np.column_stack([self.distribution[0].cdf(y), self.distribution[1].cdf(y)])
+=======
+
+                    if issubclass(self.distribution.__class__, CopulaMixin) or (
+                        issubclass(self.distribution.__class__, MarginalCopulaMixin)
+                        and p > 2):
+
+                        if (inner_iteration == 0) and (outer_iteration == 0):
+                            theta[a] = self.distribution.set_initial_guess(theta[a], p)
+                            tau = self._make_initial_eta(theta)
+                            tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
+>>>>>>> bcbe737 (Add bivariate copula implementation II)
 
                         tau = self._make_initial_eta(theta)
                         eta = self._make_initial_eta(theta)
@@ -1085,7 +1097,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                             eta[a][p], p,
                         ).squeeze()
 
-                        dp = self.distribution.log_likelihood(y, theta = theta[a])
+                        dp = self.distribution.pdf(y=y, theta=theta[a])
                         dl1_link = self.distribution.cube_to_flat(dl1_link, param=p)
                         dl1_link = dl1_link
                         dl2_link = self.distribution.cube_to_flat(dl2_link, param=p)
@@ -1107,18 +1119,13 @@ class MultivariateOnlineDistributionalRegressionPath(
                         else:
                             wt[~sel] = np.mean(wt[sel])
 
-                        # dl1_deta1 = dl1dp1 * (1.0 / dl1_link)
-
-                        # dl2_deta2 = (
-                        # dl2dp2 * dl1_link - dl1dp1 * dl2_link
-                        # ) / dl1_link**3
-
                         # Compute quantiles for clipping
                         ratio = u / wt
                         qq = np.quantile(ratio, [0.025, 0.975])
                         # Clip the ratio to the quantiles
                         clipped = np.clip(ratio, qq[0], qq[1])
                         wv = eta[a][p].squeeze() + clipped
+
                     else:    
                         if (inner_iteration == 0) and (outer_iteration == 0):
                             theta[a] = self.distribution.set_initial_guess(theta[a], p)
@@ -1218,18 +1225,36 @@ class MultivariateOnlineDistributionalRegressionPath(
                             y_gram=self._y_gram[p][k][a][:, None],
                             is_regularized=self.is_regularized_[p][k],
                         )
-
-                    eta[:, k] = self.get_dampened_prediction(
-                        prediction=np.squeeze(x @ self.coef_[p][k][a]),
+                    
+                    if issubclass(self.distribution.__class__, CopulaMixin) or (
+                        issubclass(self.distribution.__class__, MarginalCopulaMixin)
+                        and p > 2):
+                        eta[a][p] = self.get_dampened_prediction(
+                            prediction=np.squeeze(x @ self.beta[p][k][a]),
+                            eta=eta[a][p],
+                            inner_iteration=inner_iteration,
+                            outer_iteration=outer_iteration,
+                            param=p,
+                        )
+                        theta[a][p] = (1-1e-5)*self.distribution.link_inverse(
+                            self.distribution.flat_to_cube(eta[a][p].squeeze(), param=p), param=p
+                        )
+                        eta[a][p] = self.distribution.link_function(
+                            self.distribution.flat_to_cube((1-1e-5)*theta[a][p] , param=p), param=p
+                        )
+                    else:
+                        eta[:, k] = self.get_dampened_prediction(
+                        prediction=np.squeeze(x @ self.beta[p][k][a]),
                         eta=eta[:, k],
                         inner_iteration=inner_iteration,
                         outer_iteration=outer_iteration,
                         param=p,
                     )
-                    theta[a][p] = self.distribution.link_inverse(
-                        self.distribution.flat_to_cube(eta, param=p), param=p
-                    )
-                    if (self._overshoot_correction[p] is not None) and (
+                        theta[a][p] = self.distribution.link_inverse(
+                            self.distribution.flat_to_cube(eta, param=p), param=p
+                        )
+
+                    if (self.overshoot_correction[p] is not None) and (
                         inner_iteration + outer_iteration < 1
                     ):
                         theta[a] = self.distribution.set_theta_element(

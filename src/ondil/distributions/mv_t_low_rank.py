@@ -504,7 +504,6 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
     ):
         super().__init__(
             links={0: loc_link, 1: scale_link_1, 2: scale_link_2, 3: tail_link},
-            param_links=param_link,
         )
         self.rank = rank
         self.dof_guesstimate = dof_guesstimate

@@ -27,7 +27,7 @@ class FisherZLink(LinkFunction):
 
     def link(self, x: np.ndarray) -> np.ndarray:
         return np.log((1+x)/(1-x))*(1 - 1e-5)
-    
+
     def inverse(self, x: np.ndarray) -> np.ndarray:
         # Ensure output is strictly within (-1, 1)
         out = np.tanh(x / 2)
@@ -51,7 +51,7 @@ class FisherZLink(LinkFunction):
         return 0.5 * (1 / np.cosh(x / 2)) ** 2
 
 
-class TauToPar(LinkFunction):
+class KendallsTauToParameter(LinkFunction):
     """
     Link function mapping Kendall's tau to the Gaussian copula correlation parameter rho.
 
