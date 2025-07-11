@@ -3,6 +3,7 @@
 from typing import Dict
 
 import numpy as np
+from pytest import param
 import scipy.special as sp
 import scipy.stats as st
 
@@ -40,7 +41,7 @@ class MarginalCopula(MarginalCopulaMixin):
         self.is_multivariate = True
         self._adr_lower_diag = {0: False, 1: False, 2: False}
         self._regularization_allowed = {0: False, 1: False, 2: False}
-        self._regularization = "adr"  # or adr
+        self._regularization = ""  # or adr
         self._scoring = "fisher"
     
     def fitted_elements(self, dim):
@@ -76,12 +77,10 @@ class MarginalCopula(MarginalCopulaMixin):
         Returns:
             Dict: Theta where element (param, k) is set to value.
         """
-       # if (param == 0) | (param == 2):
-        theta[param][:, k] = value
-       # if param == 1:
-       #     d = theta[0].shape[1]
-       #     i, j = np.triu_indices(d)
-       #     theta[param][:, j[k], i[k]] = value
+        if param < 2:
+            theta[param][:, k] = value
+        else:
+            theta[param] = value
         return theta
 
     def theta_to_params(self, theta):
@@ -103,19 +102,58 @@ class MarginalCopula(MarginalCopulaMixin):
         return self.element_dl2_dp2(y=y, theta=theta, param=param, k=k)
 
     def link_function(self, y, param=0 , k=0):
-        return self.distributions[param].links[k].link(y)
-
+        marg_1, marg_2, copula = self.theta_to_params(y)
+        if param == 0:
+            return self.distributions[param].links[k].link(marg_1[:,k])
+        if param == 1:
+            return self.distributions[param].links[k].link(marg_2[:,k])
+        if param == 2:
+            return self.distributions[param].links[k].link((1-1e-5)*copula)
+        
     def link_inverse(self, y, param=0 , k=0):
-        return self.distributions[param].links[k].inverse(y)
+        marg_1, marg_2, copula = self.theta_to_params(y)
+        if param == 0:
+            return self.distributions[param].links[k].inverse(marg_1[:,k])
+        if param == 1:
+            return self.distributions[param].links[k].inverse(marg_2[:,k])
+        if param == 2:
+            return self.distributions[param].links[k].inverse(copula)
+        
+    def update_link_inverse(self, y, param=0 , k=0):
+        if param == 0:
+            return self.distributions[param].links[k].inverse(y)
+        if param == 1:
+            return self.distributions[param].links[k].inverse(y)
+        if param == 2:
+            return self.distributions[param].links[k].inverse(y)
+
 
     def link_function_derivative(self, y, param=0 , k=0):
-        return self.distributions[param].links[k].link_derivative(y)
+        marg_1, marg_2, copula = self.theta_to_params(y)
+        if param == 0:
+            return self.distributions[param].links[k].link_derivative(marg_1[:,k])
+        if param == 1:
+            return self.distributions[param].links[k].link_derivative(marg_2[:,k])
+        if param == 2:
+            return self.distributions[param].links[k].link_derivative(copula)
 
     def link_function_second_derivative(self, y, param=0 , k=0):
-        return self.distributions[param].links[k].link_second_derivative(y)
-
+        marg_1, marg_2, copula = self.theta_to_params(y)
+        if param == 0:
+            return self.distributions[param].links[k].link_second_derivative(marg_1[:,k])
+        if param == 1:
+            return self.distributions[param].links[k].link_second_derivative(marg_2[:,k])
+        if param == 2:
+            return self.distributions[param].links[k].link_second_derivative(copula)
+        
     def link_inverse_derivative(self, y, param=0 , k=0):
-        return self.distributions[param].links[k].inverse_derivative(y)
+        marg_1, marg_2, copula = self.theta_to_params(y)
+        if param == 0:
+            return self.distributions[param].links[k].inverse_derivative(marg_1[:,k])
+        if param == 1:
+            return self.distributions[param].links[k].inverse_derivative(marg_2[:,k])
+        if param == 2:
+            return self.distributions[param].links[k].inverse_derivative(copula)
 
     def element_dl1_dp1(
         self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip: bool = False
@@ -130,6 +168,7 @@ class MarginalCopula(MarginalCopulaMixin):
             y_transformed_1= self.distributions[1].cdf(y[:,1], marg_2)
             y_transformed = np.column_stack([y_transformed_0, y_transformed_1])
             deriv = self.distributions[param].dl1_dp1(y_transformed, copula, param=0)
+
         return deriv
 
     def element_dl2_dp2(
@@ -217,13 +256,32 @@ class MarginalCopula(MarginalCopulaMixin):
 
     def logpdf(self, y: np.ndarray, theta: Dict[int, np.ndarray]):
         marg_1, marg_2, copula = self.theta_to_params(theta)
-        return batched_log_likelihood(self,y, marg_1, marg_2, copula)
+        return batched_log_likelihood(self, y, marg_1, marg_2, copula)
+
+
+
+    def theta_to_scipy(self, theta: Dict[int, np.ndarray]):
+        out = {
+            "marginal_1": theta[0],
+            "marginal_2": theta[1],
+            "dependence": theta[2],
+        }
+        return out
+
 
     def cdf(self, y, theta):
         raise NotImplementedError("Not implemented")
 
-    def pdf(self, y, theta):
+    def pdf_test(self, y, theta, param=0):
+        marg_1, marg_2, copula = self.theta_to_params(theta)
+        y_transformed_0 = self.distributions[0].cdf(y[:, 0], marg_1)
+        y_transformed_1 = self.distributions[1].cdf(y[:, 1], marg_2)
+        y_transformed = np.column_stack([y_transformed_0, y_transformed_1])
+        return self.distributions[param].pdf(y_transformed, copula)
+
+    def pdf(self, q, theta):
         raise NotImplementedError("Not implemented")
+
 
     def ppf(self, q, theta):
         raise NotImplementedError("Not implemented")
@@ -254,6 +312,5 @@ def batched_log_likelihood(self, y, marg_1, marg_2, copula):
         + self.distributions[1].logpdf(y[:, 1], marg_2)
         + self.distributions[2].logpdf(y_transformed, copula)
     )
-
 
 

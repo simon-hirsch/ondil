@@ -249,6 +249,8 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         self, y: np.ndarray, theta: Dict[int, np.ndarray]
     ) -> Dict[int, np.ndarray]:
         raise NotImplementedError("Not implemented")
+    
+
 ##########################################################
 ### numba JIT-compiled functions for the derivatives #####
 ##########################################################

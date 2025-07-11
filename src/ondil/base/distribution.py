@@ -819,6 +819,23 @@ class MarginalCopulaMixin(ABC):
         if params[0] == params[1]:
             raise ValueError("Cross derivatives must use different parameters.")
 
+
+    def param_link_function(self, y, param=0):
+        return self.distributions[param].param_links[0].link(y)
+
+    def param_link_inverse(self, y, param=0):
+        return self.distributions[param].param_links[0].inverse(y)
+
+    def param_link_function_derivative(self, y, param=0):
+        return self.distributions[param].param_links[0].link_derivative(y)
+
+    def param_link_function_second_derivative(self, y, param=0):
+        return self.distributions[param].param_links[0].link_second_derivative(y)
+
+    def param_link_inverse_derivative(self, y, param=0):
+        return self.distributions[param].param_links[0].inverse_derivative(y)
+
+
     def link_function(
         self,
         y: np.ndarray,

@@ -63,21 +63,21 @@ class Normal(ScipyMixin, Distribution):
         mu, sigma = self.theta_to_params(theta)
 
         if param == 0:
-            return (1 / sigma**2) * (y - mu)
+            return (1 / np.clip(sigma, 1e-6, 1e6)**2) * (y - mu)
 
         if param == 1:
-            return ((y - mu) ** 2 - sigma**2) / (sigma**3)
+            return ((y - mu) ** 2 - np.clip(sigma, 1e-6, 1e6)**2) / (np.clip(sigma, 1e-6, 1e6)**3)
 
     def dl2_dp2(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
         _, sigma = self.theta_to_params(theta)
         if param == 0:
             # MU
-            return -(1 / sigma**2)
+            return -(1 / np.clip(sigma, 1e-6, 1e6)**2)
 
         if param == 1:
             # SIGMA
-            return -(2 / (sigma**2))
+            return -(2 / (np.clip(sigma, 1e-6, 1e6)**2))
 
     def dl2_dpp(
         self, y: np.ndarray, theta: np.ndarray, params: Tuple[int, int] = (0, 1)
@@ -89,6 +89,8 @@ class Normal(ScipyMixin, Distribution):
     def initial_values(self, y: np.ndarray) -> np.ndarray:
         initial_params = [np.mean(y), np.std(y, ddof=1)]
         return np.tile(initial_params, (y.shape[0], 1))
+    
+    
 
 
 class NormalMeanVariance(ScipyMixin, Distribution):
