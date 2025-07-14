@@ -1,4 +1,3 @@
-# Author Simon Hirsch
 # MIT Licence
 from typing import Dict
 

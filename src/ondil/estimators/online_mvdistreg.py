@@ -388,6 +388,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         return theta
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     def _handle_path_regularization(self, theta, p: int, a: int):
         if self.distribution._regularization_allowed[p]:
             mask = (
@@ -402,6 +403,8 @@ class MultivariateOnlineDistributionalRegressionPath(
             return theta
 =======
 
+=======
+>>>>>>> 3a1e478 (Update after rebase)
       
     def _make_initial_eta(self, theta: np.ndarray):
 
@@ -410,48 +413,11 @@ class MultivariateOnlineDistributionalRegressionPath(
                 p: 0
                 for p in range(self.distribution.n_params)
             }
-            for a in range(self.A)
+            for a in range(self.adr_steps_)
         }
 
         # Handle AD-R Regularization
         for a in range(self.adr_steps_):
-            for p in range(self.distribution.n_params):
-                if self.distribution._regularization_allowed[p]:
-                    if self.distribution._regularization == "adr":
-                        mask = (
-                            self._adr_distance[p]
-                            >= self._adr_mapping_index_to_max_distance[p][a]
-                        )
-                        regularized = self.distribution.cube_to_flat(theta[a][p], p)
-                        regularized[:, mask] = regularized[:, mask] = 0
-                        theta[a][p] = self.distribution.flat_to_cube(regularized, p)
-                    if self.distribution._regularization == "low_rank":
-                        mask = (
-                            self._adr_distance[p]
-                            >= self._adr_mapping_index_to_max_distance[p][a]
-                        )
-
-                        regularized = self.distribution.cube_to_flat(theta[a][p], p)
-                        regularized[:, mask] = regularized[:, mask] = 0
-                        theta[a][p] = self.distribution.flat_to_cube(regularized, p)
-        return eta
-
-
-
-
-      
-    def _make_initial_eta(self, theta: np.ndarray):
-
-        eta = {
-            a: {
-                p: 0
-                for p in range(self.distribution.n_params)
-            }
-            for a in range(self.A)
-        }
-
-        # Handle AD-R Regularization
-        for a in range(self.A):
             for p in range(self.distribution.n_params):
                 if self.distribution._regularization_allowed[p]:
                     if self.distribution._regularization == "adr":
@@ -1282,7 +1248,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                         and p > 1):
 
                         eta[a][p] = self.get_dampened_prediction(
-                            prediction=np.squeeze(x @ self.beta[p][k][a]),
+                            prediction=np.squeeze(x @ self.coef_[p][k][a]),
                             eta=eta[a][p],
                             inner_iteration=inner_iteration,
                             outer_iteration=outer_iteration,
@@ -1310,7 +1276,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                     elif issubclass(self.distribution.__class__, MarginalCopulaMixin) and p <= 1:
                      
                         theta[a][p][:, k] = self.get_dampened_prediction(
-                            prediction=np.squeeze(x @ self.beta[p][k][a]),
+                            prediction=np.squeeze(x @ self.coef_[p][k][a]),
                             eta=eta,
                             inner_iteration=inner_iteration,
                             outer_iteration=outer_iteration,
@@ -1324,7 +1290,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                         
                     else:
                         eta[:, k] = self.get_dampened_prediction(
-                            prediction=np.squeeze(x @ self.beta[p][k][a]),
+                            prediction=np.squeeze(x @ self.coef_[p][k][a]),
                             eta=eta[:, k],
                             inner_iteration=inner_iteration,
                             outer_iteration=outer_iteration,
@@ -1335,7 +1301,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                             self.distribution.flat_to_cube(eta, param=p), param=p
                         )
 
-                    if (self.overshoot_correction[p] is not None) and (
+                    if (self._overshoot_correction[p] is not None) and (
                         inner_iteration + outer_iteration < 1
                     ):
                         theta[a] = self.distribution.set_theta_element(
@@ -2030,7 +1996,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                     and p > 1):
 
                     eta[a][p] = self.get_dampened_prediction(
-                        prediction=np.squeeze(x @ self.beta[p][k][a]),
+                        prediction=np.squeeze(x @ self.coef_[p][k][a]),
                         eta=eta[a][p],
                         inner_iteration=inner_iteration,
                         outer_iteration=outer_iteration,
@@ -2072,7 +2038,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                     
                 else:
                     eta[:,k] = self.get_dampened_prediction(
-                        prediction=np.squeeze(x @ self.beta[p][k][a]),
+                        prediction=np.squeeze(x @ self.coef_[p][k][a]),
                         eta=eta[:,k],
                         inner_iteration=inner_iteration,
                         outer_iteration=outer_iteration,

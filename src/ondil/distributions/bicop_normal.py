@@ -7,7 +7,7 @@ import scipy.stats as st
 
 
 from ..base import Distribution, LinkFunction, CopulaMixin
-from ..link import  FisherZLink, KendallsTauToParameter
+from ..links import  FisherZLink, KendallsTauToParameter
 from ..types import ParameterShapes
 
 
