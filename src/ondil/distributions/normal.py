@@ -27,6 +27,7 @@ class Normal(ScipyMixin, Distribution):
 
     corresponding_gamlss: str = "NO"
     parameter_names = {0: "mu", 1: "sigma"}
+    n_params = 2
     parameter_support = {
         0: (-np.inf, np.inf),
         1: (np.nextafter(0, 1), np.inf),

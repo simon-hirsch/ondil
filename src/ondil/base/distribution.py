@@ -35,7 +35,6 @@ class Distribution(ABC):
         """Parameter name for each column of theta."""
         pass
 
-    @property
     def n_params(self) -> int:
         """Each subclass must define 'n_params'."""
         return len(self.parameter_names)
@@ -744,11 +743,6 @@ class MarginalCopulaMixin(ABC):
     def parameter_shape(self) -> dict:
         """Parameter name for each column of theta."""
         pass
-
-    @property
-    def n_params(self) -> int:
-        """Each subclass must define 'n_params'."""
-        return len(self.parameter_names)
 
     def theta_to_params(self, theta: np.ndarray) -> Tuple[np.ndarray, ...]:
         """Take the fitted values and return tuple of vectors for distribution parameters."""
