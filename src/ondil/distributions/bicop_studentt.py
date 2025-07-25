@@ -7,7 +7,7 @@ import scipy.stats as st
 
 
 from ..base import Distribution, LinkFunction, CopulaMixin
-from ..link import  FisherZLink, KendallsTauToParameter
+from ..links import  FisherZLink, KendallsTauToParameter
 from ..types import ParameterShapes
 
 
@@ -17,6 +17,7 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
     parameter_names = {0: "rho"}
     parameter_support = {0: (-1, 1)}
     distribution_support = (-1, 1) 
+    n_params = len(parameter_names)
     parameter_shape = {
         0: ParameterShapes.SCALAR,
     }
@@ -32,8 +33,7 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         self.is_multivariate = True
         self._adr_lower_diag = {0: False}
         self._regularization_allowed = {0: False}
-        self._regularization = "adr"  # or adr
-        self._scoring = "fisher"
+        self._regularization = ""  # or adr
         self._scoring = "fisher"
 
 
@@ -64,7 +64,9 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         """
         theta[param] = value
         return theta
-
+    
+  
+    
     def theta_to_params(self, theta):
         if len(theta) > 1:
             chol = theta
@@ -72,6 +74,20 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
             chol = theta[0]
 
         return chol
+    
+    def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
+        """Map GAMLSS Parameters to scipy parameters.
+
+        Args:
+            theta (np.ndarray): parameters
+
+        Returns:
+            dict: Dict of (loc, scale) for scipy.stats.norm(loc, scale)
+        """
+        mu = theta[:, 0]
+        sigma = theta[:, 1]
+        params = {"loc": mu, "scale": sigma**0.5}
+        return params
 
     def set_initial_guess(self, theta, param):
         return theta
@@ -181,8 +197,8 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         M = y.shape[0]
         # Compute the empirical Pearson correlation for each sample
         # y is expected to be (M, 2)
-        corr = np.corrcoef(y.T)[0, 1]
-        chol = np.full((M, 1), corr)
+        tau = st.kendalltau(y[:, 0], y[:, 1]).correlation
+        chol = np.full((M, 1), tau)
         return chol
     
     def cube_to_flat(self, x: np.ndarray, param: int):
@@ -227,7 +243,28 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         raise NotImplementedError("Not implemented")
 
     def rvs(self, size, theta):
-        raise NotImplementedError("Not implemented")
+        """
+        Generate random samples from the bivariate normal copula.
+
+        Args:
+            size (int): Number of samples to generate.
+            theta (dict or np.ndarray): Correlation parameter(s).
+
+        Returns:
+            np.ndarray: Samples of shape (size, 2) in (0, 1).
+        """
+
+        # Generate standard normal samples
+        z1 = np.random.normal(size=size)
+        z2 = np.random.normal(size=size)
+        x = z1
+        y = theta * z1 + np.sqrt(1 - theta ** 2) * z2
+
+        # Transform to uniform marginals using the normal CDF
+        u = st.norm.cdf(x)
+        v = st.norm.cdf(y)
+        return np.column_stack((u, v))
+
 
     def pdf(self, y, theta):
         return np.exp(self.logpdf(y, theta))
@@ -249,7 +286,49 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         self, y: np.ndarray, theta: Dict[int, np.ndarray]
     ) -> Dict[int, np.ndarray]:
         raise NotImplementedError("Not implemented")
-    
+
+    def hfunc(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
+        """
+        Conditional distribution function h(u|v) for the bivariate normal copula.
+
+        Args:
+            u (np.ndarray): Array of shape (n,) with values in (0, 1).
+            v (np.ndarray): Array of shape (n,) with values in (0, 1).
+            theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
+
+        Returns:
+            np.ndarray: Array of shape (n,) with conditional probabilities.
+        """
+        M = u.shape[0]
+        UMIN = 1e-12
+        UMAX = 1 - 1e-12
+
+        u = np.clip(u, UMIN, UMAX)
+        v = np.clip(v, UMIN, UMAX)
+
+        # Swap u and v if un == 2
+        if un == 2:
+            u, v = v, u
+
+        # Handle edge cases
+        h = np.where((v == 0) | (u == 0), 0, np.nan)
+        h = np.where(v == 1, u, h)
+        qnorm_u = st.norm.ppf(u)
+        qnorm_v = st.norm.ppf(v)
+
+        for m in range(M):
+            denom = np.sqrt(1.0 - np.square(theta[0][m]))
+            x = (qnorm_u[m] - theta[0][m] * qnorm_v[m]) / denom
+            if np.isfinite(x):
+                h[m] = st.norm.cdf(x)
+            elif (qnorm_u[m] - theta[0][m] * qnorm_v[m]) < 0:
+                h[m] = 0
+            else:
+                h[m] = 1
+
+        # Clip output for numerical stability
+        h = np.clip(h, UMIN, UMAX)
+        return h
 
 ##########################################################
 ### numba JIT-compiled functions for the derivatives #####

@@ -422,16 +422,16 @@ class MultivariateOnlineDistributionalRegressionPath(
                 if self.distribution._regularization_allowed[p]:
                     if self.distribution._regularization == "adr":
                         mask = (
-                            self.adr_distance[p]
-                            >= self.adr_mapping_index_to_max_distance[p][a]
+                            self._adr_distance[p]
+                            >= self._adr_mapping_index_to_max_distance[p][a]
                         )
                         regularized = self.distribution.cube_to_flat(theta[a][p], p)
                         regularized[:, mask] = regularized[:, mask] = 0
                         theta[a][p] = self.distribution.flat_to_cube(regularized, p)
                     if self.distribution._regularization == "low_rank":
                         mask = (
-                            self.adr_distance[p]
-                            >= self.adr_mapping_index_to_max_distance[p][a]
+                            self._adr_distance[p]
+                            >= self._adr_mapping_index_to_max_distance[p][a]
                         )
 
                         regularized = self.distribution.cube_to_flat(theta[a][p], p)
