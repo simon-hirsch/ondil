@@ -9,6 +9,7 @@ from scipy.optimize import root_scalar
 from ..base import Distribution, LinkFunction
 from ..links import Identity, Log
 
+
 class SkewT1(Distribution):
     """
     Azzalini Skew-t type-1 Distribution for GAMLSS.
@@ -99,7 +100,7 @@ class SkewT1(Distribution):
 
     @staticmethod
     def _lambda(z, tau):
-        return np.where(tau < 1e6, (tau + 1) / (tau + z ** 2), 1.0)
+        return np.where(tau < 1e6, (tau + 1) / (tau + z**2), 1.0)
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
@@ -115,7 +116,7 @@ class SkewT1(Distribution):
         if param == 0:
             return -ratio * nu / sigma + lam * z / sigma
         if param == 1:
-            return -ratio * nu * z / sigma + (lam * z ** 2 - 1) / sigma
+            return -ratio * nu * z / sigma + (lam * z**2 - 1) / sigma
         if param == 2:
             with np.errstate(divide="ignore", invalid="ignore"):
                 dwdv = np.where(nu == 0, 0.0, w / nu)
@@ -125,20 +126,31 @@ class SkewT1(Distribution):
             logcdf_plus = st.t.logcdf(w, tau + delta)
             logcdf_minus = st.t.logcdf(w, tau - delta)
             j = (logcdf_plus - logcdf_minus) / (2 * delta)
-            out = j + (
-                spc.digamma((tau + 1) / 2) - spc.digamma(tau / 2)
-                - 1 / tau - np.log1p(z ** 2 / tau) + lam * z ** 2 / tau
-            ) / 2
+            out = (
+                j
+                + (
+                    spc.digamma((tau + 1) / 2)
+                    - spc.digamma(tau / 2)
+                    - 1 / tau
+                    - np.log1p(z**2 / tau)
+                    + lam * z**2 / tau
+                )
+                / 2
+            )
             return out
         raise ValueError("param must be 0, 1, 2, or 3")
 
     def dl2_dp2(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
+        self._validate_dln_dpn_inputs(y, theta, param)
         g = self.dl1_dp1(y, theta, param)
         h = -g * g
         h = np.where(h < -1e-15, h, -1e-15)
         return h
 
-    def dl2_dpp(self, y: np.ndarray, theta: np.ndarray, params: Tuple[int, int] = (0, 1)) -> np.ndarray:
+    def dl2_dpp(
+        self, y: np.ndarray, theta: np.ndarray, params: Tuple[int, int] = (0, 1)
+    ) -> np.ndarray:
+        self._validate_dln_dpn_inputs(y, theta, params)
         i, j = params
         if i == j:
             return self.dl2_dp2(y, theta, i)
@@ -150,11 +162,12 @@ class SkewT1(Distribution):
         t_cdf = st.t.cdf(w, tau)
         with np.errstate(divide="ignore", invalid="ignore"):
             ratio = np.where(t_cdf == 0, 0, t_pdf / t_cdf)
+
         def s(idx):
             if idx == 0:
                 return -ratio * nu / sigma + lam * z / sigma
             if idx == 1:
-                return -ratio * nu * z / sigma + (lam * z ** 2 - 1) / sigma
+                return -ratio * nu * z / sigma + (lam * z**2 - 1) / sigma
             if idx == 2:
                 with np.errstate(divide="ignore", invalid="ignore"):
                     dwdv = np.where(nu == 0, 0.0, w / nu)
@@ -164,11 +177,19 @@ class SkewT1(Distribution):
                 logcdf_plus = st.t.logcdf(w, tau + delta)
                 logcdf_minus = st.t.logcdf(w, tau - delta)
                 j = (logcdf_plus - logcdf_minus) / (2 * delta)
-                return j + (
-                    spc.digamma((tau + 1) / 2) - spc.digamma(tau / 2)
-                    - 1 / tau - np.log1p(z ** 2 / tau) + lam * z ** 2 / tau
-                ) / 2
+                return (
+                    j
+                    + (
+                        spc.digamma((tau + 1) / 2)
+                        - spc.digamma(tau / 2)
+                        - 1 / tau
+                        - np.log1p(z**2 / tau)
+                        + lam * z**2 / tau
+                    )
+                    / 2
+                )
             raise ValueError
+
         h = -s(i) * s(j)
         h = np.where(h < -1e-15, h, -1e-15)
         return h
@@ -190,12 +211,16 @@ class SkewT1(Distribution):
         z = self._z(y, mu, sigma)
         nu = np.asarray(nu)
         tau = np.asarray(tau)
+
         def dST1(x, nu_i, tau_i):
             wx = nu_i * x
             if tau_i < 1e6:
-                return np.exp(st.t.logcdf(wx, tau_i) + st.t.logpdf(x, tau_i) + np.log(2))
+                return np.exp(
+                    st.t.logcdf(wx, tau_i) + st.t.logpdf(x, tau_i) + np.log(2)
+                )
             else:
                 return np.exp(st.norm.logcdf(wx) + st.norm.logpdf(x) + np.log(2))
+
         opts = dict(epsabs=1e-10, epsrel=1e-10)
         result = np.empty_like(z)
         for i, (zi, nu_i, tau_i) in enumerate(zip(z, nu, tau)):
@@ -216,14 +241,20 @@ class SkewT1(Distribution):
             if qi >= 1:
                 out[i] = np.inf
                 continue
+
             def root_fn(x):
-                return self.cdf(np.array([x]), np.array([[mui, sigi, nui, taui]]))[0] - qi
+                return (
+                    self.cdf(np.array([x]), np.array([[mui, sigi, nui, taui]]))[0] - qi
+                )
+
             interval = [mui - sigi, mui + sigi]
             while root_fn(interval[0]) > qi:
                 interval[0] -= sigi
             while root_fn(interval[1]) < qi:
                 interval[1] += sigi
-            sol = root_scalar(root_fn, bracket=interval, method='brentq', xtol=1e-10, rtol=1e-10)
+            sol = root_scalar(
+                root_fn, bracket=interval, method="brentq", xtol=1e-10, rtol=1e-10
+            )
             out[i] = sol.root if sol.converged else np.nan
         return out
 
@@ -236,7 +267,11 @@ class SkewT1(Distribution):
         return self.ppf(u, theta)
 
     def pmf(self, y, theta):
-        raise NotImplementedError("PMF is not implemented for continuous distributions.")
+        raise NotImplementedError(
+            "PMF is not implemented for continuous distributions."
+        )
 
     def logpmf(self, y, theta):
-        raise NotImplementedError("logPMF is not implemented for continuous distributions.")
+        raise NotImplementedError(
+            "logPMF is not implemented for continuous distributions."
+        )
