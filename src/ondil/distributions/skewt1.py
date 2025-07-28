@@ -150,7 +150,7 @@ class SkewT1(Distribution):
     def dl2_dpp(
         self, y: np.ndarray, theta: np.ndarray, params: Tuple[int, int] = (0, 1)
     ) -> np.ndarray:
-        self._validate_dln_dpn_inputs(y, theta, params)
+        self._validate_dl2_dpp_inputs(y, theta, params)
         i, j = params
         if i == j:
             return self.dl2_dp2(y, theta, i)
