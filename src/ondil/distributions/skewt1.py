@@ -213,13 +213,7 @@ class SkewT1(Distribution):
         tau = np.asarray(tau)
 
         def dST1(x, nu_i, tau_i):
-            wx = nu_i * x
-            if tau_i < 1e6:
-                return np.exp(
-                    st.t.logcdf(wx, tau_i) + st.t.logpdf(x, tau_i) + np.log(2)
-                )
-            else:
-                return np.exp(st.norm.logcdf(wx) + st.norm.logpdf(x) + np.log(2))
+            return self.pdf(x, np.array([[0, 1, nu_i, tau_i]]))
 
         opts = dict(epsabs=1e-10, epsrel=1e-10)
         result = np.empty_like(z)
