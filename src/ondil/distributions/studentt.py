@@ -8,7 +8,7 @@ from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Identity, Log, LogShiftTwo
 
 
-class T(ScipyMixin, Distribution):
+class StudentT(ScipyMixin, Distribution):
     """Corresponds to GAMLSS TF() and scipy.stats.t()"""
 
     corresponding_gamlss: str = "TF"

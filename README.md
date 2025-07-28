@@ -55,7 +55,7 @@ equation = {
 
 # Create the estimator
 online_gamlss_lasso = ondil.estimators.OnlineDistributionalRegression(
-    distribution=ondil.T(),
+    distribution=ondil.StudentT(),
     method="lasso",
     equation=equation,
     fit_intercept=True,
