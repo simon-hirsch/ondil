@@ -9,7 +9,7 @@ import ondil
 import ondil.estimators
 
 EXPECTED_FAILED_CHECKS = {
-    "check_sample_weight_equivalence_on_dense_data": "Too few data points to test this check in the original scikit-learn implementation.",
+    "check_sample_weight_equivalence_on_dense_data": "Insufficient data points to validate this check in the original scikit-learn implementation.",
 }
 
 # https://scikit-learn.org/stable/modules/generated/sklearn.utils.estimator_checks.check_estimator.html#sklearn.utils.estimator_checks.check_estimator
