@@ -3,6 +3,7 @@ import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Identity, Log
+from ..types import ParameterShapes
 
 
 class Gumbel(ScipyMixin, Distribution):
@@ -28,6 +29,10 @@ class Gumbel(ScipyMixin, Distribution):
     distribution_support = (-np.inf, np.inf)
     scipy_dist = st.gumbel_l
     scipy_names = {"mu": "loc", "sigma": "scale"}
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+    }
 
     def __init__(
         self,
