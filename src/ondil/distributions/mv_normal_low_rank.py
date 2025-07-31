@@ -129,10 +129,8 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
         )
         self.rank = rank
         self.is_multivariate = True
-        self._adr_lower_diag = {0: False, 1: False, 2: False}
         self._regularization = "low_rank"  # or adr
         self._regularization_allowed = {0: False, 1: False, 2: True}
-        self._scoring = "fisher"
 
     def fitted_elements(self, dim: int):
         return {0: dim, 1: dim, 2: dim * self.rank}

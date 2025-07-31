@@ -201,10 +201,8 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
         self.dof_independence = 1e6
         self.is_multivariate = True
 
-        self._adr_lower_diag = {0: False, 1: False, 2: False, 3: False}
         self._regularization = "low_rank"
         self._regularization_allowed = {0: False, 1: False, 2: True, 3: False}
-        self._scoring = "fisher"
 
     def fitted_elements(self, dim: int):
         return {0: dim, 1: dim, 2: dim * self.rank, 3: 1}

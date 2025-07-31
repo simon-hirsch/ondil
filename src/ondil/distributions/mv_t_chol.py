@@ -46,10 +46,8 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
         )
         self.is_multivariate = True
         self.dof_guesstimate = dof_guesstimate
-        self._adr_lower_diag = {0: False, 1: True, 2: False}
         self._regularization_allowed = {0: False, 1: True, 2: False}
         self._regularization = "adr"  # or adr
-        self._scoring = "fisher"
 
     @staticmethod
     def fitted_elements(dim: int):

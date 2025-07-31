@@ -45,7 +45,6 @@ class MultivariateNormalInverseModChol(MultivariateDistributionMixin, Distributi
                 2: scale_link_2,
             }
         )
-        self._adr_lower_diag = {0: False, 1: False, 2: False}
         self._regularization_allowed = {0: False, 1: False, 2: True}
         self._regularization = "adr"  # or adr
 
