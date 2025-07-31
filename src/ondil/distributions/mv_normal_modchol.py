@@ -1,4 +1,3 @@
-from itertools import product
 from typing import Dict
 
 import numpy as np
@@ -14,7 +13,9 @@ from ..types import ParameterShapes
 # Where T is a lower diagonal matrix and D is a diagonal matrix
 
 
-class MultivariateNormalInverseModChol(MultivariateDistributionMixin, Distribution):
+class MultivariateNormalInverseModifiedCholesky(
+    MultivariateDistributionMixin, Distribution
+):
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "D", 2: "T"}
@@ -46,7 +47,6 @@ class MultivariateNormalInverseModChol(MultivariateDistributionMixin, Distributi
             }
         )
         self._regularization_allowed = {0: False, 1: False, 2: True}
-        self._regularization = "adr"  # or adr
 
     def get_adr_regularization_distance(self, dim: int, param: int) -> float:
         if param in (0, 1):
@@ -54,6 +54,9 @@ class MultivariateNormalInverseModChol(MultivariateDistributionMixin, Distributi
         if param == 2:
             i, j = np.tril_indices(dim, k=-1)
             return np.abs(i - j)
+
+    def get_regularization_size(self, dim: int) -> float:
+        return dim - 1
 
     @staticmethod
     def fitted_elements(dim: int):

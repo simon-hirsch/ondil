@@ -128,8 +128,6 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
             }
         )
         self.rank = rank
-        self.is_multivariate = True
-        self._regularization = "low_rank"  # or adr
         self._regularization_allowed = {0: False, 1: False, 2: True}
 
     def fitted_elements(self, dim: int):
@@ -139,11 +137,14 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
     def param_structure(self):
         return self._param_structure
 
-    def get_adr_regularization_distance(self, dim: int, param: int) -> float:
+    def get_adr_regularization_distance(self, dim: int, param: int) -> np.ndarray:
         if param in (0, 1):
             return None
         if param == 2:
             return np.concatenate([np.repeat(i + 1, dim) for i in range(self.rank)])
+
+    def get_regularization_size(self, dim: int) -> int:
+        return self.rank + 1
 
     def index_flat_to_cube(self, k: int, d: int, param: int):
         if param == 0:

@@ -42,7 +42,6 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
             }
         )
         self._regularization_allowed = {0: False, 1: True}
-        self._regularization = "adr"  # or adr
 
     @staticmethod
     def fitted_elements(dim: int):
@@ -62,6 +61,9 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
         if param == 1:
             i, j = np.triu_indices(dim, k=0)
             return np.abs(i - j)
+
+    def get_regularization_size(self, dim: int) -> int:
+        return dim
 
     @staticmethod
     def set_theta_element(theta: Dict, value: np.ndarray, param: int, k: int) -> Dict:

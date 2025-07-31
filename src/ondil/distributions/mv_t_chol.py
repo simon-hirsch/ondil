@@ -47,7 +47,6 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
         self.is_multivariate = True
         self.dof_guesstimate = dof_guesstimate
         self._regularization_allowed = {0: False, 1: True, 2: False}
-        self._regularization = "adr"  # or adr
 
     @staticmethod
     def fitted_elements(dim: int):
@@ -63,6 +62,9 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
         if param == 1:
             j, i = np.triu_indices(dim, k=0)
             return np.abs(i - j)
+
+    def get_regularization_size(self, dim: int) -> int:
+        return dim
 
     @staticmethod
     def index_flat_to_cube(k: int, d: int, param: int):

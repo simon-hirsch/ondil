@@ -199,9 +199,6 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
         self.rank = rank
         self.dof_guesstimate = dof_guesstimate
         self.dof_independence = 1e6
-        self.is_multivariate = True
-
-        self._regularization = "low_rank"
         self._regularization_allowed = {0: False, 1: False, 2: True, 3: False}
 
     def fitted_elements(self, dim: int):
@@ -226,6 +223,9 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
             return None
         if param == 2:
             return np.concatenate([np.repeat(i + 1, dim) for i in range(self.rank)])
+
+    def get_regularization_size(self, dim: int) -> int:
+        return self.rank + 1
 
     def set_theta_element(
         self, theta: Dict, value: np.ndarray, param: int, k: int

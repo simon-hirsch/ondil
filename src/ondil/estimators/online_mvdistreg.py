@@ -604,10 +604,7 @@ class MultivariateOnlineDistributionalRegressionPath(
 
         # Without prior information, the optimal ADR regularization is
         # The largest model
-        if self.distribution._regularization == "adr":
-            self.adr_steps_ = self.dim_
-        if self.distribution._regularization == "low_rank":
-            self.adr_steps_ = self.distribution.rank + 1
+        self.adr_steps_ = self.distribution.get_regularization_size(self.dim_)
         if self.max_regularisation_size is not None:
             self.adr_steps_ = np.fmin(self.adr_steps_, self.max_regularisation_size)
 
