@@ -223,6 +223,12 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
             idx = [(j, i) for i, j in product(range(self.rank), range(d))]
             return idx[k][0], idx[k][1]
 
+    def get_adr_regularization_distance(self, dim: int, param: int) -> np.ndarray:
+        if param in (0, 1, 3):
+            return None
+        if param == 2:
+            return np.concatenate([np.repeat(i + 1, dim) for i in range(self.rank)])
+
     def set_theta_element(
         self, theta: Dict, value: np.ndarray, param: int, k: int
     ) -> Dict:

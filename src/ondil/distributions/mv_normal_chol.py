@@ -58,6 +58,13 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
             i, j = np.triu_indices(d)
             return i[k], j[k]
 
+    def get_adr_regularization_distance(self, dim: int, param: int) -> float:
+        if param == 0:
+            return None
+        if param == 1:
+            i, j = np.triu_indices(dim, k=0)
+            return np.abs(i - j)
+
     @staticmethod
     def set_theta_element(theta: Dict, value: np.ndarray, param: int, k: int) -> Dict:
         """Sets an element of theta for parameter param and place k.

@@ -455,18 +455,11 @@ class MultivariateOnlineDistributionalRegressionPath(
         }
         for p in range(self.distribution.n_params):
             if self.distribution._regularization_allowed[p]:
-                if self.distribution.parameter_shape[p] in [
-                    ParameterShapes.LOWER_TRIANGULAR_MATRIX,
-                    ParameterShapes.UPPER_TRIANGULAR_MATRIX,
-                ]:
-                    self._adr_distance[p] = get_adr_regularization_distance(
-                        d=self.dim_,
-                        parameter_shape=self.distribution.parameter_shape[p],
+                self._adr_distance[p] = (
+                    self.distribution.get_adr_regularization_distance(
+                        dim=self.dim_, param=p
                     )
-                if self.distribution.parameter_shape[p] in [ParameterShapes.MATRIX]:
-                    self._adr_distance[p] = get_low_rank_regularization_distance(
-                        d=self.dim_, r=self.distribution.rank
-                    )
+                )
 
     # Different UV-MV
     def _get_number_of_covariates(self, X: np.ndarray):

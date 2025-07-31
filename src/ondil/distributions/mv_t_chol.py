@@ -59,6 +59,13 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
     def param_structure(self):
         return self._param_structure
 
+    def get_adr_regularization_distance(self, dim: int, param: int) -> float:
+        if param in (0, 2):
+            return None
+        if param == 1:
+            j, i = np.triu_indices(dim, k=0)
+            return np.abs(i - j)
+
     @staticmethod
     def index_flat_to_cube(k: int, d: int, param: int):
         if (param == 0) | (param == 2):

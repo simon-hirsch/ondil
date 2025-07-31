@@ -141,6 +141,12 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
     def param_structure(self):
         return self._param_structure
 
+    def get_adr_regularization_distance(self, dim: int, param: int) -> float:
+        if param in (0, 1):
+            return None
+        if param == 2:
+            return np.concatenate([np.repeat(i + 1, dim) for i in range(self.rank)])
+
     def index_flat_to_cube(self, k: int, d: int, param: int):
         if param == 0:
             return k
