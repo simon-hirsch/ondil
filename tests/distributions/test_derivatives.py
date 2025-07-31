@@ -96,6 +96,6 @@ def test_distribution_derivatives(distribution):
     available_derivatives = R_list.names
     for key in available_derivatives:
         if key in derivative_mapping:
-            assert np.allclose(
-                derivative_mapping[key](), R_list.rx2(key)
-            ), f"Derivative {key} doesn't match for {distribution.__class__.__name__}"
+            assert np.allclose(derivative_mapping[key](), R_list.rx2(key)), (
+                f"Derivative {key} doesn't match for {distribution.__class__.__name__}"
+            )

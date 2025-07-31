@@ -82,6 +82,6 @@ def test_distribution_functions(distribution):
 
     for key in available_functions:
         if key in function_mapping:
-            assert np.allclose(
-                function_mapping[key](), R_list.rx2(key), atol=atol
-            ), f"Function {key} doesn't match for {distribution.__class__.__name__}"
+            assert np.allclose(function_mapping[key](), R_list.rx2(key), atol=atol), (
+                f"Function {key} doesn't match for {distribution.__class__.__name__}"
+            )
