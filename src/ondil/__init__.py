@@ -15,8 +15,12 @@ if find_spec("polars") is not None:
 from .information_criteria import InformationCriterion
 from .scaler import OnlineScaler
 
-__version__ = version("ondil")
-
+try:
+    from importlib.metadata import version
+    __version__ = version("ondil")
+except Exception:
+    __version__ = "dev"
+    
 __all__ = [
     "OnlineScaler",
     "InformationCriterion",

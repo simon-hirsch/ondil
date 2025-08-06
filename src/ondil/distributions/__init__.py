@@ -19,6 +19,9 @@ from .normal import Normal, NormalMeanVariance
 from .reversegumbel import ReverseGumbel
 from .studentt import StudentT
 from .zeroadjustedgamma import ZeroAdjustedGamma
+from .bicop_normal import BivariateCopulaNormal
+from .mv_marg_cop import MarginalCopula
+
 
 __all__ = [
     "Normal",
@@ -41,6 +44,6 @@ __all__ = [
     "MultivariateNormalInverseModifiedCholesky",
     "MultivariateStudentTInverseCholesky",
     "MultivariateStudentTInverseLowRank",
-    "BetaInflatedZero",
-    "ZeroAdjustedGamma",
+    "BiCopNormal",
+    "MarginalCopula",
 ]
