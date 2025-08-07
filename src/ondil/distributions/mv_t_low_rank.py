@@ -376,13 +376,13 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
             mat_v = eig.eigenvectors[:, largest_ev]
             return np.tile(mat_v, (M, 1, 1))
         if param == 3:
-            return np.full((M, 1), self.dof_guesstimate)
+            return np.full((M, 1), self.dof_independence)
 
     def set_initial_guess(self, theta, param):
         if param < 3:
             return theta
         if param == 3:
-            theta[3] = np.full_like(theta[3], 10)
+            theta[3] = np.full_like(theta[3], self.dof_guesstimate)
             return theta
 
     def cube_to_flat(self, x: np.ndarray, param: int):
