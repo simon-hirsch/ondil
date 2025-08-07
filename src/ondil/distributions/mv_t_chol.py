@@ -46,6 +46,7 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
         )
         self.is_multivariate = True
         self.dof_guesstimate = dof_guesstimate
+        self.dof_independence = 1e6
         self._regularization_allowed = {0: False, 1: True, 2: False}
 
     @staticmethod
@@ -218,13 +219,13 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
             chol = np.linalg.inv(np.linalg.cholesky(shape))
             return np.tile(chol, (M, 1, 1))
         if param == 2:
-            return np.full((y.shape[0], 1), self.dof_guesstimate)
+            return np.full((y.shape[0], 1), self.dof_independence)
 
     def set_initial_guess(self, theta, param):
         if param < 2:
             return theta
         if param == 2:
-            theta[2] = np.full_like(theta[2], 5)
+            theta[2] = np.full_like(theta[2], self.dof_guesstimate)
             return theta
 
     def cube_to_flat(self, x: np.ndarray, param: int):
