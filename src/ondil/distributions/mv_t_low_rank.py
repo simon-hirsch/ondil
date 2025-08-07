@@ -10,157 +10,6 @@ from ..links import Identity, Log, LogShiftTwo, MatrixDiag
 from ..types import ParameterShapes
 
 
-def batched_log_lilkelihood_t_precision_low_rank_fast(y, mu, mat_d, mat_v, dof):
-    k = y.shape[1]
-    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    A = np.squeeze(sp.gammaln((dof + k) / 2))
-    B = np.squeeze(sp.gammaln(dof / 2))
-    C = 1 / 2 * k * np.squeeze(np.log(np.pi * dof))
-    Z = np.sum((y - mu) * (precision @ (y - mu)[..., None]).squeeze(), 1)
-    part1 = A - B - C
-    part2 = 1 / 2 * np.log(np.linalg.det(precision))
-    part3 = np.squeeze((dof + k) / 2) * np.log((1 + np.squeeze((1 / dof)) * Z))
-    return part1 + part2 - part3
-
-
-def mv_t_lr_partial_1_mu(y, mat_mu, mat_d, mat_v, dof, i):
-    k = y.shape[1]
-    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
-    part1 = (k + dof) / (2 * (Z + dof))
-    part2 = 2 * np.sum(precision[:, i, :] * (y - mat_mu), axis=1)
-    return part1 * part2
-
-
-def mv_t_lr_partial_2_mu(y, mat_mu, mat_d, mat_v, dof, i):
-    k = y.shape[1]
-
-    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
-    deriv_1 = 2 * np.sum(precision[:, i, :] * (y - mat_mu), axis=1)
-    deriv_2 = 2 * precision[:, i, i]
-
-    part1 = k + dof
-    part2 = (Z + dof) * deriv_2 - deriv_1**2
-    part3 = 2 * (Z + dof) ** 2
-
-    return -(part1 * part2) / part3
-
-
-def mv_t_lr_partial_1_D_element(y, mat_mu, mat_d, mat_v, dof, i):
-    k = y.shape[1]
-    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
-
-    # Derivative of the log(det(D + VV^T))
-    part_1 = 0.5 * np.linalg.inv(precision)[:, i, i]
-
-    # Derivative of the last term
-    part2 = np.squeeze(k + dof) / (2 * (Z + dof.squeeze()))
-    part3 = (y[:, i] - mat_mu[:, i]) ** 2
-    return part_1 - part2 * part3
-
-
-def mv_t_lr_partial_2_D_element(y, mat_mu, mat_d, mat_v, dof, i):
-    k = y.shape[1]
-    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    cov = np.linalg.inv(precision)
-    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
-
-    # Derivative for the log(det())
-    part1 = -0.5 * cov[:, i, i] ** 2
-
-    # Derivative for the last term
-    deriv_lambda_1 = (y[:, i] - mat_mu[:, i]) ** 2
-    deriv_lambda_2 = 0
-
-    part2 = k + dof.squeeze()
-    part3 = (Z + dof.squeeze()) * deriv_lambda_2 - deriv_lambda_1**2
-    part4 = 2 * (Z + dof.squeeze()) ** 2
-    return part1 - (part2 * part3) / part4
-
-
-def mv_t_lr_partial_1_V_element(y, mat_mu, mat_d, mat_v, dof, i, j):
-    # Would be nice to calculate only the necessary rows of Omega in the future maybe!
-    # For part 2
-    # zzT @ V
-    # zzT[:, i, :] @ mat_v[:, :, j]
-    # select the correct row of zzT before
-    # sum(z * z[:, i], axis=-1)
-    k = y.shape[1]
-    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
-
-    # Deriviative for the log(det())
-    part1 = np.sum(np.linalg.inv(precision)[:, i, :] * mat_v[:, :, j], axis=1)
-
-    # Derivative for the second part
-    deriv = -2 * np.sum(
-        (y - mat_mu) * np.expand_dims((y[:, i] - mat_mu[:, i]), -1) * mat_v[:, :, j], -1
-    )
-    # Factor
-    part2 = np.squeeze(k + dof)
-    part3 = 2 * (Z + dof.squeeze())
-    return part1 + (part2 / part3) * deriv
-
-
-def mv_t_lr_partial_2_V_element(y, mat_mu, mat_d, mat_v, dof, i, j):
-    d = y.shape[1]
-    precision = mat_d + mat_v @ mat_v.swapaxes(-1, -2)
-    cov = np.linalg.inv(precision)
-    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
-
-    # second derivative for the log(det())
-    sum1 = 0
-    sum2 = 0
-    for k, q in product(range(d), range(d)):
-        sum1 += cov[:, i, i] * mat_v[:, q, j] * cov[:, q, k] * mat_v[:, k, j]
-        sum2 += cov[:, i, q] * mat_v[:, q, j] * cov[:, i, k] * mat_v[:, k, j]
-    part1 = cov[:, i, i] - sum1 - sum2
-
-    # derivatives for the second part
-    deriv1 = -2 * np.sum(
-        (y - mat_mu) * np.expand_dims((y[:, i] - mat_mu[:, i]), -1) * mat_v[:, :, j], -1
-    )
-    deriv2 = 2 * (y - mat_mu)[:, i] ** 2
-
-    part2 = d + dof.squeeze()
-    part3 = (Z + dof.squeeze()) * deriv2 - deriv1**2
-    part4 = 2 * (Z + dof.squeeze()) ** 2
-
-    return part1 - (part2 * part3) / part4
-
-
-def mv_t_lr_partial_1_dof(y, mat_mu, mat_d, mat_v, dof):
-    k = y.shape[1]
-
-    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
-
-    part1 = -(-dof * sp.digamma((k + dof) / 2) + k + dof * sp.digamma(dof / 2)) / (
-        2 * dof
-    )
-    part2 = (Z * (k + dof)) / (2 * dof * (dof + Z)) - 1 / 2 * np.log((dof + Z) / dof)
-    return part1 + part2
-
-
-def mv_t_lr_partial_2_dof(y, mat_mu, mat_d, mat_v, dof):
-    k = y.shape[1]
-    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
-    part1 = (
-        1
-        / 4
-        * (
-            (2 * k) / (dof**2)
-            + sp.polygamma(1, (dof + k) / 2)
-            - sp.polygamma(1, dof / 2)
-        )
-    )
-    part2 = (Z * (dof * Z - k * (2 * dof + Z))) / (2 * dof**2 * (dof + Z) ** 2)
-    return part1 + part2
-
-
 class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribution):
     """The multivariate $t$-distribution using a low-rank approximation (LRA)
     of the precision (inverse scale) matrix.
@@ -444,3 +293,154 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
         self, y: np.ndarray, theta: Dict[int, np.ndarray]
     ) -> Dict[int, np.ndarray]:
         raise NotImplementedError("Not implemented")
+
+
+def batched_log_lilkelihood_t_precision_low_rank_fast(y, mu, mat_d, mat_v, dof):
+    k = y.shape[1]
+    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    A = np.squeeze(sp.gammaln((dof + k) / 2))
+    B = np.squeeze(sp.gammaln(dof / 2))
+    C = 1 / 2 * k * np.squeeze(np.log(np.pi * dof))
+    Z = np.sum((y - mu) * (precision @ (y - mu)[..., None]).squeeze(), 1)
+    part1 = A - B - C
+    part2 = 1 / 2 * np.log(np.linalg.det(precision))
+    part3 = np.squeeze((dof + k) / 2) * np.log((1 + np.squeeze((1 / dof)) * Z))
+    return part1 + part2 - part3
+
+
+def mv_t_lr_partial_1_mu(y, mat_mu, mat_d, mat_v, dof, i):
+    k = y.shape[1]
+    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
+    part1 = (k + dof) / (2 * (Z + dof))
+    part2 = 2 * np.sum(precision[:, i, :] * (y - mat_mu), axis=1)
+    return part1 * part2
+
+
+def mv_t_lr_partial_2_mu(y, mat_mu, mat_d, mat_v, dof, i):
+    k = y.shape[1]
+
+    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
+    deriv_1 = 2 * np.sum(precision[:, i, :] * (y - mat_mu), axis=1)
+    deriv_2 = 2 * precision[:, i, i]
+
+    part1 = k + dof
+    part2 = (Z + dof) * deriv_2 - deriv_1**2
+    part3 = 2 * (Z + dof) ** 2
+
+    return -(part1 * part2) / part3
+
+
+def mv_t_lr_partial_1_D_element(y, mat_mu, mat_d, mat_v, dof, i):
+    k = y.shape[1]
+    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
+
+    # Derivative of the log(det(D + VV^T))
+    part_1 = 0.5 * np.linalg.inv(precision)[:, i, i]
+
+    # Derivative of the last term
+    part2 = np.squeeze(k + dof) / (2 * (Z + dof.squeeze()))
+    part3 = (y[:, i] - mat_mu[:, i]) ** 2
+    return part_1 - part2 * part3
+
+
+def mv_t_lr_partial_2_D_element(y, mat_mu, mat_d, mat_v, dof, i):
+    k = y.shape[1]
+    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    cov = np.linalg.inv(precision)
+    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
+
+    # Derivative for the log(det())
+    part1 = -0.5 * cov[:, i, i] ** 2
+
+    # Derivative for the last term
+    deriv_lambda_1 = (y[:, i] - mat_mu[:, i]) ** 2
+    deriv_lambda_2 = 0
+
+    part2 = k + dof.squeeze()
+    part3 = (Z + dof.squeeze()) * deriv_lambda_2 - deriv_lambda_1**2
+    part4 = 2 * (Z + dof.squeeze()) ** 2
+    return part1 - (part2 * part3) / part4
+
+
+def mv_t_lr_partial_1_V_element(y, mat_mu, mat_d, mat_v, dof, i, j):
+    # Would be nice to calculate only the necessary rows of Omega in the future maybe!
+    # For part 2
+    # zzT @ V
+    # zzT[:, i, :] @ mat_v[:, :, j]
+    # select the correct row of zzT before
+    # sum(z * z[:, i], axis=-1)
+    k = y.shape[1]
+    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
+
+    # Deriviative for the log(det())
+    part1 = np.sum(np.linalg.inv(precision)[:, i, :] * mat_v[:, :, j], axis=1)
+
+    # Derivative for the second part
+    deriv = -2 * np.sum(
+        (y - mat_mu) * np.expand_dims((y[:, i] - mat_mu[:, i]), -1) * mat_v[:, :, j], -1
+    )
+    # Factor
+    part2 = np.squeeze(k + dof)
+    part3 = 2 * (Z + dof.squeeze())
+    return part1 + (part2 / part3) * deriv
+
+
+def mv_t_lr_partial_2_V_element(y, mat_mu, mat_d, mat_v, dof, i, j):
+    d = y.shape[1]
+    precision = mat_d + mat_v @ mat_v.swapaxes(-1, -2)
+    cov = np.linalg.inv(precision)
+    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
+
+    # second derivative for the log(det())
+    sum1 = 0
+    sum2 = 0
+    for k, q in product(range(d), range(d)):
+        sum1 += cov[:, i, i] * mat_v[:, q, j] * cov[:, q, k] * mat_v[:, k, j]
+        sum2 += cov[:, i, q] * mat_v[:, q, j] * cov[:, i, k] * mat_v[:, k, j]
+    part1 = cov[:, i, i] - sum1 - sum2
+
+    # derivatives for the second part
+    deriv1 = -2 * np.sum(
+        (y - mat_mu) * np.expand_dims((y[:, i] - mat_mu[:, i]), -1) * mat_v[:, :, j], -1
+    )
+    deriv2 = 2 * (y - mat_mu)[:, i] ** 2
+
+    part2 = d + dof.squeeze()
+    part3 = (Z + dof.squeeze()) * deriv2 - deriv1**2
+    part4 = 2 * (Z + dof.squeeze()) ** 2
+
+    return part1 - (part2 * part3) / part4
+
+
+def mv_t_lr_partial_1_dof(y, mat_mu, mat_d, mat_v, dof):
+    k = y.shape[1]
+
+    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
+
+    part1 = -(-dof * sp.digamma((k + dof) / 2) + k + dof * sp.digamma(dof / 2)) / (
+        2 * dof
+    )
+    part2 = (Z * (k + dof)) / (2 * dof * (dof + Z)) - 1 / 2 * np.log((dof + Z) / dof)
+    return part1 + part2
+
+
+def mv_t_lr_partial_2_dof(y, mat_mu, mat_d, mat_v, dof):
+    k = y.shape[1]
+    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    Z = np.sum((y - mat_mu) * (precision @ (y - mat_mu)[..., None]).squeeze(), 1)
+    part1 = (
+        1
+        / 4
+        * (
+            (2 * k) / (dof**2)
+            + sp.polygamma(1, (dof + k) / 2)
+            - sp.polygamma(1, dof / 2)
+        )
+    )
+    part2 = (Z * (dof * Z - k * (2 * dof + Z))) / (2 * dof**2 * (dof + Z) ** 2)
+    return part1 + part2
