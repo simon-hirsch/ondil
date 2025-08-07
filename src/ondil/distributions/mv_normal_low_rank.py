@@ -9,96 +9,6 @@ from ..links import Identity, Log, MatrixDiag
 from ..types import ParameterShapes
 
 
-def batched_log_lilkelihood_normal_precision_low_rank(y, mu, mat_d, mat_v):
-    """Fast evaluation of the batched log likelihood."""
-    # k = y.shape[1]
-    # cov = np.linalg.inv(mat_d + mat_v @ np.swapaxes(mat_v, -2, -1))
-    # part1 = - k/2 * np.log(2 * np.pi)
-    # part2 = - 1/2 * np.log(np.linalg.det(cov))
-    # part3 = - 1 / 2 * np.sum((y - mu) * (np.linalg.inv(cov) @ (y - mu)[..., None]).squeeze(), 1)
-    # return part1 + part2 + part3
-    k = y.shape[1]
-    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    part1 = -k / 2 * np.log(2 * np.pi)
-    part2 = 1 / 2 * np.log(np.linalg.det(precision))
-    part3 = -1 / 2 * np.sum((y - mu) * (precision @ (y - mu)[..., None]).squeeze(), 1)
-    return part1 + part2 + part3
-
-
-def element_cov(mat_d, mat_v, i, j):
-    unit = np.expand_dims(np.eye(mat_v.shape[-1]), 0)
-    inner = np.swapaxes(mat_v, -1, -2) @ np.linalg.inv(mat_d) @ mat_v
-    inner_inverse = np.linalg.inv(unit + inner)
-    element = int(i == j) * 1 / mat_d[:, i, i] - np.sum(
-        inner_inverse
-        * (
-            (mat_v[:, i, :] / np.expand_dims(mat_d[:, i, i], -1))[:, :, None]
-            @ (mat_v[:, j, :] / np.expand_dims(mat_d[:, j, j], -1))[:, None, :]
-        ),
-        axis=(-2, -1),
-    )
-    return element
-
-
-def partial1_mu_element(y, mat_mu, mat_d, mat_v, i):
-    term1 = mat_d[:, i, i] * (y - mat_mu)[:, i]
-    term2 = np.sum(
-        mat_v[:, [i], :] * mat_v * np.expand_dims(y - mat_mu, -1), axis=(-2, -1)
-    )
-    # This is a slightly cleaner version of below
-    # term2 = np.squeeze(mat_v[:, [i], :] @ mat_v.swapaxes(-1, -2) @ np.expand_dims((y - mat_mu), -1))
-    return term1 + term2
-
-
-def partial2_mu_element(y, mat_mu, mat_d, mat_v, i):
-    # Diagonal elements of the inverse covariance matrix
-    return -(mat_d[:, i, i] + np.sum(mat_v[:, i] ** 2, 1))
-
-
-def partial1_D_element(y, mat_mu, mat_d, mat_v, i):
-    omega = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    part_1 = 0.5 * np.linalg.inv(omega)[:, i, i]
-    part_2 = -0.5 * (y[:, i] - mat_mu[:, i]) ** 2
-    return part_1 + part_2
-
-
-def partial2_D_element(y, mat_mu, mat_d, mat_v, i):
-    omega = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    cov = np.linalg.inv(omega)
-    return 0.5 * -cov[:, i, i] ** 2
-
-
-def partial1_V_element(y, mat_mu, mat_d, mat_v, i, j):
-    # TODO: Would be nice to calculate only the necessary rows
-    # of OMEGA in the future maybe!
-
-    # Derivation for part 2
-    # zzT @ V
-    # zzT[:, i, :] @ mat_v[:, :, j]
-    # select the correct row of zzT before
-    # sum(z * z[:, i], axis=-1)
-    omega = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
-    part_1 = np.sum(np.linalg.inv(omega)[:, i, :] * mat_v[:, :, j], axis=1)
-    part_2 = -np.sum(
-        (y - mat_mu) * np.expand_dims((y[:, i] - mat_mu[:, i]), -1) * mat_v[:, :, j], -1
-    )
-    return part_1 + part_2
-
-
-def partial2_V_element(y, mat_mu, mat_d, mat_v, i, j):
-    d = mat_d.shape[1]
-    omega = mat_d + mat_v @ mat_v.swapaxes(-1, -2)
-    cov = np.linalg.inv(omega)
-    sum1 = 0
-    sum2 = 0
-    for k, q in product(range(d), range(d)):
-        sum1 += cov[:, i, i] * mat_v[:, q, j] * cov[:, q, k] * mat_v[:, k, j]
-        sum2 += cov[:, i, q] * mat_v[:, q, j] * cov[:, i, k] * mat_v[:, k, j]
-    term1 = cov[:, i, i] - sum1 - sum2
-    term2 = -(y - mat_mu)[:, i] ** 2
-    return term1 + term2
-
-
 class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distribution):
 
     corresponding_gamlss: str = None
@@ -365,3 +275,78 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
         self, y: np.ndarray, theta: Dict[int, np.ndarray]
     ) -> Dict[int, np.ndarray]:
         raise NotImplementedError("Not implemented")
+
+
+def batched_log_lilkelihood_normal_precision_low_rank(y, mu, mat_d, mat_v):
+    """Fast evaluation of the batched log likelihood."""
+    # k = y.shape[1]
+    # cov = np.linalg.inv(mat_d + mat_v @ np.swapaxes(mat_v, -2, -1))
+    # part1 = - k/2 * np.log(2 * np.pi)
+    # part2 = - 1/2 * np.log(np.linalg.det(cov))
+    # part3 = - 1 / 2 * np.sum((y - mu) * (np.linalg.inv(cov) @ (y - mu)[..., None]).squeeze(), 1)
+    # return part1 + part2 + part3
+    k = y.shape[1]
+    precision = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    part1 = -k / 2 * np.log(2 * np.pi)
+    part2 = 1 / 2 * np.log(np.linalg.det(precision))
+    part3 = -1 / 2 * np.sum((y - mu) * (precision @ (y - mu)[..., None]).squeeze(), 1)
+    return part1 + part2 + part3
+
+
+def _partial1_mu_element(y, mat_mu, mat_d, mat_v, i):
+    term1 = mat_d[:, i, i] * (y - mat_mu)[:, i]
+    term2 = np.sum(
+        mat_v[:, [i], :] * mat_v * np.expand_dims(y - mat_mu, -1), axis=(-2, -1)
+    )
+    # This is a slightly cleaner version of below
+    # term2 = np.squeeze(mat_v[:, [i], :] @ mat_v.swapaxes(-1, -2) @ np.expand_dims((y - mat_mu), -1))
+    return term1 + term2
+
+
+def partial2_mu_element(y, mat_mu, mat_d, mat_v, i):
+    # Diagonal elements of the inverse covariance matrix
+    return -(mat_d[:, i, i] + np.sum(mat_v[:, i] ** 2, 1))
+
+
+def partial1_D_element(y, mat_mu, mat_d, mat_v, i):
+    omega = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    part_1 = 0.5 * np.linalg.inv(omega)[:, i, i]
+    part_2 = -0.5 * (y[:, i] - mat_mu[:, i]) ** 2
+    return part_1 + part_2
+
+
+def partial2_D_element(y, mat_mu, mat_d, mat_v, i):
+    omega = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    cov = np.linalg.inv(omega)
+    return 0.5 * -cov[:, i, i] ** 2
+
+
+def partial1_V_element(y, mat_mu, mat_d, mat_v, i, j):
+    # TODO: Would be nice to calculate only the necessary rows
+    # of OMEGA in the future maybe!
+
+    # Derivation for part 2
+    # zzT @ V
+    # zzT[:, i, :] @ mat_v[:, :, j]
+    # select the correct row of zzT before
+    # sum(z * z[:, i], axis=-1)
+    omega = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
+    part_1 = np.sum(np.linalg.inv(omega)[:, i, :] * mat_v[:, :, j], axis=1)
+    part_2 = -np.sum(
+        (y - mat_mu) * np.expand_dims((y[:, i] - mat_mu[:, i]), -1) * mat_v[:, :, j], -1
+    )
+    return part_1 + part_2
+
+
+def partial2_V_element(y, mat_mu, mat_d, mat_v, i, j):
+    d = mat_d.shape[1]
+    omega = mat_d + mat_v @ mat_v.swapaxes(-1, -2)
+    cov = np.linalg.inv(omega)
+    sum1 = 0
+    sum2 = 0
+    for k, q in product(range(d), range(d)):
+        sum1 += cov[:, i, i] * mat_v[:, q, j] * cov[:, q, k] * mat_v[:, k, j]
+        sum2 += cov[:, i, q] * mat_v[:, q, j] * cov[:, i, k] * mat_v[:, k, j]
+    term1 = cov[:, i, i] - sum1 - sum2
+    term2 = -(y - mat_mu)[:, i] ** 2
+    return term1 + term2
