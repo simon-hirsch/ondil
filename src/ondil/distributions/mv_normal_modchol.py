@@ -124,7 +124,12 @@ class MultivariateNormalInverseModifiedCholesky(
         t_mat = theta[2]
         return mu, d_mat, t_mat
 
-    def set_initial_guess(self, theta, param):
+    def set_initial_guess(
+        self,
+        y: np.ndarray,
+        theta: Dict[int, np.ndarray],
+        param: int,
+    ) -> Dict[int, np.ndarray]:
         return theta
 
     def dl1_dp1(self, y: np.ndarray, theta: Dict, param: int = 0):

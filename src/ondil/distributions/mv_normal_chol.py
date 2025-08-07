@@ -107,8 +107,20 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
         fitted_inv_tr_chol = theta[1]
         return fitted_loc, fitted_inv_tr_chol
 
-    def set_initial_guess(self, theta, param):
-        return theta
+    def set_initial_guess(
+        self,
+        y: np.ndarray,
+        theta: Dict[int, np.ndarray],
+        param: int,
+    ) -> Dict[int, np.ndarray]:
+        if param == 0:
+            return theta
+        if param == 1:
+            residual = y - theta[0]
+            cov = np.cov(residual, rowvar=False)
+            chol = np.linalg.inv(np.linalg.cholesky(cov)).T
+            theta[param] = np.tile(chol, (y.shape[0], 1, 1))
+            return theta
 
     def dl1_dp1(self, y: np.ndarray, theta: Dict, param: int = 0):
         """Return the first derivatives wrt to the parameter.

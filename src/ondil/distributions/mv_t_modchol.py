@@ -129,7 +129,12 @@ class MultivariateStudentTInverseModifiedCholesky(
         dof = theta[3]
         return mu, d_mat, t_mat, dof
 
-    def set_initial_guess(self, theta, param):
+    def set_initial_guess(
+        self,
+        y: np.ndarray,
+        theta: Dict[int, np.ndarray],
+        param: int,
+    ) -> Dict[int, np.ndarray]:
         if param < 3:
             return theta
         if param == 3:

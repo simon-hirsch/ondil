@@ -224,10 +224,8 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
     def initial_values(self, y, param=0):
         M = y.shape[0]
         if param == 0:
-            # return (y + np.mean(y, axis=0)) / 2
             return np.tile(np.mean(y, axis=0), (M, 1))
         if param == 1:
-            # chol = np.linalg.inv(np.linalg.cholesky(np.cov(y, rowvar=False)))
             var = np.var(y, axis=0)
             shape = np.diag(var * (self.dof_guesstimate - 2) / self.dof_guesstimate)
             chol = np.linalg.inv(np.linalg.cholesky(shape))
@@ -235,7 +233,12 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
         if param == 2:
             return np.full((y.shape[0], 1), self.dof_independence)
 
-    def set_initial_guess(self, theta, param):
+    def set_initial_guess(
+        self,
+        y: np.ndarray,
+        theta: Dict[int, np.ndarray],
+        param: int,
+    ) -> Dict[int, np.ndarray]:
         if param < 2:
             return theta
         if param == 2:

@@ -233,7 +233,12 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
             mat_v = eig.eigenvectors[:, largest_ev]
             return np.tile(mat_v, (M, 1, 1))
 
-    def set_initial_guess(self, theta, param):
+    def set_initial_guess(
+        self,
+        y: np.ndarray,
+        theta: Dict[int, np.ndarray],
+        param: int,
+    ) -> Dict[int, np.ndarray]:
         return theta
 
     def cube_to_flat(self, x: np.ndarray, param: int):

@@ -238,7 +238,12 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
         if param == 3:
             return np.full((M, 1), self.dof_independence)
 
-    def set_initial_guess(self, theta, param):
+    def set_initial_guess(
+        self,
+        y: np.ndarray,
+        theta: Dict[int, np.ndarray],
+        param: int,
+    ) -> Dict[int, np.ndarray]:
         if param < 3:
             return theta
         if param == 3:

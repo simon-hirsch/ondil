@@ -413,16 +413,22 @@ class MultivariateOnlineDistributionalRegressionPath(
         # Handle AD-R Regularization
         for a in range(self.adr_steps_):
             for p in range(self.distribution.n_params):
-                if self.distribution._regularization_allowed[p]:
-                    mask = (
-                        self._adr_distance[p]
-                        >= self._adr_mapping_index_to_max_distance[p][a]
-                    )
-                    regularized = self.distribution.cube_to_flat(theta[a][p], p)
-                    regularized[:, mask] = regularized[:, mask] = 0
-                    theta[a][p] = self.distribution.flat_to_cube(regularized, p)
+                theta = self._handle_path_regularization(theta=theta, p=p, a=a)
 
         return theta
+
+    def _handle_path_regularization(self, theta, p: int, a: int):
+        if self.distribution._regularization_allowed[p]:
+            mask = (
+                self._adr_distance[p] >= self._adr_mapping_index_to_max_distance[p][a]
+            )
+            regularized = self.distribution.cube_to_flat(theta[a][p], p)
+            regularized[:, mask] = regularized[:, mask] = 0
+            theta[a][p] = self.distribution.flat_to_cube(regularized, p)
+            return theta
+        else:
+            # If no regularization is allowed, we just return the theta
+            return theta
 
     # Only MV
     def _is_element_adr_regularized(self, p: int, k: int, a: int):
@@ -555,7 +561,9 @@ class MultivariateOnlineDistributionalRegressionPath(
 
     # Different UV - MV
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X: np.ndarray, y: np.ndarray):
+    def fit(
+        self, X: np.ndarray, y: np.ndarray
+    ) -> "MultivariateOnlineDistributionalRegressionPath":
         """Fit the estimator to the data.
 
         !!! Note
@@ -945,6 +953,11 @@ class MultivariateOnlineDistributionalRegressionPath(
                 prev_beta = copy.copy(self.coef_)
                 prev_beta_path = copy.copy(self.coef_path_)
 
+            # This will check if we
+            if (inner_iteration == 0) and (outer_iteration == 0):
+                theta[a] = self.distribution.set_initial_guess(y, theta[a], p)
+                theta = self._handle_path_regularization(theta=theta, p=p, a=a)
+
             # Iterate through all elements of the distribution parameter
             for k in self._iter_index[p]:
                 if self.debug:
@@ -956,9 +969,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                         (self.lambda_n, self.n_features_[p][k])
                     )
                 else:
-                    if (inner_iteration == 0) and (outer_iteration == 0):
-                        theta[a] = self.distribution.set_initial_guess(theta[a], p)
-
                     eta = self.distribution.link_function(theta[a][p], p)
                     eta = self.distribution.cube_to_flat(eta, param=p)
 
