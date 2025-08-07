@@ -15,6 +15,7 @@ from .mv_normal_low_rank import MultivariateNormalInverseLowRank
 from .mv_normal_modchol import MultivariateNormalInverseModifiedCholesky
 from .mv_t_chol import MultivariateStudentTInverseCholesky
 from .mv_t_low_rank import MultivariateStudentTInverseLowRank
+from .mv_t_modchol import MultivariateStudentTInverseModifiedCholesky
 from .normal import Normal, NormalMeanVariance
 from .reversegumbel import ReverseGumbel
 from .studentt import StudentT
@@ -41,6 +42,7 @@ __all__ = [
     "MultivariateNormalInverseModifiedCholesky",
     "MultivariateStudentTInverseCholesky",
     "MultivariateStudentTInverseLowRank",
+    "MultivariateStudentTInverseModifiedCholesky",
     "BetaInflatedZero",
     "ZeroAdjustedGamma",
 ]
