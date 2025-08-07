@@ -17,6 +17,20 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
     # Precision Matrix OMEGA
     # Cholesky Factor inv(chol(SIGMA))
     # Lower diagonal matrix
+    """
+    The multivariate \\( t \\)-distribution parameterized by the inverse Cholesky factor of the precision (inverse scale) matrix.
+
+    The PDF of the multivariate \\( t \\)-distribution is given by:
+    $$
+    p(y \mid \\mu, L, \\nu) =
+    \\frac{\\Gamma\\left(\\frac{\\nu + k}{2}\\right)}
+         {\\Gamma\\left(\\frac{\\nu}{2}\\right) \\left(\\pi \\nu\\right)^{k/2}}
+    \\cdot |L|
+    \\left(1 + \\frac{1}{\\nu} (y - \\mu)^T (L L^T) (y - \\mu)\\right)^{-\\frac{\\nu + k}{2}}
+    $$
+
+    where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the location parameter, \\( L \\) is the inverse Cholesky factor of the precision matrix (so the precision is \\( L L^T \\)), and \\( \\nu \\) is the degrees of freedom.
+    """
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "sigma", 2: "nu"}

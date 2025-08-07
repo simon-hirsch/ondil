@@ -16,6 +16,23 @@ from ..types import ParameterShapes
 class MultivariateNormalInverseModifiedCholesky(
     MultivariateDistributionMixin, Distribution
 ):
+    """
+    The multivariate normal (Gaussian) distribution parameterized by the modified Cholesky decomposition of the precision (inverse scale) matrix.
+
+    In the modified Cholesky decomposition, the precision matrix \\( \\Omega \\) is written as:
+    $$
+    \\Omega = T^T D T
+    $$
+    where \\( T \\) is a lower triangular matrix with ones on the diagonal, and \\( D \\) is a diagonal matrix with positive entries.
+
+    The PDF of the multivariate normal distribution is then:
+    $$
+    p(y \\mid \\mu, T, D) =
+    |T| \\cdot |D|^{1/2} \\cdot (2\\pi)^{-k/2}
+    \\exp\\left(-\\frac{1}{2} (y - \\mu)^T T^T D T (y - \\mu)\\right)
+    $$
+    where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the mean vector, \\( T \\) and \\( D \\) are the modified Cholesky factors of the precision matrix.
+    """
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "D", 2: "T"}

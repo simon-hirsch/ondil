@@ -11,8 +11,19 @@ from ..types import ParameterShapes
 
 
 class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribution):
-    """The multivariate $t$-distribution using a low-rank approximation (LRA)
-    of the precision (inverse scale) matrix.
+    """
+    The multivariate \\( t \\)-distribution using a low-rank approximation (LRA) of the precision (inverse scale) matrix.
+
+    The PDF of the multivariate \\( t \\)-distribution is given by:
+    $$
+    p(y \mid \\mu, D, V, \\nu) =
+    \\frac{\\Gamma\\left(\\frac{\\nu + k}{2}\\right)}
+         {\\Gamma\\left(\\frac{\\nu}{2}\\right) \\left(\\pi \\nu\\right)^{k/2}}
+    \\cdot \\frac{1}{\\sqrt{\\det(D + V V^T)}}
+    \\left(1 + \\frac{1}{\\nu} (y - \\mu)^T (D + V V^T)^{-1} (y - \\mu)\\right)^{-\\frac{\\nu + k}{2}}
+    $$
+
+    where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the location parameter, \\( D \\) is a diagonal matrix, \\( V \\) is a low-rank matrix, and \\( \\nu \\) is the degrees of freedom.
     """
 
     corresponding_gamlss: str = None

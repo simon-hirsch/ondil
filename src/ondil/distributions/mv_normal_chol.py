@@ -19,6 +19,19 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
     # The cross derivatives are defined on (L^-1).T
     # The transpose is important!!
 
+    """
+    The multivariate normal (Gaussian) distribution parameterized by the inverse Cholesky factor of the precision (inverse scale) matrix.
+
+    The PDF of the multivariate normal distribution is given by:
+    $$
+    p(y \\mid \\mu, L) =
+    |L| \\cdot (2\\pi)^{-k/2}
+    \\exp\\left(-\\frac{1}{2} (y - \\mu)^T (L L^T) (y - \\mu)\\right)
+    $$
+
+    where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the location parameter, and \\( L \\) is the inverse Cholesky factor of the precision matrix (so the precision is \\( L L^T \\)).
+    """
+
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "sigma"}
     parameter_support = {0: (-np.inf, np.inf), 1: (-np.inf, np.inf)}

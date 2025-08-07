@@ -10,6 +10,18 @@ from ..types import ParameterShapes
 
 
 class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distribution):
+    """
+    The multivariate normal (Gaussian) distribution parameterized by a low-rank precision matrix.
+
+    The PDF of the multivariate normal distribution is given by:
+    $$
+    p(y \\mid \\mu, D, V) =
+    |D + V V^T|^{1/2} \cdot (2\\pi)^{-k/2}
+    \\exp\\left(-\\frac{1}{2} (y - \\mu)^T (D + V V^T) (y - \\mu)\\right)
+    $$
+
+    where \( k \) is the dimensionality of the data, \( \\mu \) is the location parameter, \( D \) is a diagonal matrix, and \( V \) is a low-rank matrix such that the precision is \( D + V V^T \).
+    """
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "diag_matrix", 2: "low_rank_matrix"}

@@ -17,6 +17,19 @@ from ..types import ParameterShapes
 class MultivariateStudentTInverseModifiedCholesky(
     MultivariateDistributionMixin, Distribution
 ):
+    """
+    Multivariate Student's t distribution with modified Cholesky decomposition.
+
+    The PDF of the multivariate \\( t \\)-distribution with precision matrix parameterized as \\( T^T D T \\) is:
+    $$
+    p(y \mid \\mu, D, T, \\nu) =
+    \\frac{\\Gamma\\left(\\frac{\\nu + k}{2}\\right)}
+         {\\Gamma\\left(\\frac{\\nu}{2}\\right) \\left(\\pi \\nu\\right)^{k/2}}
+    \\cdot \\sqrt{\\det(D)}
+    \\left(1 + \\frac{1}{\\nu} (y - \\mu)^T T^T D T (y - \\mu)\\right)^{-\\frac{\\nu + k}{2}}
+    $$
+    where \\( k \\) is the dimensionality, \\( \\mu \\) is the location, \\( D \\) is a diagonal matrix, \\( T \\) is a lower triangular matrix, and \\( \\nu \\) is the degrees of freedom.
+    """
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "D", 2: "T", 3: "dof"}

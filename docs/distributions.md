@@ -38,6 +38,17 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 | [`BetaInflatedZero`](#ondil.distributions.BetaInflatedZero)     | Zero Inflated Beta distribution        | -                       |
 | [`ZeroAdjustedGamma`](#ondil.distributions.ZeroAdjustedGamma)   | Zero Adjusted Gamma distribution       | -                       |
 
+| Distribution                                                           | Description                                   | Scale Matrix Parameterization         | Formula                                                                                 |
+| ---------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------- |
+| [`MultivariateNormalInverseCholesky`](#ondil.distributions.MultivariateNormalInverseCholesky)             | Multivariate normal (inverse Cholesky)        | Inverse Cholesky factorization        | \$\\Sigma = (L L^{\\top})^{-1}\$, where \$L\$ is lower triangular                               |
+| [`MultivariateNormalInverseModifiedCholesky`](#ondil.distributions.MultivariateNormalInverseModifiedCholesky) | Multivariate normal (inverse modified Cholesky) | Inverse modified Cholesky factorization | \$\\Sigma = (T D T^{\\top})^{-1}\$, \$T\$ unit lower triangular, \$D\$ diagonal                   |
+| [`MultivariateNormalInverseLowRank`](#ondil.distributions.MultivariateNormalInverseLowRank)               | Multivariate normal (inverse low-rank)        | Inverse low-rank factorization        | \$\\Sigma = (U U^{\\top} + D)^{-1}\$, \$U\$ low-rank, \$D\$ diagonal                             |
+| [`MultivariateStudentTInverseCholesky`](#ondil.distributions.MultivariateStudentTInverseCholesky)         | Multivariate Student's \$t\$ (inverse Cholesky) | Inverse Cholesky factorization        | \$\\Sigma = (L L^{\\top})^{-1}\$, where \$L\$ is lower triangular                               |
+| [`MultivariateStudentTInverseModifiedCholesky`](#ondil.distributions.MultivariateStudentTInverseModifiedCholesky) | Multivariate Student's \$t\$ (inverse modified Cholesky) | Inverse modified Cholesky factorization | \$\\Sigma = (T D T^{\\top})^{-1}\$, \$T\$ unit lower triangular, \$D\$ diagonal                   |
+| [`MultivariateStudentTInverseLowRank`](#ondil.distributions.MultivariateStudentTInverseLowRank)           | Multivariate Student's \$t\$ (inverse low-rank) | Inverse low-rank factorization        | \$\\Sigma = (U U^{\\top} + D)^{-1}\$, \$U\$ low-rank, \$D\$ diagonal                             |
+
+
+
 ## API Reference
 
 ::: ondil.distributions.Normal
@@ -73,6 +84,20 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 ::: ondil.distributions.ZeroAdjustedGamma
 
 ::: ondil.distributions.BetaInflatedZero
+
+## Multivariate Distributions
+
+::: ondil.distributions.MultivariateNormalInverseCholesky
+
+::: ondil.distributions.MultivariateNormalInverseModifiedCholesky
+
+::: ondil.distributions.MultivariateNormalInverseLowRank
+
+::: ondil.distributions.MultivariateStudentTInverseCholesky
+
+::: ondil.distributions.MultivariateStudentTInverseModifiedCholesky
+
+::: ondil.distributions.MultivariateStudentTInverseLowRank
 
 ## Base Class
 
