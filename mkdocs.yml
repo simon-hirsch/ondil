@@ -23,6 +23,7 @@ theme:
     - search.share
     - search.highlight
     - search.suggest
+    - toc.follow
   palette: 
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
@@ -41,8 +42,6 @@ theme:
         icon: material/lightbulb-outline
         name: Switch to light mode
 
-
-
 plugins:
 - search
 - mkdocstrings:
@@ -50,7 +49,7 @@ plugins:
       python:
         paths: [src]
         options:
-          heading_level: 3
+          heading_level: 2
           line_length: 60
           show_source: false
           show_root_heading: true
@@ -59,6 +58,7 @@ plugins:
           show_signature_annotations: true
           members_order: source
           docstring_section_style: list
+
 
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML
