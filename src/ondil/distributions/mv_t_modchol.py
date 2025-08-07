@@ -135,7 +135,16 @@ class MultivariateStudentTInverseModifiedCholesky(
         theta: Dict[int, np.ndarray],
         param: int,
     ) -> Dict[int, np.ndarray]:
-        if param < 3:
+        if param in (0, 2):
+            return theta
+        if param == 1:
+            M = y.shape[0]
+            residual = y - theta[0]
+            var = np.var(residual, axis=0)
+            shape = np.diag(var * (self.dof_guesstimate - 2) / self.dof_guesstimate)
+            _, d_inv, _ = la.ldl(shape, lower=True)
+            d_mat = np.linalg.inv(d_inv)
+            theta[1] = np.tile(d_mat, (M, 1, 1))
             return theta
         if param == 3:
             theta[3] = np.full_like(theta[3], self.dof_guesstimate)
@@ -234,9 +243,9 @@ class MultivariateStudentTInverseModifiedCholesky(
     def initial_values(self, y, param=0):
         M = y.shape[0]
         mu = np.mean(y, axis=0)
-        cov = np.cov(y, rowvar=False)
-        scale = cov * (self.dof_guesstimate - 2) / self.dof_guesstimate
-        t_inv, d_inv, _ = la.ldl(scale, lower=True)
+        var = np.var(y, axis=0)
+        shape = np.diag(var * (self.dof_guesstimate - 2) / self.dof_guesstimate)
+        t_inv, d_inv, _ = la.ldl(shape, lower=True)
         t_mat = np.linalg.inv(t_inv)
         d_mat = np.linalg.inv(d_inv)
 

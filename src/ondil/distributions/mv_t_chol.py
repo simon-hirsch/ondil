@@ -239,11 +239,18 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
         theta: Dict[int, np.ndarray],
         param: int,
     ) -> Dict[int, np.ndarray]:
-        if param < 2:
-            return theta
+
+        if param == 1:
+            M = y.shape[0]
+            residuals = y - theta[0]
+            var = np.var(residuals, axis=0)
+            shape = np.diag(var * (self.dof_guesstimate - 2) / self.dof_guesstimate)
+            chol = np.linalg.inv(np.linalg.cholesky(shape))
+            theta[1] = np.tile(chol, (M, 1, 1))
         if param == 2:
             theta[2] = np.full_like(theta[2], self.dof_guesstimate)
-            return theta
+
+        return theta
 
     def cube_to_flat(self, x: np.ndarray, param: int):
         if (param == 0) | (param == 2):

@@ -119,7 +119,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
             residual = y - theta[0]
             cov = np.cov(residual, rowvar=False)
             chol = np.linalg.inv(np.linalg.cholesky(cov)).T
-            theta[param] = np.tile(chol, (y.shape[0], 1, 1))
+            theta[1] = np.tile(chol, (y.shape[0], 1, 1))
             return theta
 
     def dl1_dp1(self, y: np.ndarray, theta: Dict, param: int = 0):

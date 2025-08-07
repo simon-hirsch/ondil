@@ -130,7 +130,17 @@ class MultivariateNormalInverseModifiedCholesky(
         theta: Dict[int, np.ndarray],
         param: int,
     ) -> Dict[int, np.ndarray]:
-        return theta
+        if param in (0, 2):
+            return theta
+        if param == 1:
+            M = y.shape[0]
+            residual = y - theta[0]
+            var = np.var(residual, axis=0)
+            shape = np.diag(var * (self.dof_guesstimate - 2) / self.dof_guesstimate)
+            _, d_inv, _ = la.ldl(shape, lower=True)
+            d_mat = np.linalg.inv(d_inv)
+            theta[1] = np.tile(d_mat, (M, 1, 1))
+            return theta
 
     def dl1_dp1(self, y: np.ndarray, theta: Dict, param: int = 0):
         raise NotImplementedError("Not implemented")

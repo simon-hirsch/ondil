@@ -239,7 +239,16 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
         theta: Dict[int, np.ndarray],
         param: int,
     ) -> Dict[int, np.ndarray]:
-        return theta
+        if param in (0, 2):
+            return theta
+        if param == 1:
+            residuals = y - theta[0]
+            variance = np.var(residuals, 0)
+            mat_d = np.diag(
+                1 / (variance * (self.dof_guesstimate - 2) / self.dof_guesstimate)
+            )
+            theta[1] = np.tile(mat_d, (y.shape[0], 1, 1))
+            return theta
 
     def cube_to_flat(self, x: np.ndarray, param: int):
         if param == 0:

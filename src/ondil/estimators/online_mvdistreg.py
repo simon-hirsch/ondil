@@ -954,7 +954,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 prev_beta_path = copy.copy(self.coef_path_)
 
             # This will check if we
-            if (inner_iteration == 0) and (outer_iteration == 0):
+            if (inner_iteration == 0) and (outer_iteration == 0) & (a == 0):
                 theta[a] = self.distribution.set_initial_guess(y, theta[a], p)
                 theta = self._handle_path_regularization(theta=theta, p=p, a=a)
 
