@@ -414,7 +414,7 @@ def _deriv1_dmat(
 ) -> np.ndarray:
     k = y.shape[1]
     y_centered = y - mu
-    Ty = (T_mat @ y_centered[..., None]).squeeze()
+    Ty = (T_mat @ y_centered[..., None]).squeeze(-1)
     precision = np.swapaxes(T_mat, -2, -1) @ D_inv @ T_mat
     Z = np.sum(y_centered * (precision @ y_centered[..., None]).squeeze(), 1)
 
@@ -436,7 +436,7 @@ def _deriv2_dmat(
 ) -> np.ndarray:
     k = y.shape[1]
     y_centered = y - mu
-    Ty = (T_mat @ y_centered[..., None]).squeeze()
+    Ty = (T_mat @ y_centered[..., None]).squeeze(-1)
     precision = np.swapaxes(T_mat, -2, -1) @ D_inv @ T_mat
     Z = np.sum(y_centered * (precision @ y_centered[..., None]).squeeze(), 1)
 
@@ -465,7 +465,7 @@ def _deriv1_tmat(
 
     k = y.shape[1]
     y_centered = y - mu
-    Ty = (T_mat @ y_centered[..., None]).squeeze()
+    Ty = (T_mat @ y_centered[..., None]).squeeze(-1)
     precision = np.swapaxes(T_mat, -2, -1) @ D_inv @ T_mat
     Z = np.sum(y_centered * (precision @ y_centered[..., None]).squeeze(), 1)
 
@@ -487,7 +487,7 @@ def _deriv2_tmat(
 ) -> np.ndarray:
     k = y.shape[1]
     y_centered = y - mu
-    Ty = (T_mat @ y_centered[..., None]).squeeze()
+    Ty = (T_mat @ y_centered[..., None]).squeeze(-1)
     precision = np.swapaxes(T_mat, -2, -1) @ D_inv @ T_mat
     Z = np.sum(y_centered * (precision @ y_centered[..., None]).squeeze(), 1)
 

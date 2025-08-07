@@ -354,7 +354,7 @@ def _deriv1_mu(
 ) -> np.ndarray:
     k = y.shape[1]
     y_centered = y - mu
-    Ty = (T_mat @ y_centered[..., None]).squeeze()
+    Ty = (T_mat @ y_centered[..., None]).squeeze(-1)
     deriv_Z = -2 * np.sum(
         D_inv[:, range(i, k), range(i, k)]
         * Ty[:, range(i, k)]
@@ -383,7 +383,7 @@ def _deriv1_dmat(
     i: int = 0,
 ) -> np.ndarray:
     y_centered = y - mu
-    Ty = (T_mat @ y_centered[..., None]).squeeze()
+    Ty = (T_mat @ y_centered[..., None]).squeeze(-1)
     deriv_Z = Ty[:, i] ** 2
     deriv_logdet = -1 / 2 * 1 / D_inv[:, i, i]
     return -deriv_logdet + (-1 / 2) * deriv_Z
@@ -408,7 +408,7 @@ def _deriv1_tmat(
     j: int = 0,
 ) -> np.ndarray:
     y_centered = y - mu
-    Ty = (T_mat @ y_centered[..., None]).squeeze()
+    Ty = (T_mat @ y_centered[..., None]).squeeze(-1)
     deriv_Z = 2 * D_inv[:, i, i] * Ty[:, i] * y_centered[:, j]
     return (-1 / 2) * deriv_Z
 
