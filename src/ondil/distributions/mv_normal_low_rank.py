@@ -130,13 +130,13 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
         mu, mat_d, mat_v = self.theta_to_params(theta)
         d = y.shape[1]
         if param == 0:
-            deriv = partial1_mu_element(y, mu, mat_d, mat_v, i=k)
+            deriv = _deriv1_mu(y, mu, mat_d, mat_v, i=k)
         if param == 1:
             i, j = self.index_flat_to_cube(k=k, d=d, param=param)
-            deriv = partial1_D_element(y, mu, mat_d, mat_v, i=i)
+            deriv = _deriv1_dmat(y, mu, mat_d, mat_v, i=i)
         if param == 2:
             i, j = self.index_flat_to_cube(k=k, d=d, param=param)
-            deriv = partial1_V_element(y, mu, mat_d, mat_v, i=i, j=j)
+            deriv = _deriv1_vmat(y, mu, mat_d, mat_v, i=i, j=j)
         return deriv
 
     def element_dl2_dp2(
@@ -145,13 +145,13 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
         mu, mat_d, mat_v = self.theta_to_params(theta)
         d = y.shape[1]
         if param == 0:
-            deriv = partial2_mu_element(y, mu, mat_d, mat_v, i=k)
+            deriv = _deriv2_mu(y, mu, mat_d, mat_v, i=k)
         if param == 1:
             i, j = self.index_flat_to_cube(k=k, d=d, param=param)
-            deriv = partial2_D_element(y, mu, mat_d, mat_v, i=i)
+            deriv = _deriv2_dmat(y, mu, mat_d, mat_v, i=i)
         if param == 2:
             i, j = self.index_flat_to_cube(k=k, d=d, param=param)
-            deriv = partial2_V_element(y, mu, mat_d, mat_v, i=i, j=j)
+            deriv = _deriv2_vmat(y, mu, mat_d, mat_v, i=i, j=j)
         if clip:
             deriv = np.clip(deriv, -np.inf, -1e-5)
 
@@ -261,9 +261,7 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
 
     def logpdf(self, y, theta):
         loc, mat_d, mat_v = self.theta_to_params(theta)
-        return batched_log_lilkelihood_normal_precision_low_rank(
-            y, loc, mat_d=mat_d, mat_v=mat_v
-        )
+        return _loglikelihood_gaussian_lowrank(y, loc, mat_d=mat_d, mat_v=mat_v)
 
     def logpmf(self, y, theta):
         raise NotImplementedError("Not implemented")
@@ -277,7 +275,7 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
         raise NotImplementedError("Not implemented")
 
 
-def batched_log_lilkelihood_normal_precision_low_rank(y, mu, mat_d, mat_v):
+def _loglikelihood_gaussian_lowrank(y, mu, mat_d, mat_v):
     """Fast evaluation of the batched log likelihood."""
     # k = y.shape[1]
     # cov = np.linalg.inv(mat_d + mat_v @ np.swapaxes(mat_v, -2, -1))
@@ -293,7 +291,7 @@ def batched_log_lilkelihood_normal_precision_low_rank(y, mu, mat_d, mat_v):
     return part1 + part2 + part3
 
 
-def _partial1_mu_element(y, mat_mu, mat_d, mat_v, i):
+def _deriv1_mu(y, mat_mu, mat_d, mat_v, i):
     term1 = mat_d[:, i, i] * (y - mat_mu)[:, i]
     term2 = np.sum(
         mat_v[:, [i], :] * mat_v * np.expand_dims(y - mat_mu, -1), axis=(-2, -1)
@@ -303,25 +301,25 @@ def _partial1_mu_element(y, mat_mu, mat_d, mat_v, i):
     return term1 + term2
 
 
-def partial2_mu_element(y, mat_mu, mat_d, mat_v, i):
+def _deriv2_mu(y, mat_mu, mat_d, mat_v, i):
     # Diagonal elements of the inverse covariance matrix
     return -(mat_d[:, i, i] + np.sum(mat_v[:, i] ** 2, 1))
 
 
-def partial1_D_element(y, mat_mu, mat_d, mat_v, i):
+def _deriv1_dmat(y, mat_mu, mat_d, mat_v, i):
     omega = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
     part_1 = 0.5 * np.linalg.inv(omega)[:, i, i]
     part_2 = -0.5 * (y[:, i] - mat_mu[:, i]) ** 2
     return part_1 + part_2
 
 
-def partial2_D_element(y, mat_mu, mat_d, mat_v, i):
+def _deriv2_dmat(y, mat_mu, mat_d, mat_v, i):
     omega = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
     cov = np.linalg.inv(omega)
     return 0.5 * -cov[:, i, i] ** 2
 
 
-def partial1_V_element(y, mat_mu, mat_d, mat_v, i, j):
+def _deriv1_vmat(y, mat_mu, mat_d, mat_v, i, j):
     # TODO: Would be nice to calculate only the necessary rows
     # of OMEGA in the future maybe!
 
@@ -338,7 +336,7 @@ def partial1_V_element(y, mat_mu, mat_d, mat_v, i, j):
     return part_1 + part_2
 
 
-def partial2_V_element(y, mat_mu, mat_d, mat_v, i, j):
+def _deriv2_vmat(y, mat_mu, mat_d, mat_v, i, j):
     d = mat_d.shape[1]
     omega = mat_d + mat_v @ mat_v.swapaxes(-1, -2)
     cov = np.linalg.inv(omega)
