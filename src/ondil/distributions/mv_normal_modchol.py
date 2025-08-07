@@ -292,7 +292,7 @@ class MultivariateNormalInverseModifiedCholesky(
         raise NotImplementedError("Not implemented")
 
     def logpdf(self, y, theta):
-        return loglikelihood_gaussian_modchol(y, theta[0], theta[1], theta[2])
+        return _loglikelihood_gaussian_modchol(y, theta[0], theta[1], theta[2])
 
     def logpmf(self, y, theta):
         raise NotImplementedError("Not implemented")
@@ -306,7 +306,7 @@ class MultivariateNormalInverseModifiedCholesky(
         raise NotImplementedError("Not implemented")
 
 
-def loglikelihood_gaussian_modchol(
+def _loglikelihood_gaussian_modchol(
     y: np.ndarray,
     mu: np.ndarray,
     D_inv: np.ndarray,
