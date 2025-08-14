@@ -89,7 +89,6 @@ def fast_vectorized_interpolate(x, xp, fp, ascending=True):
 def make_model_array(X, eq, fit_intercept):
     n = X.shape[0]
 
-    # TODO: Check difference between np.array and list more explicitly?
     if isinstance(eq, str) and (eq == "intercept"):
         if not fit_intercept:
             raise ValueError(
@@ -263,7 +262,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         self.abs_tol_outer = abs_tol_outer
 
         # For pretty printing.
-        # TODO: This can be moved to top classes
         self.verbose = verbose
         self.debug = debug
 
@@ -789,7 +787,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                     elif self.improvement_rel_[a - 1] < 0:
                         self.optimal_adr_ = a - 1
 
-                    # TODO: What to put in here?
                     self.improvement_abs_[(a + 1) :] = 0
                     self.improvement_rel_[(a + 1) :] = 0
                     self.improvement_abs_scaled_[(a + 1) :] = 0
@@ -1757,7 +1754,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                     elif self.improvement_rel_[a - 1] < 0:
                         self.optimal_adr_ = a - 1
 
-                    # TODO: What to put in here?
                     self.improvement_abs_[(a + 1) :] = 0
                     self.improvement_rel_[(a + 1) :] = 0
                     self.improvement_abs_scaled_[(a + 1) :] = 0
