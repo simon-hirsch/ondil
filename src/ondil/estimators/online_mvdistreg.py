@@ -120,52 +120,6 @@ def make_model_array(X, eq, fit_intercept):
     return out
 
 
-def get_J_from_equation(self, X: np.ndarray):
-    J = {}
-    for p in range(self.distribution.n_params):
-        if isinstance(self._equation[p], str):
-            if self._equation[p] == "all":
-                J[p] = X.shape[1] + int(self._fit_intercept[p])
-            if self._equation[p] == "intercept":
-                J[p] = 1
-        elif isinstance(self._equation[p], np.ndarray) or isinstance(
-            self._equation[p], list
-        ):
-            J[p] = len(self._equation[p]) + int(self._fit_intercept[p])
-        else:
-            raise ValueError("Something unexpected happened")
-    return J
-
-
-@nb.njit()
-def get_max_lambda(x_gram: np.ndarray, y_gram: np.ndarray, is_regularized: np.ndarray):
-    if np.all(is_regularized):
-        max_lambda = np.max(np.abs(y_gram))
-    elif np.sum(~is_regularized) == 1:
-        intercept = y_gram[is_regularized] / np.diag(x_gram)[~is_regularized]
-        max_lambda = np.max(
-            np.abs(y_gram.flatten() - x_gram[~is_regularized] * intercept)
-        )
-    else:
-        raise NotImplementedError("Currently not implemented")
-    return max_lambda
-
-
-# TODO: This should use the distribution.parameter_shape
-def get_adr_regularization_distance(d: int, parameter_shape: str):
-    if parameter_shape == ParameterShapes.LOWER_TRIANGULAR_MATRIX:
-        j, i = np.triu_indices(d, k=0)
-    else:
-        i, j = np.triu_indices(d, k=0)
-    distance = np.abs(i - j)
-    return distance
-
-
-# TODO: This should use the
-def get_low_rank_regularization_distance(d, r):
-    return np.concatenate([np.repeat(i + 1, d) for i in range(r)])
-
-
 class MultivariateOnlineDistributionalRegressionPath(
     OndilEstimatorMixin, RegressorMixin, MultiOutputMixin, BaseEstimator
 ):
