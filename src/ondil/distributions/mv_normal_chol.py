@@ -135,7 +135,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
             param (int, optional): Which parameter derivatives to return. Defaults to 0.
 
         Returns:
-            derivative: The 1st derivatives.
+            derivative (np.ndarray): The 1st derivatives.
         """
         fitted_loc, fitted_inv_tr_chol = self.theta_to_params(theta)
 
@@ -150,7 +150,9 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
 
         return deriv
 
-    def dl2_dp2(self, y: np.ndarray, theta: Dict, param: int = 0, clip=False):
+    def dl2_dp2(
+        self, y: np.ndarray, theta: Dict, param: int = 0, clip=False
+    ) -> np.ndarray:
         """Return the second derivatives wrt to the parameter.
 
         !!! Note
@@ -163,7 +165,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
             param (int, optional): Which parameter derivatives to return. Defaults to 0.
 
         Returns:
-            derivative: The 2nd derivatives.
+            derivative (np.ndarray): The 2nd derivatives.
         """
         fitted_loc, fitted_inv_tr_chol = self.theta_to_params(theta)
 

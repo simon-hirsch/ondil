@@ -1444,7 +1444,9 @@ class MultivariateOnlineDistributionalRegressionPath(
 
     # Different UV - MV
     @_fit_context(prefer_skip_nested_validation=True)
-    def update(self, X: np.ndarray, y: np.ndarray):
+    def update(
+        self, X: np.ndarray, y: np.ndarray
+    ) -> "MultivariateOnlineDistributionalRegressionPath":
         """
         Updates the estimator with new observations.
 
