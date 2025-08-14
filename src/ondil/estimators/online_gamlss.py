@@ -267,10 +267,6 @@ class OnlineDistributionalRegression(
                 stacklevel=2,
             )
 
-    def _print_message(self, message, level=0):
-        if level <= self.verbose:
-            print(f"[{self.__class__.__name__}]", message)
-
     def _process_parameter(self, attribute: Any, default: Any, name: str) -> None:
         if isinstance(attribute, dict):
             for p in range(self.distribution.n_params):

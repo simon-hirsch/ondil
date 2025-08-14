@@ -9,7 +9,7 @@
 
 ## Introduction
 
-This package provides an online estimation of distributional regression The main contribution is an online/incremental implementation of the generalized additive models for location, shape and scale (GAMLSS, see [Rigby & Stasinopoulos, 2005](https://academic.oup.com/jrsssc/article-abstract/54/3/507/7113027)) developed in [Hirsch, Berrisch & Ziel, 2024](https://arxiv.org/abs/2407.08750).
+This package provides an online estimation of distributional regression The main contribution is an online/incremental implementation of the generalized additive models for location, shape and scale (GAMLSS, see [Rigby & Stasinopoulos, 2005](https://academic.oup.com/jrsssc/article-abstract/54/3/507/7113027)) developed in [Hirsch, Berrisch & Ziel, 2024](https://arxiv.org/abs/2407.08750) and the multivariate extension for online distributional regression models developed in [Hirsch, 2025](https://arxiv.org/abs/2504.02518).
 
 Please have a look at the [documentation](https://simon-hirsch.github.io/ondil/) or the [example notebook](https://github.com/simon-hirsch/ondil/blob/main/example.ipynb).
 
@@ -92,7 +92,7 @@ print(prediction)
 
 The package is available from [pypi](https://pypi.org/project/ondil/) - do `pip install ondil` and enjoy.
 
-`ondil` is designed to have minimal dependencies. We rely on `python>=3.10`, `numpy`, `numba` and `scipy` in a reasonably up-to-date versions.
+`ondil` is designed to have minimal dependencies. We rely on `python>=3.10`, `numpy`, `numba`, `scipy` and `scikit-learn` in a reasonably up-to-date versions.
 
 ## Authors
 

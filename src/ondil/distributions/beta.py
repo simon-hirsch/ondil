@@ -6,6 +6,7 @@ import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Logit
+from ..types import ParameterShapes
 
 
 class Beta(ScipyMixin, Distribution):
@@ -58,6 +59,10 @@ class Beta(ScipyMixin, Distribution):
     parameter_support = {
         0: (np.nextafter(0, 1), np.nextafter(1, 0)),
         1: (np.nextafter(0, 1), np.nextafter(1, 0)),
+    }
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
     }
     distribution_support = (np.nextafter(0, 1), np.nextafter(1, 0))
     # Scipy equivalent and parameter mapping ondil -> scipy

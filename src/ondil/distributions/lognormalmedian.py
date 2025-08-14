@@ -5,6 +5,7 @@ import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Log
+from ..types import ParameterShapes
 
 
 class LogNormalMedian(ScipyMixin, Distribution):
@@ -27,6 +28,10 @@ class LogNormalMedian(ScipyMixin, Distribution):
     parameter_support = {
         0: (np.nextafter(0, 1), np.inf),
         1: (np.nextafter(0, 1), np.inf),
+    }
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
     }
     distribution_support = (0, np.inf)
     scipy_dist = st.lognorm

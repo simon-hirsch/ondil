@@ -5,6 +5,7 @@ import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Identity, Log
+from ..types import ParameterShapes
 
 
 class JSU(ScipyMixin, Distribution):
@@ -26,6 +27,12 @@ class JSU(ScipyMixin, Distribution):
         1: (np.nextafter(0, 1), np.inf),
         2: (-np.inf, np.inf),
         3: (np.nextafter(0, 1), np.inf),
+    }
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+        2: ParameterShapes.SCALAR,
+        3: ParameterShapes.SCALAR,
     }
     distribution_support = (-np.inf, np.inf)
 

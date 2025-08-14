@@ -5,13 +5,17 @@ import pytest
 
 import ondil
 
+from .utils import get_univariate_distributions
+
 DISTRIBUTIONS = [
     getattr(ondil.distributions, name)() for name in ondil.distributions.__all__
 ]
 
 
 @pytest.mark.parametrize(
-    "distribution", DISTRIBUTIONS, ids=lambda dist: dist.__class__.__name__
+    "distribution",
+    get_univariate_distributions(),
+    ids=lambda dist: dist.__class__.__name__,
 )
 def test_initial_values(distribution):
     n_params = distribution.n_params
@@ -29,7 +33,9 @@ def test_initial_values(distribution):
 
 
 @pytest.mark.parametrize(
-    "distribution", DISTRIBUTIONS, ids=lambda dist: dist.__class__.__name__
+    "distribution",
+    get_univariate_distributions(),
+    ids=lambda dist: dist.__class__.__name__,
 )
 def test_raise_error_cross_derivative(distribution):
     n_params = distribution.n_params
@@ -39,8 +45,6 @@ def test_raise_error_cross_derivative(distribution):
     upper = np.clip(distribution.distribution_support[1], -1e3, 1e3)
     y = np.random.uniform(low=lower, high=upper, size=1000)
     theta = distribution.initial_values(y)
-
-    assert theta.shape == (y.shape[0], n_params)
 
     for a, b in product(range(n_params), range(n_params)):
         if a == b:

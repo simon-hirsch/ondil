@@ -5,58 +5,6 @@ from typing import Any, Dict, Union
 import numpy as np
 
 
-def handle_param_dict(
-    self: Any,
-    param: Union[Any, Dict],
-    default: Union[Any, Dict],
-    n_params: int,
-    name: str,
-) -> None:
-    """This function takes the potentially incomplete parameter dict given by the user
-    and the default value for a GAMLSS param and will fill it for all missing distribution
-    parameters with the default. If the user passes just a bool, string, int, it will
-    create a matching dictionary.
-
-    This is necessary since ondil expects at many places as many user given parameters
-    as distribution parameters, but we don't know the number of distribution
-    parameters a-priori at the estimator initialization.
-
-    This function proceeds to set the default value!
-
-    Args:
-        self (Any): The self
-        param (Union[Any, Dict]): The param given by the user
-        default (Any): The default value
-        n_params (int): The number of distribution parameters.
-        name (str): The name of the parameter.
-
-    Warns:
-        Raises a warning if the user sets an incomplete default dict.
-
-    """
-    # Handle (incomplete) dictionaries of parameters.
-    if isinstance(param, dict):
-        for p in range(n_params):
-            if p not in param.keys():
-                warnings.warn(
-                    f"[{self.__class__.__name__}] "
-                    f"No value given for parameter {name} for distribution "
-                    f"parameter {p}. Setting default value {default}.",
-                    RuntimeWarning,
-                    stacklevel=1,
-                )
-                if isinstance(default, dict):
-                    param[p] = default[p]
-                else:
-                    param[p] = default
-    else:
-        # No warning since we expect that floats/strings/ints are either the defaults
-        # Or given on purpose for all params the ame
-        param = {p: param for p in range(n_params)}
-
-    setattr(self, name, param)
-
-
 def calculate_asymptotic_training_length(forget: float):
     if forget == 0:
         # Return the highest possible value that is no infinity
