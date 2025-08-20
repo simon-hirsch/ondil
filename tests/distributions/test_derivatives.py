@@ -15,7 +15,8 @@ CLIP_BOUNDS = (-1e5, 1e5)
     ids=lambda dist: dist.__class__.__name__,
 )
 def test_distribution_derivatives(distribution):
-    """Test that Python derivatives match R GAMLSS derivatives for different distributions."""
+    """Test that Python derivatives match R GAMLSS derivatives for different
+    distributions."""
 
     # Set seed for reproducibility
     np.random.seed(42)
@@ -48,7 +49,8 @@ def test_distribution_derivatives(distribution):
     code = f"""
         dist <- gamlss.dist::{distribution.corresponding_gamlss}()
         # all_derivative_funcs <- c("dldm", "dldd", "d2ldm2", "d2ldd2", "d2ldmdd")
-        available_funcs <- names(dist)[startsWith(names(dist), "d2l") | startsWith(names(dist), "dl")]
+        available_funcs <- names(dist)[startsWith(names(dist), "d2l") | 
+                                       startsWith(names(dist), "dl")]
         setNames(lapply(available_funcs, function(f) {{
           do.call(dist[[f]], mget(names(formals(dist[[f]])), envir = .GlobalEnv))
         }}), available_funcs)

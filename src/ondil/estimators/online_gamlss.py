@@ -88,52 +88,95 @@ class OnlineDistributionalRegression(
         rel_tol_inner: float = 1e-5,
         min_it_outer: int = 1,
     ) -> "OnlineDistributionalRegression":
-        """The `OnlineDistributionalRegression()` provides the fit, update and predict methods for linear parametric GAMLSS models.
+        """The `OnlineDistributionalRegression()` provides the fit, update and predict
+        methods for linear parametric GAMLSS models.
 
-        For a response variable $Y$ which is distributed according to the distribution $\mathcal{F}(\\theta)$
-        with the distribution parameters $\\theta$, we model:
+        For a response variable $Y$ which is distributed according to the distribution
+        $\mathcal{F}(\\theta)$ with the distribution parameters $\\theta$, we model:
 
         $$g_k(\\theta_k) = \\eta_k = X_k\\beta_k$$
 
-        where $g_k(\cdot)$ is a link function, which ensures that the predicted distribution parameters are in a
-        sensible range (we don't want, e.g. negative standard deviations), and $\eta_k$ is the predictor (on the
-        space of the link function). The model is fitted using iterative re-weighted least squares (IRLS).
+        where $g_k(\cdot)$ is a link function, which ensures that the predicted
+        distribution parameters are in a sensible range (we don't want, e.g. negative
+        standard deviations), and $\eta_k$ is the predictor (on the space of the link
+        function). The model is fitted using iterative re-weighted least squares (IRLS).
 
 
         !!! note "Tips and Tricks"
-            If you're facing issues with non-convergence and/or matrix inversion problems, please enable the `debug` mode and increase the
+            If you're facing issues with non-convergence and/or matrix
+            inversion problems, please enable the `debug` mode and increase
+            the
             logging level by increasing `verbose`.
-            In debug mode, the estimator will save the weights, working vectors, derivatives each iteration in a
+            In debug mode, the estimator will save the weights, working
+            vectors, derivatives each iteration in a
             according dictionary, i.e. self._debug_weights.
-            The keys are composed of a tuple of ints of `(parameter, outer_iteration, inner_iteration)`.
-            Very small and/or very large weights (implicitly second derivatives) can be a sign that either start values are not chosen appropriately or
+            The keys are composed of a tuple of ints of `(parameter,
+            outer_iteration, inner_iteration)`.
+            Very small and/or very large weights (implicitly second
+            derivatives) can be a sign that either start values are not
+            chosen appropriately or
             that the distributional assumption does not fit the data well.
 
         !!! warning "Debug Mode"
-            Please don't use debug more for production models since it saves the `X` matrix and its scaled counterpart, so you will get large
+            Please don't use debug more for production models since it saves
+            the `X` matrix and its scaled counterpart, so you will get large
             estimator objects.
 
         !!! warning "Conditional start values `cond_start_val=False`"
-            The `cond_start_val` parameter is considered experimental and may not work as expected.
+            The `cond_start_val` parameter is considered experimental and
+            may not work as expected.
 
         !!! warning "Cautious updates `cautious_updates=True`"
-            The `cautious_updates` parameter is considered experimental and may not work as expected.
+            The `cautious_updates` parameter is considered experimental and
+            may not work as expected.
 
         Args:
-            distribution (ondil.Distribution): The parametric distribution to use for modeling the response variable.
-            equation (Dict[int, Union[str, np.ndarray, list]], optional): The modeling equation for each distribution parameter. The dictionary should map parameter indices to either the strings `'all'`, `'intercept'`, a numpy array of column indices, or a list of column names. Defaults to None, which uses all covariates for the first parameter and intercepts for others.
-            forget (float | Dict[int, float], optional): The forget factor for exponential weighting of past observations. Can be a single float for all parameters or a dictionary mapping parameter indices to floats. Defaults to 0.0.
-            method (str | EstimationMethod | Dict[int, str] | Dict[int, EstimationMethod], optional): The estimation method for each parameter. Can be a string, EstimationMethod, or a dictionary mapping parameter indices. Defaults to "ols".
-            scale_inputs (bool | np.ndarray, optional): Whether to scale the input features. Can be a boolean or a numpy array specifying scaling per feature. Defaults to True.
-            fit_intercept (bool | Dict[int, bool], optional): Whether to fit an intercept for each parameter. Can be a boolean or a dictionary mapping parameter indices. Defaults to True.
-            regularize_intercept (bool | Dict[int, bool], optional): Whether to regularize the intercept for each parameter. Can be a boolean or a dictionary mapping parameter indices. Defaults to False.
-            ic (str | Dict, optional): Information criterion for model selection (e.g., "aic", "bic"). Can be a string or a dictionary mapping parameter indices. Defaults to "aic".
-            model_selection (Literal["local_rss", "global_ll"], optional): Model selection strategy. "local_rss" selects based on local residual sum of squares, "global_ll" uses global log-likelihood. Defaults to "local_rss".
-            prefit_initial (int, optional): Number of initial outer iterations with only one inner iteration (for stabilization). Defaults to 0.
-            prefit_update (int, optional): Number of initial outer iterations with only one inner iteration during updates. Defaults to 0.
-            step_size (float | Dict[int, float], optional): Step size for parameter updates. Can be a float or a dictionary mapping parameter indices. Defaults to 1.0.
-            verbose (int, optional): Verbosity level for logging. 0 = silent, 1 = high-level, 2 = per-parameter, 3 = per-iteration. Defaults to 0.
-            debug (bool, optional): Enable debug mode. Debug mode will save additional data to the estimator object.
+            distribution (ondil.Distribution): The parametric distribution
+            to use for modeling the response variable.
+            equation (Dict[int, Union[str, np.ndarray, list]], optional):
+            The modeling equation for each distribution parameter. The
+            dictionary should map parameter indices to either the strings
+            `'all'`, `'intercept'`, a numpy array of column indices, or a
+            list of column names. Defaults to None, which uses all
+            covariates for the first parameter and intercepts for others.
+            forget (float | Dict[int, float], optional): The forget factor
+            for exponential weighting of past observations. Can be a single
+            float for all parameters or a dictionary mapping parameter
+            indices to floats. Defaults to 0.0.
+            method (str | EstimationMethod | Dict[int, str] | Dict[int,
+            EstimationMethod], optional): The estimation method for each
+            parameter. Can be a string, EstimationMethod, or a dictionary
+            mapping parameter indices. Defaults to "ols".
+            scale_inputs (bool | np.ndarray, optional): Whether to scale the
+            input features. Can be a boolean or a numpy array specifying
+            scaling per feature. Defaults to True.
+            fit_intercept (bool | Dict[int, bool], optional): Whether to fit
+            an intercept for each parameter. Can be a boolean or a
+            dictionary mapping parameter indices. Defaults to True.
+            regularize_intercept (bool | Dict[int, bool], optional): Whether
+            to regularize the intercept for each parameter. Can be a boolean
+            or a dictionary mapping parameter indices. Defaults to False.
+            ic (str | Dict, optional): Information criterion for model
+            selection (e.g., "aic", "bic"). Can be a string or a dictionary
+            mapping parameter indices. Defaults to "aic".
+            model_selection (Literal["local_rss", "global_ll"], optional):
+            Model selection strategy. "local_rss" selects based on local
+            residual sum of squares, "global_ll" uses global log-likelihood.
+            Defaults to "local_rss".
+            prefit_initial (int, optional): Number of initial outer
+            iterations with only one inner iteration (for stabilization).
+            Defaults to 0.
+            prefit_update (int, optional): Number of initial outer
+            iterations with only one inner iteration during updates.
+            Defaults to 0.
+            step_size (float | Dict[int, float], optional): Step size for
+            parameter updates. Can be a float or a dictionary mapping
+            parameter indices. Defaults to 1.0.
+            verbose (int, optional): Verbosity level for logging. 0 =
+            silent, 1 = high-level, 2 = per-parameter, 3 = per-iteration.
+            Defaults to 0.
+            debug (bool, optional): Enable debug mode. Debug mode will save
+            additional data to the estimator object.
                 Currently, we save
 
                     * self._debug_X_dict
@@ -147,33 +190,56 @@ class OnlineDistributionalRegression(
                     * self._debug_coef
                     * self._debug_coef_path
 
-                to the the estimator. Debug mode works in batch and online settings. Note that debug mode is not recommended for production use. Defaults to False.
-            param_order (np.ndarray | None, optional): Order in which to fit the distribution parameters. Defaults to None (natural order).
-            cautious_updates (bool, optional): If True, use smaller step sizes and more iterations when new data are outliers. Defaults to False.
-            cond_start_val (bool, optional): If True, use conditional start values for parameters (experimental). Defaults to False.
-            max_it_outer (int, optional): Maximum number of outer iterations for the fitting algorithm. Defaults to 30.
-            max_it_inner (int, optional): Maximum number of inner iterations for the fitting algorithm. Defaults to 30.
-            abs_tol_outer (float, optional): Absolute tolerance for convergence in the outer loop. Defaults to 1e-3.
-            abs_tol_inner (float, optional): Absolute tolerance for convergence in the inner loop. Defaults to 1e-3.
-            rel_tol_outer (float, optional): Relative tolerance for convergence in the outer loop. Defaults to 1e-5.
-            rel_tol_inner (float, optional): Relative tolerance for convergence in the inner loop. Defaults to 1e-5.
-            min_it_outer (int, optional): Minimum number of outer iterations before checking for convergence. Defaults to 1.
+                to the the estimator. Debug mode works in batch and
+                online settings. Note that debug mode is not recommended
+                for production use. Defaults to False.
+            param_order (np.ndarray | None, optional): Order in which to fit
+            the distribution parameters. Defaults to None (natural order).
+            cautious_updates (bool, optional): If True, use smaller step
+            sizes and more iterations when new data are outliers. Defaults
+            to False.
+            cond_start_val (bool, optional): If True, use conditional start
+            values for parameters (experimental). Defaults to False.
+            max_it_outer (int, optional): Maximum number of outer iterations
+            for the fitting algorithm. Defaults to 30.
+            max_it_inner (int, optional): Maximum number of inner iterations
+            for the fitting algorithm. Defaults to 30.
+            abs_tol_outer (float, optional): Absolute tolerance for
+            convergence in the outer loop. Defaults to 1e-3.
+            abs_tol_inner (float, optional): Absolute tolerance for
+            convergence in the inner loop. Defaults to 1e-3.
+            rel_tol_outer (float, optional): Relative tolerance for
+            convergence in the outer loop. Defaults to 1e-5.
+            rel_tol_inner (float, optional): Relative tolerance for
+            convergence in the inner loop. Defaults to 1e-5.
+            min_it_outer (int, optional): Minimum number of outer iterations
+            before checking for convergence. Defaults to 1.
 
         Attributes:
             distribution (Distribution): The distribution used for modeling.
-            equation (Dict[int, Union[str, np.ndarray, list]]): The modeling equation for each distribution parameter.
+            equation (Dict[int, Union[str, np.ndarray, list]]): The modeling
+            equation for each distribution parameter.
             forget (Dict[int, float]): Forget factor for each distribution parameter.
-            fit_intercept (Dict[int, bool]): Whether to fit an intercept for each parameter.
-            regularize_intercept (Dict[int, bool]): Whether to regularize the intercept for each parameter.
-            ic (Dict[int, str]): Information criterion for model selection for each parameter.
+            fit_intercept (Dict[int, bool]): Whether to fit an intercept for
+            each parameter.
+            regularize_intercept (Dict[int, bool]): Whether to regularize
+            the intercept for each parameter.
+            ic (Dict[int, str]): Information criterion for model selection
+            for each parameter.
             method (Dict[int, EstimationMethod]): Estimation method for each parameter.
             scale_inputs (bool | np.ndarray): Whether to scale the input features.
-            param_order (np.ndarray | None): Order in which to fit the distribution parameters.
+            param_order (np.ndarray | None): Order in which to fit the
+            distribution parameters.
             n_observations_ (float): Total number of observations used for fitting.
-            n_training_ (Dict[int, int]): Effective training length for each distribution parameter.
-            n_features_ (Dict[int, int]): Number of features used for each distribution parameter.
-            coef_ (np.ndarray): Coefficients for the fitted model, shape (n_params, n_features).
-            coef_path_ (np.ndarray): Coefficients path for the fitted model, shape (n_params, n_iterations, n_features). Only available if `method` is a path-based method like LASSO.
+            n_training_ (Dict[int, int]): Effective training length for each
+            distribution parameter.
+            n_features_ (Dict[int, int]): Number of features used for each
+            distribution parameter.
+            coef_ (np.ndarray): Coefficients for the fitted model, shape
+            (n_params, n_features).
+            coef_path_ (np.ndarray): Coefficients path for the fitted model,
+            shape (n_params, n_iterations, n_features). Only available if
+            `method` is a path-based method like LASSO.
 
         Returns:
             OnlineDistributionalRegression: The OnlineDistributionalRegression instance.
@@ -287,7 +353,8 @@ class OnlineDistributionalRegression(
                     else:
                         attribute[p] = default
         else:
-            # No warning since we expect that floats/strings/ints are either the defaults
+            # No warning since we expect that floats/strings/ints are either the
+            defaults
             # Or given on purpose for all params the ame
             attribute = {p: attribute for p in range(self.distribution.n_params)}
 
@@ -330,7 +397,8 @@ class OnlineDistributionalRegression(
                             " - a numpy array of dtype int, \n"
                             " - a list of string column names \n"
                             " - or the strings 'all' or 'intercept' \n"
-                            f"you have passed {equation[p]} for the distribution parameter {p}."
+                            f"you have passed {equation[p]} for the distribution"
+                            f"parameter {p}."
                         )
 
         return equation
@@ -531,15 +599,18 @@ class OnlineDistributionalRegression(
         y : np.ndarray
             Observed response values of shape (n_samples,).
         wv : np.ndarray
-            Working vector, typically the adjusted response for IRLS or similar algorithms.
+            Working vector, typically the adjusted response for IRLS or
+            similar algorithms.
         wt : np.ndarray
             Working weights, used for weighted updates.
         w : np.ndarray
             Sample weights for each observation.
         beta_path : np.ndarray
-            Array of candidate coefficient vectors along the regularization path, shape (n_candidates, n_features).
+            Array of candidate coefficient vectors along the regularization
+            path, shape (n_candidates, n_features).
         model_selection_data : Any
-            Data carried over from previous model selection steps (e.g., previous RSS or log-likelihood values).
+            Data carried over from previous model selection steps (e.g.,
+            previous RSS or log-likelihood values).
         param : int
             Index of the distribution parameter being updated.
         Returns
@@ -547,7 +618,8 @@ class OnlineDistributionalRegression(
         beta : np.ndarray
             Selected coefficient vector for the best model.
         model_selection_data_new : Any
-            Updated model selection data (e.g., RSS or log-likelihood values for the selected model).
+            Updated model selection data (e.g., RSS or log-likelihood values
+            for the selected model).
         best_ic : int
             Index of the best model according to the information criterion.
 
@@ -608,15 +680,18 @@ class OnlineDistributionalRegression(
             y (np.ndarray): Response vector $y$.
 
         Raises:
-            OutOfSupportError: If the values of $y$ are below the range of the distribution.
-            OutOfSupportError: If the values of $y$ are beyond the range of the distribution.
+            OutOfSupportError: If the values of $y$ are below the range of
+            the distribution.
+            OutOfSupportError: If the values of $y$ are beyond the range of
+            the distribution.
         """
         if np.any(y < self.distribution.distribution_support[0]):
             raise OutOfSupportError(
                 message=(
                     "y contains values below the distribution's support. "
                     f"The smallest value in y is {np.min(y)}. "
-                    f"The support of the distribution is {str(self.distribution.distribution_support)}."
+                    f"The support of the distribution is"
+                    f"{str(self.distribution.distribution_support)}."
                 )
             )
         if np.any(y > self.distribution.distribution_support[1]):
@@ -624,7 +699,8 @@ class OnlineDistributionalRegression(
                 message=(
                     "Y contains values larger than the distribution's support. "
                     f"The smallest value in y is {np.max(y)}. "
-                    f"The support of the distribution is {str(self.distribution.distribution_support)}."
+                    f"The support of the distribution is"
+                    f"{str(self.distribution.distribution_support)}."
                 ),
             )
 
@@ -646,19 +722,23 @@ class OnlineDistributionalRegression(
     ) -> "OnlineDistributionalRegression":
         """Fit the online GAMLSS model.
 
-        This method initializes the model with the given covariate data matrix $X$ and response variable $Y$.
+        This method initializes the model with the given covariate data matrix
+        $X$ and response variable $Y$.
 
         Args:
             X (np.ndarray): Covariate data matrix $X$.
             y (np.ndarray): Response variable $Y$.
-            sample_weight (Optional[np.ndarray], optional): User-defined sample weights. Defaults to None.
+            sample_weight (Optional[np.ndarray], optional): User-defined
+            sample weights. Defaults to None.
 
         Returns:
-            OnlineDistributionalRegression: The fitted OnlineDistributionalRegression instance.
+            OnlineDistributionalRegression: The fitted
+            OnlineDistributionalRegression instance.
 
         Raises:
             ValueError: If the equation is not specified correctly.
-            OutOfSupportError: If the values of $y$ are below or above the distribution's support.
+            OutOfSupportError: If the values of $y$ are below or above the
+            distribution's support.
         """
 
         self._prepare_estimator()
@@ -692,7 +772,8 @@ class OnlineDistributionalRegression(
             cond_num = np.linalg.cond(x)
             if cond_num > 100:
                 message = (
-                    f"Condition number of X for after scaling (and adding an intercept) for param {p} is {cond_num}. "
+                    f"Condition number of X for after scaling (and adding an"
+                    f"intercept) for param {p} is {cond_num}. "
                     "This might lead to numerical issues. Consider using a regularized estimation method."
                 )
                 self._print_message(message=message, level=1)
@@ -784,7 +865,9 @@ class OnlineDistributionalRegression(
         Args:
             X (np.ndarray): Covariate data matrix $X$.
             y (np.ndarray): Response variable $Y$.
-            sample_weight (Optional[np.ndarray], optional): User-defined sample weights. Defaults to None (all observations have the same weight).
+            sample_weight (Optional[np.ndarray], optional): User-defined
+            sample weights. Defaults to None (all observations have the same
+            weight).
         """
         X, y = validate_data(
             self, X=X, y=y, reset=False, dtype=[np.float64, np.float32]
@@ -905,7 +988,7 @@ class OnlineDistributionalRegression(
 
                 # if global_dev > global_dev_old:
                 #     message = (
-                #         f"Outer iteration {it_outer}: Global deviance increased. Breaking."
+                # f"Outer iteration {it_outer}: Global deviance increased. Breaking."
                 #         f"Current LL {global_dev}, old LL {global_dev_old}"
                 #     )
                 #     self._print_message(message=message, level=1)
@@ -926,7 +1009,8 @@ class OnlineDistributionalRegression(
                     param=param,
                     dv=global_dev,
                 )
-                message = f"Outer iteration {it_outer}: Fitted param {param}: Current deviance {global_dev}"
+                message = f"Outer iteration {it_outer}: Fitted param {param}:"
+                f"Current deviance {global_dev}"
                 self._print_message(message=message, level=2)
 
             message = (
@@ -959,7 +1043,8 @@ class OnlineDistributionalRegression(
 
                 if global_dev > global_dev_old:
                     message = (
-                        f"Outer iteration {it_outer}: Global deviance increased. Breaking."
+                        f"Outer iteration {it_outer}: Global deviance increased."
+                        f"Breaking."
                         f"Current deviance {global_dev}, old deviance {global_dev_old}"
                     )
                     self._print_message(message=message, level=0)
@@ -977,10 +1062,12 @@ class OnlineDistributionalRegression(
                     it_outer=it_outer,
                     dv=global_dev,
                 )
-                message = f"Outer iteration {it_outer}: Fitted param {param}: current deviance {global_dev}"
+                message = f"Outer iteration {it_outer}: Fitted param {param}:"
+                f"current deviance {global_dev}"
                 self._print_message(message=message, level=2)
 
-            message = f"Outer iteration {it_outer}: Finished. Current deviance {global_dev}, old deviance {global_dev_old}"
+            message = f"Outer iteration {it_outer}: Finished. Current deviance"
+            f"{global_dev}, old deviance {global_dev_old}"
             self._print_message(message=message, level=1)
 
         return (global_dev, it_outer)
@@ -1002,7 +1089,8 @@ class OnlineDistributionalRegression(
         terminate = False
         bad_state = False
 
-        message = f"Starting inner iteration param {param}, outer iteration {it_outer}, start DV {dv_start}"
+        message = f"Starting inner iteration param {param}, outer iteration"
+        f"{it_outer}, start DV {dv_start}"
         self._print_message(message=message, level=2)
 
         for it_inner in range(self._schedule_iteration[it_outer - 1]):
@@ -1022,7 +1110,8 @@ class OnlineDistributionalRegression(
                     theta=fv_it,
                     param=param,
                 )
-                message = f"Outer iteration {it_outer}: Fitting Parameter {param}: Using conditional start value {fv_it[0, param]}."
+                message = f"Outer iteration {it_outer}: Fitting Parameter"
+                f"{param}: Using conditional start value {fv_it[0, param]}."
                 self._print_message(message=message, level=3)
 
             eta = self.distribution.link_function(fv_it[:, param], param=param)
@@ -1122,7 +1211,8 @@ class OnlineDistributionalRegression(
             bad_state = dv_it > dv_iterations[0]
 
             # print(dv_it, dv_old, dv_increasing)
-            message = f"Outer iteration {it_outer}: Fitting Parameter {param}: Inner iteration {it_inner}: Current Deviance {dv_it}"
+            message = f"Outer iteration {it_outer}: Fitting Parameter {param}:"
+            f"Inner iteration {it_inner}: Current Deviance {dv_it}"
             self._print_message(message=message, level=3)
 
             if dv_increasing and it_inner < (
@@ -1138,7 +1228,8 @@ class OnlineDistributionalRegression(
                     level=1,
                 )
                 if step_decrease_counter > 5:
-                    message = f"Step size too small. Parameter {param}, Outer iteration {it_outer}, Inner iteration {it_inner}."
+                    message = f"Step size too small. Parameter {param}, Outer"
+                    f"iteration {it_outer}, Inner iteration {it_inner}."
                     self._print_message(message=message, level=1)
                     terminate = True
 
@@ -1149,15 +1240,19 @@ class OnlineDistributionalRegression(
                 if abs(dv_old - dv_it) / abs(dv_old) < self.rel_tol_inner:
                     terminate = True
                 if it_inner == (self.max_it_inner - 1):
-                    message = f"Reached max inner iteration in inner fit. Parameter:{param}, Outer iteration: {it_outer}, Inner iteration: {it_inner}."
+                    message = f"Reached max inner iteration in inner fit."
+                    f"Parameter:{param}, Outer iteration: {it_outer}, Inner iteration: {it_inner}."
                     self._print_message(message=message, level=3)
                     terminate = True
 
             if terminate and (it_outer == 1) and bad_state:
                 message = (
-                    f"The model ended in a bad state in the first outer iteration of param {param}. This is not a good sign.  \n"
-                    f"The deviance increased from the start values to the current fit in inner iteration {it_inner}. \n"
-                    f"The deviance is {dv_it} and the starting deviance for this inner iterations is {dv_iterations[0]}. \n"
+                    f"The model ended in a bad state in the first outer iteration"
+                    f"of param {param}. This is not a good sign.  \n"
+                    f"The deviance increased from the start values to the current"
+                    f"fit in inner iteration {it_inner}. \n"
+                    f"The deviance is {dv_it} and the starting deviance for this"
+                    f"inner iterations is {dv_iterations[0]}. \n"
                     "Please check your data and model. \n"
                     "Please turn on logging (verbose=3, debug=True) and check the debug information. \n"
                     "Consider using a pre-fit via the iteration_schedule and set the inner iterations to 1-2 for the first outer iteration."
@@ -1326,7 +1421,8 @@ class OnlineDistributionalRegression(
                     level=1,
                 )
                 if step_decrease_counter > 5:
-                    message = f"Step size too small. Parameter {param}, Outer iteration {it_outer}, Inner iteration {it_inner}."
+                    message = f"Step size too small. Parameter {param}, Outer"
+                    f"iteration {it_outer}, Inner iteration {it_inner}."
                     self._print_message(message=message, level=1)
                     terminate = True
 
@@ -1337,11 +1433,13 @@ class OnlineDistributionalRegression(
                 if abs(dv_old - dv_it) / abs(dv_old) < self.rel_tol_inner:
                     terminate = True
                 if it_inner == (self.max_it_inner - 1):
-                    message = f"Reached max inner iteration in inner fit. Parameter:{param}, Outer iteration: {it_outer}, Inner iteration: {it_inner}."
+                    message = f"Reached max inner iteration in inner fit."
+                    f"Parameter:{param}, Outer iteration: {it_outer}, Inner iteration: {it_inner}."
                     self._print_message(message=message, level=3)
                     terminate = True
 
-            message = f"Outer iteration {it_outer}: Fitting Parameter {param}: Inner iteration {it_inner}: Current DV {dv_it}, previous DV {dv_old}, step size {step_it}"
+            message = f"Outer iteration {it_outer}: Fitting Parameter {param}:"
+            f"Inner iteration {it_inner}: Current DV {dv_it}, previous DV {dv_old}, step size {step_it}"
             self._print_message(message=message, level=3)
 
             if terminate:
@@ -1381,7 +1479,8 @@ class OnlineDistributionalRegression(
         """Predict the mean of the response distribution.
 
         Args:
-            X (np.ndarray): Covariate matrix $X$. Shape should be (n_samples, n_features).
+            X (np.ndarray): Covariate matrix $X$. Shape should be
+            (n_samples, n_features).
         Raises:
             NotFittedError: If the model is not fitted yet.
 
@@ -1395,12 +1494,14 @@ class OnlineDistributionalRegression(
         """Predict the median of the distribution.
 
         Args:
-            X (np.ndarray): Covariate matrix $X$. Shape should be (n_samples, n_features).
+            X (np.ndarray): Covariate matrix $X$. Shape should be
+            (n_samples, n_features).
         Raises:
             NotFittedError: If the model is not fitted yet.
 
         Returns:
-            Predictions (np.ndarray): Predicted median of the distribution. Shape will be (n_samples,).
+            Predictions (np.ndarray): Predicted median of the distribution.
+            Shape will be (n_samples,).
         """
         theta = self.predict_distribution_parameters(X)
         return self.distribution.median(theta)
@@ -1415,14 +1516,23 @@ class OnlineDistributionalRegression(
 
         Args:
             X (np.ndarray): Design matrix.
-            what (str, optional): Predict the response or the link. Defaults to "response". Remember the  GAMLSS models $g(\\theta) = X^T\\beta$. Predict `"link"` will output $X^T\\beta$, predict `"response"` will output $g^{-1}(X^T\\beta)$. Usually, you want predict = `"response"`.
-            return_contributions (bool, optional): Whether to return a `Tuple[prediction, contributions]` where the contributions of the individual covariates for each distribution parameter's predicted value is specified. Defaults to False.
+            what (str, optional): Predict the response or the link. Defaults
+            to "response". Remember the  GAMLSS models $g(\\theta) =
+            X^T\\beta$. Predict `"link"` will output $X^T\\beta$, predict
+            `"response"` will output $g^{-1}(X^T\\beta)$. Usually, you want
+            predict = `"response"`.
+            return_contributions (bool, optional): Whether to return a
+            `Tuple[prediction, contributions]` where the contributions of
+            the individual covariates for each distribution parameter's
+            predicted value is specified. Defaults to False.
 
         Raises:
             ValueError: Raises if `what` is not in `["link", "response"]`.
 
         Returns:
-            Predictions (np.ndarray): Predicted values for the distribution of shape (n_samples, n_params) where n_params is the number of distribution parameters.
+            Predictions (np.ndarray): Predicted values for the distribution
+            of shape (n_samples, n_params) where n_params is the number of
+            distribution parameters.
         """
         check_is_fitted(self)
         X = validate_data(self, X=X, reset=False, dtype=[np.float64, np.float32])
@@ -1464,11 +1574,13 @@ class OnlineDistributionalRegression(
         """Predict the quantile(s) of the distribution.
 
         Args:
-            X (np.ndarray): Covariate matrix $X$. Shape should be (n_samples, n_features).
+            X (np.ndarray): Covariate matrix $X$. Shape should be
+            (n_samples, n_features).
             quantile (float | np.ndarray): Quantile(s) to predict.
 
         Returns:
-            np.ndarray: Predicted quantile(s) of the distribution. Shape will be (n_samples, n_quantiles).
+            np.ndarray: Predicted quantile(s) of the distribution. Shape
+            will be (n_samples, n_quantiles).
         """
         check_is_fitted(self)
         X = validate_data(self, X=X, reset=False, dtype=[np.float64, np.float32])
@@ -1488,7 +1600,8 @@ class OnlineDistributionalRegression(
         it_outer: int = 1,
         it_inner: int = 1,
     ):
-        """Get debug information for a specific variable, parameter, outer iteration and inner iteration.
+        """Get debug information for a specific variable, parameter, outer iteration and
+        inner iteration.
 
         We currently support the following variables:
 
@@ -1496,8 +1609,10 @@ class OnlineDistributionalRegression(
         * "X_scaled": The scaled design matrix.
         * "weights": The sample weights for the distribution parameter.
         * "working_vectors": The working vectors for the distribution parameter.
-        * "dl1dlp1": The first derivative of the log-likelihood with respect to the distribution parameter.
-        * "dl2dlp2": The second derivative of the log-likelihood with respect to the distribution parameter.
+        * "dl1dlp1": The first derivative of the log-likelihood with respect to
+        the distribution parameter.
+        * "dl2dlp2": The second derivative of the log-likelihood with respect to
+        the distribution parameter.
         * "eta": The linear predictor for the distribution parameter.
         * "fv": The fitted values for the distribution parameter.
         * "dv": The deviance for the distribution parameter.
@@ -1505,12 +1620,17 @@ class OnlineDistributionalRegression(
         * "coef_path": The coefficients path for the distribution parameter.
 
         Args:
-            variable (str): The variable to get debug information for. Defaults to "coef".
-            param (int): The distribution parameter to get debug information for. Defaults to 0.
-            it_outer (int): The outer iteration to get debug information for. Defaults to 1.
-            it_inner (int): The inner iteration to get debug information for. Defaults to 1.
+            variable (str): The variable to get debug information for.
+            Defaults to "coef".
+            param (int): The distribution parameter to get debug information
+            for. Defaults to 0.
+            it_outer (int): The outer iteration to get debug information
+            for. Defaults to 1.
+            it_inner (int): The inner iteration to get debug information
+            for. Defaults to 1.
         Returns:
-            Any: The debug information for the specified variable, parameter, outer iteration and inner iteration.
+            Any: The debug information for the specified variable,
+            parameter, outer iteration and inner iteration.
         Raises:
             ValueError: If debug mode is not enabled.
 

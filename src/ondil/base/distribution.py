@@ -35,8 +35,7 @@ class Distribution(ABC):
         return len(self.parameter_names)
 
     def theta_to_params(self, theta: np.ndarray) -> Tuple[np.ndarray, ...]:
-        """Take the fitted values and return tuple of vectors for distribution
-        parameters."""
+        """Take the fitted values and return tuple of vectors for distribution parameters."""
         return tuple(theta[:, i] for i in range(self.n_params))
 
     @property
@@ -53,37 +52,30 @@ class Distribution(ABC):
 
     @abstractmethod
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int) -> np.ndarray:
-        """Take the first derivative of the likelihood function with respect to the
-        param."""
+        """Take the first derivative of the likelihood function with respect to the param."""
 
     @abstractmethod
     def dl2_dp2(self, y: np.ndarray, theta: np.ndarray, param: int) -> np.ndarray:
-        """Take the second derivative of the likelihood function with respect to the
-        param."""
+        """Take the second derivative of the likelihood function with respect to the param."""
 
     @abstractmethod
     def dl2_dpp(
         self, y: np.ndarray, theta: np.ndarray, params: Tuple[int, int]
     ) -> np.ndarray:
-        """Take the first derivative of the likelihood function with respect to both
-        parameters."""
+        """Take the first derivative of the likelihood function with respect to both parameters."""
 
     def _validate_links(self):
         for param, link in self.links.items():
             if link.link_support[0] < self.parameter_support[param][0]:
                 warnings.warn(
-                    message=(
-                        f"Lower bound of link function is smaller than the parameter "
-                        f"support for parameter {param} "
-                    ),
+                    message=f"Lower bound of link function is smaller than the"
+                    f"parameter support for parameter {param} ",
                     category=OutOfSupportWarning,
                 )
             if link.link_support[1] > self.parameter_support[param][1]:
                 warnings.warn(
-                    message=(
-                        f"Upper bound of link function is larger than the parameter "
-                        f"support for parameter {param} "
-                    ),
+                    message=f"Upper bound of link function is larger than the"
+                    f"parameter support for parameter {param} ",
                     category=OutOfSupportWarning,
                 )
 
@@ -92,9 +84,8 @@ class Distribution(ABC):
     ) -> None:
         if param >= self.n_params:
             raise ValueError(
-                f"{self.__class__.__name__} has only {self.n_params} distribution "
-                f"parameters.\nYou have passed {param}. Please remember we start "
-                f"counting at 0."
+                f"{self.__class__.__name__} has only {self.n_params} distribution"
+                f"parameters.\nYou have passed {param}. Please remember we start counting at 0."
             )
 
     def _validate_dl2_dpp_inputs(
@@ -102,9 +93,8 @@ class Distribution(ABC):
     ) -> None:
         if max(params) >= self.n_params:
             raise ValueError(
-                f"{self.__class__.__name__} has only {self.n_params} distribution "
-                f"parameters.\nYou have passed {params}. Please remember we start "
-                f"counting at 0."
+                f"{self.__class__.__name__} has only {self.n_params} distribution"
+                f"parameters.\nYou have passed {params}. Please remember we start counting at 0."
             )
         if params[0] == params[1]:
             raise ValueError("Cross derivatives must use different parameters.")
@@ -234,16 +224,15 @@ class Distribution(ABC):
 
     @abstractmethod
     def logcdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """Compute the log of the cumulative distribution function (CDF) for the given
-        data points.
+        """Compute the log of the cumulative distribution function (CDF) for the given data points.
 
         Args:
             y (np.ndarray): An array of data points at which to evaluate the log CDF.
             theta (np.ndarray): An array of parameters for the distribution.
 
         Returns:
-            np.ndarray: An array of log CDF values corresponding to the data points
-                in `y`.
+            np.ndarray: An array of log CDF values corresponding to the data
+            points in `y`.
         """
 
 
@@ -257,37 +246,33 @@ class ScipyMixin(ABC):
     @property
     @abstractmethod
     def scipy_dist(self) -> st.rv_continuous:
-        """The names of the parameters in the scipy.stats distribution and the
-        corresponding column in theta."""
+        """The names of the parameters in the scipy.stats distribution and the corresponding column in theta."""
         pass
 
     @property
     @abstractmethod
     def scipy_names(self) -> Tuple[str]:
-        """The names of the parameters in the scipy.stats distribution and the
-        corresponding column in theta."""
+        """The names of the parameters in the scipy.stats distribution and the corresponding column in theta."""
         pass
 
     def theta_to_scipy_params(self, theta: np.ndarray) -> Dict[str, np.ndarray]:
         """Maps $\\theta$ to the `scipy` parameters.
 
         Args:
-            theta (np.ndarray): $\theta$ as estimated by
-                `OnlineDistributionalRegression()` estimator
+            theta (np.ndarray): $\\theta$ as estimated by
+            `OnlineDistributionalRegression()` estimator
 
         Raises:
             ValueError: If we don't define the `scipy_names` attribute.
 
         Returns:
-            dict: Dictionary that can be unrolled into scipy distribution class as in
-                `st.some_dist(**return_value)`
+            dict: Dictionary that can be unrolled into scipy distribution
+            class as in `st.some_dist(**return_value)`
         """
         if not self.scipy_names:
             raise ValueError(
-                f"{self.__class__.__name__} has no scipy_names defined. To use "
-                f"theta_to_scipy_params Please define them in the subclass. Or "
-                f"override this method in the subclass if there is no 1:1 mapping "
-                f"between theta columns and scipy params."
+                f"{self.__class__.__name__} has no scipy_names defined. To use"
+                f"theta_to_scipy_params Please define them in the subclass. Or override this method in the subclass if there is no 1:1 mapping between theta columns and scipy params."
             )
 
         params = {}
@@ -308,39 +293,34 @@ class ScipyMixin(ABC):
 
     def ppf(self, q: np.ndarray, theta: np.ndarray) -> np.ndarray:
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).ppf(q)
-        return self.scipy_dist(**self.theta_to_scipy_params(theta)).ppf(
-            q)
+
     def logpmf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """Compute the log of the probability mass function (PMF) for the given
-        data points.
+        """Compute the log of the probability mass function (PMF) for the given data points.
 
         Args:
             y (np.ndarray): An array of data points at which to evaluate the log PMF.
             theta (np.ndarray): An array of parameters for the distribution.
 
         Returns:
-            np.ndarray: An array of log PMF values corresponding to the data points in `y`.
-            np.ndarray: An array of log PMF values corresponding to the data points
-                in `y`.
-        return self.scipy_dist(**self.theta_to_scipy_params(theta))
-            .logpmf(y)
+            np.ndarray: An array of log PMF values corresponding to the data
+            points in `y`.
+        """
+        return self.scipy_dist(**self.theta_to_scipy_params(theta)).logpmf(y)
 
     def logpdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         """Compute the log of the probability density function (PDF) for the given data points.
 
         Args:
             y (np.ndarray): An array of data points at which to evaluate the log PDF.
-            y (np.ndarray): An array of data points at which to evaluate the log
-                PDF.
+            theta (np.ndarray): An array of parameters for the distribution.
 
         Returns:
-            np.ndarray: An array of log PDF values corresponding to the data points in `y`.
+            np.ndarray: An array of log PDF values corresponding to the data
+            points in `y`.
         """
-            np.ndarray: An array of log PDF values corresponding to the data points
-                in `y`.
+        return self.scipy_dist(**self.theta_to_scipy_params(theta)).logpdf(y)
 
-        return self.scipy_dist(**self.theta_to_scipy_params(theta))
-            .logpdf(y)
+    def logcdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         """Compute the log of the cumulative distribution function (CDF) for the given data points.
 
         Args:
@@ -348,7 +328,8 @@ class ScipyMixin(ABC):
             theta (np.ndarray): An array of parameters for the distribution.
 
         Returns:
-            np.ndarray: An array of log CDF values corresponding to the data points in `y`.
+            np.ndarray: An array of log CDF values corresponding to the data
+            points in `y`.
         """
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).logcdf(y)
 

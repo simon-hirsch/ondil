@@ -55,9 +55,18 @@ def test_distribution_functions(distribution):
     code = f"""
         available_vars <- c("x", "q", "p", "mu", "sigma", "nu", "tau")
         list(
-          "cdf" = do.call(gamlss.dist::p{distribution.corresponding_gamlss}, mget(intersect(available_vars, names(formals(gamlss.dist::p{distribution.corresponding_gamlss}))), envir = .GlobalEnv)),
-          "pdf" = do.call(gamlss.dist::d{distribution.corresponding_gamlss}, mget(intersect(available_vars, names(formals(gamlss.dist::d{distribution.corresponding_gamlss}))), envir = .GlobalEnv)),
-          "ppf" = do.call(gamlss.dist::q{distribution.corresponding_gamlss}, mget(intersect(available_vars, names(formals(gamlss.dist::q{distribution.corresponding_gamlss}))), envir = .GlobalEnv))
+          "cdf" = do.call(gamlss.dist::p{distribution.corresponding_gamlss}, 
+                          mget(intersect(available_vars, 
+                               names(formals(gamlss.dist::p{distribution.corresponding_gamlss}))), 
+                               envir = .GlobalEnv)),
+          "pdf" = do.call(gamlss.dist::d{distribution.corresponding_gamlss}, 
+                          mget(intersect(available_vars, 
+                               names(formals(gamlss.dist::d{distribution.corresponding_gamlss}))), 
+                               envir = .GlobalEnv)),
+          "ppf" = do.call(gamlss.dist::q{distribution.corresponding_gamlss}, 
+                          mget(intersect(available_vars, 
+                               names(formals(gamlss.dist::q{distribution.corresponding_gamlss}))), 
+                               envir = .GlobalEnv))
         )
         """
 
