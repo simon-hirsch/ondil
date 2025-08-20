@@ -1,6 +1,6 @@
 import sys
-import warnings
 from typing import Any, Dict, Union
+import warnings
 
 import numpy as np
 

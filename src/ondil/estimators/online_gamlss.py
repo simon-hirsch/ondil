@@ -1,7 +1,7 @@
 import copy
 import numbers
-import warnings
 from typing import Any, Dict, Literal, Optional, Union
+import warnings
 
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context

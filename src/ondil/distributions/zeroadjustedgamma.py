@@ -5,7 +5,7 @@ import scipy.special as spc
 import scipy.stats as st
 
 from ..base import Distribution, LinkFunction
-from ..links import Logit, Log
+from ..links import Log, Logit
 
 
 class ZeroAdjustedGamma(Distribution):
