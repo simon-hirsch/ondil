@@ -122,7 +122,10 @@ def test_online_scaler(N_init, D, forget, selection_dtype, sample_weight):
         ), f"Step {i - N_init + 1}: Mean mismatch: {os.mean_} vs {true_mean[to_scale]}"
         assert np.allclose(
             os.var_, true_var[to_scale]
-        ), f"Step {i - N_init + 1}: Variance mismatch: {os.var_} vs {true_var[to_scale]}"
+        ), (
+            f"Step {i - N_init + 1}: Variance mismatch: {os.var_} vs "
+            f"{true_var[to_scale]}"
+        )
         assert np.allclose(
             out, expected_out
         ), f"Scaled X mismatch: {out} vs {expected_out}"

@@ -13,9 +13,9 @@ def handle_param_dict(
     name: str,
 ) -> None:
     """This function takes the potentially incomplete parameter dict given by the user
-    and the default value for a GAMLSS param and will fill it for all missing distribution
-    parameters with the default. If the user passes just a bool, string, int, it will
-    create a matching dictionary.
+    and the default value for a GAMLSS param and will fill it for all missing
+    distribution parameters with the default. If the user passes just a bool, string,
+    int, it will create a matching dictionary.
 
     This is necessary since ondil expects at many places as many user given parameters
     as distribution parameters, but we don't know the number of distribution
@@ -91,12 +91,14 @@ def online_mean_update(
     forget: float,
     n_seen: int,
 ) -> float:
-    """Update the average with a new value or an array of values using an online mean update.
+    """Update the average with a new value or an array of values using an online
+    mean update.
 
     Args:
         avg (float): The current average.
-        value (float | np.ndarray): The new value or array of values to update the average with.
-            If `value` is an array, the average is updated iteratively for each element.
+        value (float | np.ndarray): The new value or array of values to update the
+            average with. If `value` is an array, the average is updated iteratively
+            for each element.
         forget (float): The forgetting factor.
         n_seen (int): The number of observations seen so far.
 
