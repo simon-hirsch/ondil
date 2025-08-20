@@ -68,7 +68,7 @@ preview = true
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-sort-within-sections = true
-known-first-party = ["entsoe"]
+known-first-party = ["ondil"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
