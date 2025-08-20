@@ -46,6 +46,16 @@ class OnlineLasso(OnlineLinearModel):
             selection (Literal["cyclic", "random"], optional): Whether to cycle through all coordinates in order or random. For large problems, random might increase convergence. Defaults to 100.
         """
 
+        self.lambda_n = lambda_n
+        self.lambda_eps = lambda_eps
+        self.start_value = start_value
+        self.tolerance = tolerance
+        self.max_iterations = max_iterations
+        self.selection = selection
+        self.beta_lower_bound = beta_lower_bound
+        self.beta_upper_bound = beta_upper_bound
+        self.early_stop = early_stop
+
         concrete_method = LassoPath(
             lambda_eps=lambda_eps,
             lambda_n=lambda_n,
