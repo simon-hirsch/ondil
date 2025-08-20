@@ -447,14 +447,18 @@ class MultivariateOnlineDistributionalRegressionPath(
             for k in range(self.n_dist_elements_[p]):
                 if self._method[p][k]._path_based_method:
                     lmbdas.append(self._method[p][k]._path_length)
-
             if len(set(lmbdas)) > 1:
                 raise ValueError(
                     f"Distribution parameter {p} has different path lengths for different elements. "
                     "This is not supported by the current implementation. "
                     "Please use a single path length for all elements of the distribution parameter."
                 )
-            self._lambda_n[p] = lmbdas[0]
+            if len(set(lmbdas)) == 1:
+                self._lambda_n[p] = lmbdas[0]
+            else:
+                # If no path length is given, we assume that the method is not path-based
+                # and we set the path length to 1.
+                self._lambda_n[p] = 1
 
     def _get_next_adr_start_values(self, theta, p, a):
         mask = (
