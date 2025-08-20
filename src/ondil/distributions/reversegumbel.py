@@ -1,4 +1,5 @@
-from typing import Optional, Tuple
+from typing import Tuple
+
 import numpy as np
 import scipy.stats as st
 

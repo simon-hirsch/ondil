@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import scipy.stats as st
+
 from ondil.gram import (
     init_gram,
     init_inverted_gram,

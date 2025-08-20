@@ -1,7 +1,7 @@
 import copy
 import numbers
-import warnings
 from typing import Any, Dict, Literal, Optional, Union
+import warnings
 
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
@@ -713,9 +713,11 @@ class OnlineDistributionalRegression(
         self._x_gram = {}
         self._y_gram = {}
         self._rss = np.zeros((self.distribution.n_params))
-        self._rss_iterations = np.zeros(
-            (self.distribution.n_params, self.max_it_outer, self.max_it_inner)
-        )
+        self._rss_iterations = np.zeros((
+            self.distribution.n_params,
+            self.max_it_outer,
+            self.max_it_inner,
+        ))
 
         # For regularized estimation, we have the necessary data to do model selection!
         self._model_selection_data = {}
