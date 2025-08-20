@@ -571,7 +571,9 @@ class MultivariateOnlineDistributionalRegressionPath(
 
         self.n_dist_elements_ = self.distribution.fitted_elements(self.dim_)
         # Validate the equation and set the method
+        # Ensure that we have the same number of lambda_n for all methods per distr param.
         self._method = self._prepare_estimation_method(y=y)
+        self._check_path_based_estimation_methods()
         self._equation = self.validate_equation(self.equation)
         self.n_features_ = self._get_number_of_covariates(X)
 
