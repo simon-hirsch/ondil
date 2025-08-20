@@ -147,7 +147,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         "max_iterations_inner": [Interval(numbers.Integral, 1, None, closed="left")],
         "max_iterations_outer": [Interval(numbers.Integral, 1, None, closed="left")],
         "overshoot_correction": [dict, type(None)],
-        "lambda_n": [Interval(numbers.Integral, 1, None, closed="left")],
         "dampen_estimation": [
             bool,
             Interval(numbers.Integral, 0, None, closed="left"),
@@ -182,7 +181,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         max_iterations_inner: int = 10,
         max_iterations_outer: int = 10,
         overshoot_correction: Optional[Dict[int, float]] = None,
-        lambda_n: int = 100,
         dampen_estimation: bool | int = False,
         debug: bool = False,
         rel_tol_inner: float = 1e-3,
@@ -217,7 +215,6 @@ class MultivariateOnlineDistributionalRegressionPath(
             max_iterations_inner (int, optional): Maximum number of inner iterations. Defaults to 10.
             max_iterations_outer (int, optional): Maximum number of outer iterations. Defaults to 10.
             overshoot_correction (Optional[Dict[int, float]], optional): Correction factors for overshooting during updates. Defaults to None.
-            lambda_n (int, optional): Number of regularization steps for LASSO. Defaults to 100.
             dampen_estimation (bool | int, optional): If True or int, dampens estimation updates. Defaults to False.
             debug (bool, optional): Enables debug mode for additional logging. Defaults to False.
             rel_tol_inner (float, optional): Relative tolerance for convergence in inner loop. Defaults to 1e-3.
@@ -249,7 +246,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         self.scale_inputs = scale_inputs
 
         # For LASSO
-        self.lambda_n = lambda_n
         self.ic = ic
         self.approx_fast_model_selection = approx_fast_model_selection
 
@@ -443,6 +439,23 @@ class MultivariateOnlineDistributionalRegressionPath(
         }
         return method
 
+    def _check_path_based_estimation_methods(self):
+        self._lambda_n = {}
+
+        for p in range(self.distribution.n_params):
+            lmbdas = []
+            for k in range(self.n_dist_elements_[p]):
+                if self._method[p][k]._path_based_method:
+                    lmbdas.append(self._method[p][k]._path_length)
+
+            if len(set(lmbdas)) > 1:
+                raise ValueError(
+                    f"Distribution parameter {p} has different path lengths for different elements. "
+                    "This is not supported by the current implementation. "
+                    "Please use a single path length for all elements of the distribution parameter."
+                )
+            self._lambda_n[p] = lmbdas[0]
+
     def _get_next_adr_start_values(self, theta, p, a):
         mask = (
             self._adr_distance[p] >= self._adr_mapping_index_to_max_distance[p][a - 1]
@@ -624,7 +637,9 @@ class MultivariateOnlineDistributionalRegressionPath(
         }
         self.coef_path_ = {
             p: {
-                k: np.zeros((self.adr_steps_, self.lambda_n, self.n_features_[p][k]))
+                k: np.zeros(
+                    (self.adr_steps_, self._lambda_n[p], self.n_features_[p][k])
+                )
                 for k in range(self.n_dist_elements_[p])
             }
             for p in range(self.distribution.n_params)
@@ -917,7 +932,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 if self._is_element_adr_regularized(p=p, k=k, a=a):
                     self.coef_[p][k][a] = np.zeros(self.n_features_[p][k])
                     self.coef_path_[p][k][a] = np.zeros(
-                        (self.lambda_n, self.n_features_[p][k])
+                        (self._lambda_n[p], self.n_features_[p][k])
                     )
                 else:
                     eta = self.distribution.link_function(theta[a][p], p)
@@ -1102,7 +1117,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         )
         # Model selection
         if self.ic == "max":
-            opt_ic = self.lambda_n - 1
+            opt_ic = self._lambda_n[param] - 1
         else:
             theta_ll = copy.deepcopy(theta[a])
             theta_elem_delta = np.diff(theta_fit, axis=1)
@@ -1111,7 +1126,7 @@ class MultivariateOnlineDistributionalRegressionPath(
             )
             approx_ll = np.sum(self.distribution.logpdf(y, theta_ll) * weights_forget)
             approx_ll = np.repeat(approx_ll, 100)
-            for l_idx in range(1, self.lambda_n):
+            for l_idx in range(1, self._lambda_n[param]):
                 theta_ms = self.distribution.set_theta_element(
                     theta_ll, theta_fit[:, l_idx], param=param, k=k
                 )
@@ -1176,7 +1191,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         )
 
         if self.ic == "max":
-            opt_ic = self.lambda_n - 1
+            opt_ic = self._lambda_n[param] - 1
         else:
             # Model selection
             theta_ll = copy.deepcopy(theta[a])
@@ -1187,7 +1202,7 @@ class MultivariateOnlineDistributionalRegressionPath(
             )
             approx_ll = np.sum(self.distribution.logpdf(y, theta_ll) * weights_forget)
             approx_ll = np.repeat(approx_ll, 100)
-            for l_idx in range(1, self.lambda_n):
+            for l_idx in range(1, self._lambda_n[param]):
                 theta_ms = self.distribution.set_theta_element(
                     theta_ll, theta_fit[:, l_idx], param=param, k=k
                 )
@@ -1485,7 +1500,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 if self._is_element_adr_regularized(p=p, k=k, a=a):
                     self.coef_[p][k][a] = np.zeros(self.n_features_[p][k])
                     self.coef_path_[p][k][a] = np.zeros(
-                        (self.lambda_n, self.n_features_[p][k])
+                        (self._lambda_n[p], self.n_features_[p][k])
                     )
 
                 else:
