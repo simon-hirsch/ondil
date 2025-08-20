@@ -38,11 +38,15 @@ class Ridge(EstimationMethod):
 
         Args:
             lambda_reg (float): Regularization parameter. Must be greater than 0. Higher values lead to more regularization. If not set, the average variance of the features is used as the default.
-            selection (Literal["cyclic", "random"]): Method to select features during the path. Default is "cyclic".
-            beta_lower_bound (np.ndarray | None): Lower bound for the coefficients. Default is None.
-            beta_upper_bound (np.ndarray | None): Upper bound for the coefficients. Default is None.
+                        selection (Literal["cyclic", "random"]):
+                Method to select features during the path. Default is "cyclic".
+            beta_lower_bound (np.ndarray | None): Lower bound for the coefficients.
+                Default is None.
+            beta_upper_bound (np.ndarray | None): Upper bound for the coefficients.
+                Default is None.
             tolerance (float): Tolerance for the optimization. Default is 1e-4.
-            max_iterations (int): Maximum number of iterations for the optimization. Default is 1000.
+            max_iterations (int): Maximum number of iterations for the optimization.
+                Default is 1000.
         """
         super().__init__(
             _path_based_method=False,

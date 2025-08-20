@@ -86,7 +86,8 @@ class InformationCriterion:
             return - 2 * ll + p * 2 
         elif c == "aicc":
             if n - p - 1 == 0:
-                raise ValueError("Invalid inputs: n - p - 1 must not be zero for AICC calculation.")
+                raise ValueError(
+                    "Invalid inputs: n - p - 1 must not be zero for AICC calculation.")
             return - 2 * ll + p * 2 * n / ( n - p - 1)
         elif c == "bic":
             return - 2 * ll + p * np.log(n) 

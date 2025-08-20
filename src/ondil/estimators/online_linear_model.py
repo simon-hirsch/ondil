@@ -121,7 +121,8 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
 
         if self.n_observations_ <= self.n_features_ and self.method == "ols":
             raise ValueError(
-                f"You have tried to fit using n_samples={self.n_observations_} and n_features={self.n_features_}. "
+                f"You have tried to fit using n_samples={self.n_observations_}"
+                f"and 
                 "Since we need calculate the inverse Gram matrix, we need at least as many observations as features for OLS-based methods"
             )
         if self.n_observations_ == 1:

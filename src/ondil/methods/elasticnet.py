@@ -11,11 +11,16 @@ class ElasticNetPath(EstimationMethod):
     """
     Path-based elastic net estimation.
 
-    The elastic net method runs coordinate descent along a (geometric) decreasing grid of regularization strengths (lambdas).
-    We automatically calculate the maximum regularization strength for which all (not-regularized) coefficients are 0.
+    The elastic net method runs coordinate descent along a (geometric) decreasing
+    grid of regularization strengths (lambdas). We automatically calculate the
+    maximum regularization strength for which all (not-regularized) coefficients
+    are 0.
     The lower end of the lambda grid is defined as $$\\lambda_\min = \\lambda_\max * \\varepsilon_\\lambda.$$
 
-    The elastic net method is a combination of LASSO and Ridge regression. Parameter $\alpha$ controls the balance between LASSO and Ridge. Thereby, $\alpha=0$ corresponds to Ridge regression and $\alpha=1$ corresponds to LASSO regression.
+    The elastic net method is a combination of LASSO and Ridge regression.
+    Parameter $\alpha$ controls the balance between LASSO and Ridge. Thereby,
+    $\alpha=0$ corresponds to Ridge regression and $\alpha=1$ corresponds to LASSO
+    regression.
 
     We allow to pass user-defined lower and upper bounds for the coefficients.
     The coefficient bounds must be an `numpy` array of the length of `X` respectively of the number of variables in the
@@ -57,15 +62,23 @@ class ElasticNetPath(EstimationMethod):
         Args:
             alpha (float): Mixing parameter between the L1 and L2 loss. Alpha = 0 corresponds to the Rigde, Alpha = 1 corresponds to the LASSO.
             lambda_n (int): Number of lambda values to use in the path. Default is 100.
-            lambda_eps (float): Minimum lambda value as a fraction of the maximum lambda. Default is 1e-4.
-            early_stop (int): Early stopping criterion. Will stop if the number of non-zero parameters is reached. Default is 0 (no early stopping).
-            start_value_initial (Literal["previous_lambda", "previous_fit", "average"]): Method to initialize the start value for the first lambda. Default is "previous_lambda".
-            start_value_update (Literal["previous_lambda", "previous_fit", "average"]): Method to update the start value for subsequent lambdas. Default is "previous_fit".
-            selection (Literal["cyclic", "random"]): Method to select features during the path. Default is "cyclic".
-            beta_lower_bound (np.ndarray | None): Lower bound for the coefficients. Default is None.
-            beta_upper_bound (np.ndarray | None): Upper bound for the coefficients. Default is None.
+                        lambda_eps (float):
+                Minimum lambda value as a fraction of the maximum lambda.Default is
+                        early_stop (int):
+                Early stopping criterion. Will stop if the number of non-zero parameters is reached.Default is
+                        start_value_initial (Literal["previous_lambda", "previous_fit", "average"]):
+                Method to initialize the start value for the first lambda.Default is
+                        start_value_update (Literal["previous_lambda", "previous_fit", "average"]):
+                Method to update the start value for subsequent lambdas.Default is
+                        selection (Literal["cyclic", "random"]):
+                Method to select features during the path.Default is
+                        beta_lower_bound (np.ndarray | None):
+                Lower bound for the coefficients.Default is
+                        beta_upper_bound (np.ndarray | None):
+                Upper bound for the coefficients.Default is
             tolerance (float): Tolerance for the optimization. Default is 1e-4.
-            max_iterations (int): Maximum number of iterations for the optimization. Default is 1000.
+                        max_iterations (int):
+                Maximum number of iterations for the optimization.Default is
         """
         super().__init__(
             _path_based_method=True,
