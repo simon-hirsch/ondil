@@ -60,6 +60,21 @@ class MultivariateStudentTInverseModifiedCholesky(
         dof_guesstimate: float = 10,
         use_gaussian_for_location: bool = False,
     ):
+        """
+        Initializes the distribution with specified link functions and parameters.
+        Args:
+            loc_link (LinkFunction, optional): Link function for the location parameter. Defaults to Identity().
+            scale_link_1 (LinkFunction, optional): Link function for the first scale parameter (diagonal). Defaults to MatrixDiag(Log()).
+            scale_link_2 (LinkFunction, optional): Link function for the second scale parameter (lower-triangular). Defaults to MatrixDiagTril(Identity(), Identity()).
+            tail_link (LinkFunction, optional): Link function for the tail (degrees of freedom) parameter. Defaults to LogShiftTwo().
+            dof_guesstimate (float, optional): Initial guess for the degrees of freedom. Defaults to 10.
+            use_gaussian_for_location (bool, optional): Whether to use a Gaussian approximation for the location parameter. Defaults to False.
+        Attributes:
+            dof_guesstimate (float): Stores the initial guess for the degrees of freedom.
+            dof_independence (float): Large value to represent independence in degrees of freedom.
+            use_gaussian_for_location (bool): Indicates if a Gaussian is used for the location parameter.
+            _regularization_allowed (dict): Specifies which parameters allow regularization.
+        """
         super().__init__(
             links={
                 0: loc_link,
