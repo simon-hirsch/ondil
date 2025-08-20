@@ -48,6 +48,31 @@ pandas = ["pandas >= 1.26"]
 polars = ["polars"]
 all = ["ondil[pandas, polars]"]
 
+[dependency-groups]
+dev = ["ruff==0.12.4"]
+
+[tool.ruff]
+exclude = [
+    "__pycache__",
+    "build",
+    "*.egg-info",
+]
+
+[tool.ruff.lint]
+preview = true
+extend-select = ["E302", "E301", "I"]
+
+[tool.ruff.format]
+preview = true
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-sort-within-sections = true
+known-first-party = ["ondil"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
