@@ -8,6 +8,8 @@ import scipy.stats as st
 from ..base import Distribution, LinkFunction, MultivariateDistributionMixin
 from ..links import Identity, Log, LogShiftTwo, MatrixDiag, MatrixDiagTril
 from ..types import ParameterShapes
+from .mv_normal_modchol import _deriv1_mu as _deriv1_mu_normal
+from .mv_normal_modchol import _deriv2_mu as _deriv2_mu_normal
 
 # The MV gaussian distribution with modified Cholesky decomposition
 # We use the notation T' D T = PRECISION
@@ -56,6 +58,7 @@ class MultivariateStudentTInverseModifiedCholesky(
         scale_link_2: LinkFunction = MatrixDiagTril(Identity(), Identity()),
         tail_link: LinkFunction = LogShiftTwo(),
         dof_guesstimate: float = 10,
+        use_gaussian_for_location: bool = False,
     ):
         super().__init__(
             links={
@@ -67,6 +70,7 @@ class MultivariateStudentTInverseModifiedCholesky(
         )
         self.dof_guesstimate = dof_guesstimate
         self.dof_independence = 1e6
+        self.use_gaussian_for_location = use_gaussian_for_location
         self._regularization_allowed = {0: False, 1: False, 2: True, 3: False}
 
     def get_adr_regularization_distance(self, dim: int, param: int) -> float:
@@ -169,8 +173,10 @@ class MultivariateStudentTInverseModifiedCholesky(
         self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False
     ):
         mu, d_mat, t_mat, dof = self.theta_to_params(theta)
-        if param == 0:
+        if (param == 0) and not self.use_gaussian_for_location:
             deriv = _deriv1_mu(y, mu, d_mat, t_mat, dof, i=k)
+        elif (param == 0) and self.use_gaussian_for_location:
+            deriv = _deriv1_mu_normal(y, mu, d_mat, t_mat, i=k)
         if param == 1:
             deriv = _deriv1_dmat(y, mu, d_mat, t_mat, dof, i=k)
         if param == 2:
@@ -184,8 +190,10 @@ class MultivariateStudentTInverseModifiedCholesky(
         self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False
     ):
         mu, d_mat, t_mat, dof = self.theta_to_params(theta)
-        if param == 0:
+        if (param == 0) and not self.use_gaussian_for_location:
             deriv = _deriv2_mu(y, mu, d_mat, t_mat, dof, i=k)
+        if (param == 0) and self.use_gaussian_for_location:
+            deriv = _deriv2_mu_normal(y, mu, d_mat, t_mat, i=k)
         if param == 1:
             deriv = _deriv2_dmat(y, mu, d_mat, t_mat, dof, i=k)
         if param == 2:
