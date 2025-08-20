@@ -5,7 +5,7 @@ import scipy.special as spc
 import scipy.stats as st
 
 from ..base import Distribution, LinkFunction
-from ..links import Logit, Log
+from ..links import Log, Logit
 
 
 class ZeroAdjustedGamma(Distribution):
@@ -117,9 +117,6 @@ class ZeroAdjustedGamma(Distribution):
 
     def pdf(self, y, theta):
         mu, sigma, nu = self.theta_to_params(theta)
-        shape = 1 / sigma**2
-        scale = mu * sigma**2
-        pdf_gamma = st.gamma(a=shape, loc=0, scale=scale).pdf(y)
 
         result = (
             (1 - nu)

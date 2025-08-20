@@ -1,8 +1,8 @@
-import ondil.estimators
 import pytest
 from sklearn.utils.estimator_checks import check_estimator
 
 import ondil
+import ondil.estimators
 
 EXPECTED_FAILED_CHECKS = {
     "check_sample_weight_equivalence_on_dense_data": "To few data points to test this check in the original sklaern implementation.",
