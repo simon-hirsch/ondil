@@ -125,7 +125,7 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
         out = {
             "loc": theta[0],
             "shape": np.linalg.inv(theta[1].swapaxes(-1, -2) @ theta[1]),
-            "dof": theta[2],
+            "df": theta[2],
         }
         return out
 

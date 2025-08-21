@@ -282,7 +282,7 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
         out = {
             "loc": theta[0],
             "shape": np.linalg.inv(theta[1] + theta[2] @ theta[2].swapaxes(-1, -2)),
-            "dof": theta[3],
+            "df": theta[3],
         }
         return out
 
