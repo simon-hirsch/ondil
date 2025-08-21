@@ -1,9 +1,11 @@
 from typing import Tuple
+
 import numpy as np
 import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Log
+from ..types import ParameterShapes
 
 
 class Exponential(ScipyMixin, Distribution):
@@ -25,6 +27,10 @@ class Exponential(ScipyMixin, Distribution):
     distribution_support = (np.nextafter(0, 1), np.inf)
     scipy_dist = st.expon
     scipy_names = {"mu": "scale"}
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+    }
 
     def __init__(self, mu_link: LinkFunction = Log()) -> None:
         assert isinstance(mu_link, LinkFunction), "mu_link must be a LinkFunction"

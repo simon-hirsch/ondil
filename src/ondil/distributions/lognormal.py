@@ -6,6 +6,7 @@ import scipy.stats as st
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Identity, Log
 from ..links.robust_math import robust_exp
+from ..types import ParameterShapes
 
 
 class LogNormal(ScipyMixin, Distribution):
@@ -36,7 +37,14 @@ class LogNormal(ScipyMixin, Distribution):
 
     corresponding_gamlss: str = "LOGNO"
     parameter_names = {0: "mu", 1: "sigma"}
-    parameter_support = {0: (-np.inf, np.inf), 1: (np.nextafter(0, 1), np.inf)}
+    parameter_support = {
+        0: (-np.inf, np.inf),
+        1: (np.nextafter(0, 1), np.inf),
+    }
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+    }
     distribution_support = (0, np.inf)
     scipy_dist = st.lognorm
     scipy_names = {"mu": "scale", "sigma": "s"}
