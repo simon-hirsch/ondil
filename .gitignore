@@ -23,3 +23,6 @@ gist.githubusercontent*
 .envrc
 default.nix
 *.vscode
+
+# Temporary test files
+test_adapter_*.py
