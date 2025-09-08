@@ -1,8 +1,9 @@
-import os
-import subprocess
-import sys
-
 import pytest
+
+# I have originally written this using subprocess
+# but this does not work in some environments in the github actions CI/CD
+# using the exec function works, but is less clean in terms of error reporting
+
 
 EXAMPLE_MD = [
     "README.md",
@@ -22,12 +23,8 @@ def test_examples_in_md(filepath):
 
     python_code = file.split("```python")[1].split("```")[0]
     exec(python_code, {}, {})
-    # proc = subprocess.run([sys.executable, "-c", python_code], env=os.environ.copy())
-    # assert proc.returncode == 0, "The extracted code did not run successfully"
 
 
 @pytest.mark.parametrize("script", EXAMPLE_SCRIPTS)
 def test_examples_in_py(script):
     exec(open(script).read(), {}, {})
-    # proc = subprocess.run([sys.executable, script], env=os.environ.copy())
-    # assert proc.returncode == 0, f"The example script {script} did not run successfully"
