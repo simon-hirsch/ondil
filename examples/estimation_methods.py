@@ -51,7 +51,7 @@ model = OnlineLinearModel(
 )
 model.fit(X[:-10, :], y[:-10])
 plt.plot(model.beta_path)
-plt.show()
+plt.show(block=False)
 print(model.beta)
 
 
