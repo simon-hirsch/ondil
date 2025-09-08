@@ -8,6 +8,8 @@ import pytest
 EXAMPLE_MD = [
     "README.md",
     "docs/index.md",
+    "docs/estimators_and_methods.md",
+    "docs/methods.md",
 ]
 
 EXAMPLE_SCRIPTS = [
@@ -21,7 +23,12 @@ def test_examples_in_md(filepath):
     with open(filepath, "r", encoding="utf-8") as f:
         file = f.read()
 
-    python_code = file.split("```python")[1].split("```")[0]
+    python_blocks = []
+    parts = file.split("```python")
+    for part in parts[1:]:
+        code = part.split("```")[0]
+        python_blocks.append(code.strip())
+    python_code = "\n\n".join(python_blocks)
     exec(python_code, {}, {})
 
 
