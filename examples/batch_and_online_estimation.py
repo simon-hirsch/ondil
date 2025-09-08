@@ -13,6 +13,7 @@ print(ondil.__version__)
 # This example illustrates how to use `ondil` for both
 # batch and online estimation of a distributional regression
 # model. We use the diabetes data set from `sklearn` as an example.
+
 # We first fit a batch model using OLS and then a LASSO model
 # using the StudentT distribution. We then move to the online
 # setting and fit a LASSO model to the first N-1 observations
