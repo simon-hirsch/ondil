@@ -57,6 +57,27 @@ jobs:
       - name: Add R shared libraries to LD_LIBRARY_PATH
         run: |
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(python -m rpy2.situation LD_LIBRARY_PATH)" >> $GITHUB_ENV
-      - name: Run tests with pytest
-        run: pytest tests
+      
+      # Show python and numpy info
+      - name: Python info
+        run: |
+          python -c "import sys, numpy; print('Python executable:', sys.executable); print('numpy path:', numpy.__file__)"
 
+      # Run pytest
+      - name: Run tests
+        run: pytest tests/
+
+      # Example: subprocess test
+      - name: Subprocess numpy check
+        run: |
+          python -c "
+          import sys, subprocess, os
+
+          res = subprocess.run(
+              [sys.executable, '-c', 'import numpy; print(numpy.__version__)'],
+              capture_output=True, text=True,
+              env=os.environ.copy()  # inherit environment
+          )
+          print('Subprocess stdout:', res.stdout)
+          print('Subprocess stderr:', res.stderr)
+          "
