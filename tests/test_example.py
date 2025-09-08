@@ -34,4 +34,5 @@ def test_examples_in_md(filepath):
 
 @pytest.mark.parametrize("script", EXAMPLE_SCRIPTS)
 def test_examples_in_py(script):
-    exec(open(script).read(), {}, {})
+    with open(script) as f:
+        exec(f.read(), {}, {})
