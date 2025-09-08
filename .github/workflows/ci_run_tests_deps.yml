@@ -63,10 +63,6 @@ jobs:
         run: |
           python -c "import sys, numpy; print('Python executable:', sys.executable); print('numpy path:', numpy.__file__)"
 
-      # Run pytest
-      - name: Run tests
-        run: pytest tests/
-
       # Example: subprocess test
       - name: Subprocess numpy check
         run: |
@@ -81,3 +77,8 @@ jobs:
           print('Subprocess stdout:', res.stdout)
           print('Subprocess stderr:', res.stderr)
           "
+
+      # Run pytest
+      - name: Run tests
+        run: pytest tests/
+
