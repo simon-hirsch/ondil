@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 import pytest
 
@@ -19,11 +20,11 @@ def test_examples_in_md(filepath):
         file = f.read()
 
     python_code = file.split("```python")[1].split("```")[0]
-    proc = subprocess.run(["python", "-c", python_code])
+    proc = subprocess.run([sys.executable, "-c", python_code])
     assert proc.returncode == 0, "The extracted code did not run successfully"
 
 
 @pytest.mark.parametrize("script", EXAMPLE_SCRIPTS)
 def test_examples_in_py(script):
-    proc = subprocess.run(["python", script])
+    proc = subprocess.run([sys.executable, script])
     assert proc.returncode == 0, f"The example script {script} did not run successfully"
