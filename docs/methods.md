@@ -39,7 +39,6 @@ More information on coordinate descent can also be found on this [page](coordina
 !!! note
     We don't document the classmethods of the `EstimationMethod` since these are only used internally.
 
-
 ::: ondil.methods.OrdinaryLeastSquares
 
 ::: ondil.methods.LassoPath
