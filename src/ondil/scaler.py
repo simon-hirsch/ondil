@@ -14,7 +14,6 @@ from .gram import init_forget_vector
 
 
 class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
-
     _parameter_constraints = {
         "forget": [Interval(numbers.Real, 0.0, 1.0, closed="left")],
         "to_scale": [bool, np.ndarray],

@@ -1,8 +1,8 @@
 from typing import Dict, Optional, Tuple
 
 import numpy as np
-import scipy.stats as st
 from scipy.special import digamma, polygamma
+import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Log
