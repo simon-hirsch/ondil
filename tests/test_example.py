@@ -15,6 +15,7 @@ EXAMPLE_MD = [
 EXAMPLE_SCRIPTS = [
     "examples/estimation_methods.py",
     "examples/batch_and_online_estimation.py",
+    "examples/multivariate.py",
 ]
 
 
