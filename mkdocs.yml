@@ -3,16 +3,18 @@ site_name: "ondil: Online Distributional Learning"
 nav:
   - Home: index.md
   - Tips & Tricks: modeling_tips.md
+  - Estimators and Methods : estimators_and_methods.md
   - Estimators : estimators.md
   - Methods : methods.md
-  - Estimators and Methods : estimators_and_methods.md
-  - Coordinate Descent : coordinate_descent.md
+  - Preprocessing: scaler.md
   - Distributions : distributions.md
   - Link Functions : links.md
+  - Coordinate Descent : coordinate_descent.md
   - Gramian Matrix : gram.md
   - Model Selection : model_selection.md
-  - Preprocessing: scaler.md
   - Development : development.md
+  - Examples:
+      - Multivariate : multivariate.md
   - Issues [Github] : "https://github.com/simon-hirsch/ondil/issues"
   - Source [Github] : "https://github.com/simon-hirsch/ondil/tree/main"
   - Licence [Github] : "https://github.com/simon-hirsch/ondil/tree/main?tab=MIT-1-ov-file#readme"
@@ -78,12 +80,14 @@ markdown_extensions:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
+  - pymdownx.blocks.caption
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
   - attr_list
   - md_in_html
   - admonition
+  
 
 
 

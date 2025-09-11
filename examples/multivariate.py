@@ -17,6 +17,15 @@ from ondil.estimators import MultivariateOnlineDistributionalRegressionPath
 
 np.set_printoptions(precision=3, suppress=True)
 
+# Dimension of the data D=3
+# Initial training size M=1000
+# On my laptop
+# For 10k samples and D=10, it takes a two-three mins.
+# For 10k samples and D=3, it takes a few seconds.
+
+D = 3
+M = 1000
+
 
 # Define a function to compute the true parameters
 def compute_true(x, D=3):
@@ -48,11 +57,6 @@ def compute_true(x, D=3):
 
     return true_mu, true_D, true_T
 
-
-# Dimension of the data D=3
-# Initial training size M=1000
-D = 3
-M = 1000
 
 distribution = MultivariateNormalInverseCholesky()
 equation = {
@@ -137,6 +141,7 @@ axs[2].set_title("Predicted vs True Covariance (Upper Triangular Elements)")
 axs[2].legend(["Predicted Covariance", "True Covariance"])
 
 plt.tight_layout()
+# plt.savefig(f"./docs/assets/figure_multivariate_cd_{D}_{M}.png", dpi=300)
 plt.show(block=False)
 
 # Now fit the same model but using the modified Cholesky parameterization
@@ -207,5 +212,5 @@ axs[2].set_title("Predicted vs True Covariance (Upper Triangular Elements)")
 axs[2].legend(["Predicted Covariance", "True Covariance"])
 
 plt.tight_layout()
-plt.show(block=False)
+# plt.savefig(f"./docs/assets/figure_multivariate_mcd_{D}_{M}.png", dpi=300)
 plt.show(block=False)
