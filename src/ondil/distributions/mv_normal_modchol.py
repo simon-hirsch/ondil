@@ -136,7 +136,7 @@ class MultivariateNormalInverseModifiedCholesky(
             M = y.shape[0]
             residual = y - theta[0]
             var = np.var(residual, axis=0)
-            shape = np.diag(var * (self.dof_guesstimate - 2) / self.dof_guesstimate)
+            shape = np.diag(var)
             _, d_inv, _ = la.ldl(shape, lower=True)
             d_mat = np.linalg.inv(d_inv)
             theta[1] = np.tile(d_mat, (M, 1, 1))

@@ -243,10 +243,7 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
             return theta
         if param == 1:
             residuals = y - theta[0]
-            variance = np.var(residuals, 0)
-            mat_d = np.diag(
-                1 / (variance * (self.dof_guesstimate - 2) / self.dof_guesstimate)
-            )
+            mat_d = np.diag(1 / np.var(residuals, 0))
             theta[1] = np.tile(mat_d, (y.shape[0], 1, 1))
             return theta
 
