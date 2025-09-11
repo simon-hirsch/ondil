@@ -8,7 +8,7 @@ Multivariate distributional regression allows us to model mean and covariance ma
 
 ## Model
 
-We want to model $$ Y \sim \mathcal{N}(\mu(x), \Sigma(x)) $$ where \(y\) is a \(D\)-dimensional response vector, \(x\) is a \(p\)-dimensional covariate vector, \(\mu(x)\) is the mean vector, and \(\Sigma(x)\) is the covariance matrix. The parameters of the model are functions of the covariates, which can be modeled using linear or non-linear functions. We use the two versions of the Cholesky decomposition implemented in `ondil`: the standard Cholesky decomposition and the modified Cholesky decomposition. Both are implemented based on the precision matrix of the multivariate normal \(\Omega = \Sigma^{-1}\). 
+We want to model $$ Y \sim \mathcal{N}(\mu(x), \Sigma(x)) $$ where \(y\) is a \(D\)-dimensional response vector, \(x\) is a \(p\)-dimensional covariate vector, \(\mu(x)\) is the mean vector, and \(\Sigma(x)\) is the covariance matrix. The parameters of the model are functions of the covariates, which can be modeled using linear or non-linear functions. We use the two versions of the Cholesky decomposition implemented in `ondil`: the standard Cholesky decomposition and the modified Cholesky decomposition. Both are implemented based on the precision matrix of the multivariate normal \(\Omega = \Sigma^{-1}\).
 
 - Cholesky decomposition: \(\Omega = L^T L\), where \(L\) is a lower triangular matrix with positive diagonal entries. The parameters to be estimated are the elements of \(L\).
 - Modified Cholesky decomposition: \(\Omega = T^T D^{-1} T\), where \(D\) is a diagonal matrix with positive entries and \(T\) is a lower triangular matrix with ones on the diagonal. The parameters to be estimated are the elements of the diagonal of \(D\) and the elements of \(T\) below the diagonal.
@@ -145,7 +145,6 @@ We estimated the following covariance matrices depending on $x$:
 True (Black) and estimated Covariance matrix (Colored) for a three-dimensional example D=3 and M=10000 samples using the Cholesky decomposition.
 ///
 
-
 ![True (Black) and estimated Covariance matrix (Colored) for a three-dimensional example.](assets/figure_multivariate_mcd_3_10000.png)
 /// caption
 True (Black) and estimated Covariance matrix (Colored) for a three-dimensional example D=3 and M=10000 samples using the modified Cholesky decomposition.
@@ -153,7 +152,7 @@ True (Black) and estimated Covariance matrix (Colored) for a three-dimensional e
 
 ### High-dimensional example
 
-For the higher-dimensional example, we estimated the following covariance matrices depending on $x$. Here we see that the B-Splines get more wiggly, which is expected due to the higher dimensionality and the same number of samples. We can try to counter this behavior by employing some kind of regularization, e.g., ridge or lasso, since these are also implemented in `ondil`.    
+For the higher-dimensional example, we estimated the following covariance matrices depending on $x$. Here we see that the B-Splines get more wiggly, which is expected due to the higher dimensionality and the same number of samples. We can try to counter this behavior by employing some kind of regularization, e.g., ridge or lasso, since these are also implemented in `ondil`.
 
 ![True (Black) and estimated Covariance matrix (Colored) for a three-dimensional example.](assets/figure_multivariate_cd_10_10000.png)
 /// caption
