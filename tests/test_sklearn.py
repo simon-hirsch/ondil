@@ -66,7 +66,7 @@ def test_sklearn_compliance_online_gamlss(scale_inputs, method, ic):
 
 
 def test_sklearn_compliance_scaler():
-    estimator = ondil.OnlineScaler()
+    estimator = ondil.scaler.OnlineScaler()
     check_estimator(
         estimator,
         on_fail="raise",
