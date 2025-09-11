@@ -13,7 +13,7 @@ class InverseGamma(ScipyMixin, Distribution):
     """
     The Inverse Gamma distribution as parameterized in GAMLSS:
 
-    Parameters:
+    The distribution has two parameters:
         - mu: mean-related parameter
         - sigma: dispersion parameter
 

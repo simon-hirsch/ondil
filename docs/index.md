@@ -39,22 +39,23 @@ pip install ondil
 The following few lines give an introduction. We use the `diabetes` data set and model the response variable \(Y\) as Student-\(t\) distributed, where all distribution parameters (location, scale and tail) are modelled conditional on the explanatory variables in \(X\). We use LASSO to estimate the coefficients and the Bayesian information criterion to select the best model along a grid of regularization strengths.
 
 ```python
-import ondil
 import numpy as np
 from sklearn.datasets import load_diabetes
+from ondil.estimators import OnlineDistributionalRegression
+from ondil.distributions import StudentT
 
 X, y = load_diabetes(return_X_y=True)
 
-# Model coefficients 
+# Model coefficients
 equation = {
-    0 : "all", # Can also use "intercept" or np.ndarray of integers / booleans
-    1 : "all", 
-    2 : "all", 
+    0: "all",  # Can also use "intercept" or np.ndarray of integers / booleans
+    1: "all",
+    2: "all",
 }
 
 # Create the estimator
-online_gamlss_lasso = ondil.estimators.OnlineDistributionalRegression(
-    distribution=ondil.T(),
+online_gamlss_lasso = OnlineDistributionalRegression(
+    distribution=StudentT(),
     method="lasso",
     equation=equation,
     fit_intercept=True,
@@ -63,24 +64,19 @@ online_gamlss_lasso = ondil.estimators.OnlineDistributionalRegression(
 
 # Initial Fit
 online_gamlss_lasso.fit(
-    X=X[:-11, :], 
-    y=y[:-11], 
+    X=X[:-11, :],
+    y=y[:-11],
 )
 print("Coefficients for the first N-11 observations \n")
-print(online_gamlss_lasso.betas)
+print(online_gamlss_lasso.beta)
 
 # Update call
-online_gamlss_lasso.update(
-    X=X[[-11], :], 
-    y=y[[-11]]
-)
+online_gamlss_lasso.update(X=X[[-11], :], y=y[[-11]])
 print("\nCoefficients after update call \n")
-print(online_gamlss_lasso.betas)
+print(online_gamlss_lasso.beta)
 
 # Prediction for the last 10 observations
-prediction = online_gamlss_lasso.predict_distribution_parameters(
-    X=X[-10:, :]
-)
+prediction = online_gamlss_lasso.predict_distribution_parameters(X=X[-10:, :])
 
 print("\n Predictions for the last 10 observations")
 # Location, scale and shape (degrees of freedom)
