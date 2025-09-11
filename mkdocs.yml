@@ -14,7 +14,7 @@ nav:
   - Model Selection : model_selection.md
   - Development : development.md
   - Examples:
-      - Multivariate : multivariate.md
+      - Multivariate Distributional Regression : multivariate.md
   - Issues [Github] : "https://github.com/simon-hirsch/ondil/issues"
   - Source [Github] : "https://github.com/simon-hirsch/ondil/tree/main"
   - Licence [Github] : "https://github.com/simon-hirsch/ondil/tree/main?tab=MIT-1-ov-file#readme"
