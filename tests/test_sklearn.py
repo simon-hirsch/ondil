@@ -5,8 +5,13 @@ import pytest
 from sklearn.utils._tags import get_tags
 from sklearn.utils.estimator_checks import check_estimator
 
-import ondil
-import ondil.estimators
+from ondil.estimators import (
+    MultivariateOnlineDistributionalRegressionPath,
+    OnlineDistributionalRegression,
+    OnlineLasso,
+    OnlineLinearModel,
+)
+from ondil.scaler import OnlineScaler
 
 EXPECTED_FAILED_CHECKS = {
     "check_sample_weight_equivalence_on_dense_data": "Insufficient data points to validate this check in the original scikit-learn implementation.",
@@ -20,7 +25,7 @@ EXPECTED_FAILED_CHECKS = {
 @pytest.mark.parametrize("method", ["ols", "lasso", "elasticnet"])
 @pytest.mark.parametrize("ic", ["aic", "bic", "hqc", "max"])
 def test_sklearn_compliance_linear_model(scale_inputs, fit_intercept, method, ic):
-    estimator = ondil.estimators.OnlineLinearModel(
+    estimator = OnlineLinearModel(
         fit_intercept=fit_intercept,
         scale_inputs=scale_inputs,
         method=method,
@@ -43,7 +48,7 @@ def test_sklearn_compliance_lasso_model(
     lambda_n: int,
     lambda_eps: float,
 ):
-    estimator = ondil.estimators.OnlineLasso(
+    estimator = OnlineLasso(
         fit_intercept=fit_intercept,
         scale_inputs=scale_inputs,
         ic=ic,
@@ -59,7 +64,7 @@ def test_sklearn_compliance_lasso_model(
 @pytest.mark.parametrize("method", ["ols", "lasso", "elasticnet"])
 @pytest.mark.parametrize("ic", ["aic", "bic", "hqc", "max"])
 def test_sklearn_compliance_online_gamlss(scale_inputs, method, ic):
-    estimator = ondil.estimators.OnlineDistributionalRegression(
+    estimator = OnlineDistributionalRegression(
         scale_inputs=scale_inputs,
         method=method,
         ic=ic,
@@ -70,7 +75,7 @@ def test_sklearn_compliance_online_gamlss(scale_inputs, method, ic):
 
 
 def test_sklearn_compliance_scaler():
-    estimator = ondil.scaler.OnlineScaler()
+    estimator = OnlineScaler()
     check_estimator(
         estimator,
         on_fail="raise",
@@ -119,7 +124,7 @@ def test_sklearn_compliance_multivariate():
         new=_enforce_estimator_tags_y,
     ):
         _ = check_estimator(
-            ondil.estimators.MultivariateOnlineDistributionalRegressionPath(verbose=0),
+            MultivariateOnlineDistributionalRegressionPath(verbose=0),
             on_fail="raise",
             expected_failed_checks=EXPECTED_FAILED_CHECKS_MV,
         )
