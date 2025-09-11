@@ -15,6 +15,7 @@ EXAMPLE_MD = [
 EXAMPLE_SCRIPTS = [
     "examples/estimation_methods.py",
     "examples/batch_and_online_estimation.py",
+    "examples/multivariate.py",
 ]
 
 
@@ -29,10 +30,13 @@ def test_examples_in_md(filepath):
         code = part.split("```")[0]
         python_blocks.append(code.strip())
     python_code = "\n\n".join(python_blocks)
-    exec(python_code, {}, {})
+    namespace = {}
+    exec(python_code, namespace, namespace)
 
 
 @pytest.mark.parametrize("script", EXAMPLE_SCRIPTS)
 def test_examples_in_py(script):
     with open(script) as f:
-        exec(f.read(), {}, {})
+        file = f.read()
+    namespace = {}
+    exec(file, namespace, namespace)

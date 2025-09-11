@@ -9,9 +9,15 @@
 
 ## Introduction
 
-This package provides an online estimation of distributional regression The main contribution is an online/incremental implementation of the generalized additive models for location, shape and scale (GAMLSS, see [Rigby & Stasinopoulos, 2005](https://academic.oup.com/jrsssc/article-abstract/54/3/507/7113027)) developed in [Hirsch, Berrisch & Ziel, 2024](https://arxiv.org/abs/2407.08750).
+This package provides an online estimation of distributional regression and linear regression models in Python. We provide:
 
-Please have a look at the [documentation](https://simon-hirsch.github.io/ondil/) or the [example files](https://github.com/simon-hirsch/ondil/tree/main/examples)). We're actively working on the package and welcome contributions from the community. Have a look at the [Release Notes](https://github.com/simon-hirsch/ondil/releases) and the [Issue Tracker](https://github.com/simon-hirsch/ondil/issues).
+- Online linear regression models including regularization (Lasso, Ridge, Elastic Net).
+- An online implementation of the generalized additive models for location, shape and scale (GAMLSS, see [Rigby & Stasinopoulos, 2005](https://academic.oup.com/jrsssc/article-abstract/54/3/507/7113027)) developed in [Hirsch, Berrisch & Ziel, 2024](https://arxiv.org/abs/2407.08750).
+- The multivariate extension for online distributional regression models developed in [Hirsch, 2025](https://arxiv.org/abs/2504.02518).
+
+All models are implemented in a way that they are fully compatible with `scikit-learn` estimators and transformers. The main advantage of the online approach is that the model can be updated incrementally using `model.update(X, y)` without the need to refit the whole model from scratch. This is especially useful for large datasets or streaming data. 
+
+Please have a look at the [documentation](https://simon-hirsch.github.io/ondil/) or the [example files](https://github.com/simon-hirsch/ondil/tree/main/examples). We're actively working on the package and welcome contributions from the community. Have a look at the [Release Notes](https://github.com/simon-hirsch/ondil/releases) and the [Issue Tracker](https://github.com/simon-hirsch/ondil/issues).
 
 ## Distributional Regression
 
@@ -86,7 +92,7 @@ print(prediction)
 
 The package is available from [pypi](https://pypi.org/project/ondil/) - do `pip install ondil` and enjoy.
 
-`ondil` is designed to have minimal dependencies. We rely on `python>=3.10`, `numpy`, `numba` and `scipy` in a reasonably up-to-date versions.
+`ondil` is designed to have minimal dependencies. We rely on `python>=3.10`, `numpy`, `numba`, `scipy` and `scikit-learn` in a reasonably up-to-date versions.
 
 ## Authors
 
