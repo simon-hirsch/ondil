@@ -1,6 +1,5 @@
 # This script reproduces the multivariate example from the paper:
 # Muschinski, Thomas, et al. "Cholesky-based multivariate Gaussian regression." Econometrics and Statistics 29 (2024): 261-281.
-
 # It fits a multivariate distributional regression model to simulated data and visualizes the results.
 # The results correspond to Figure 1 in the paper. However, we visualize the the results for the covariance matrix instead of the Cholesky factors.
 # Qualitatively, the results are very similar.
@@ -15,6 +14,8 @@ from ondil.distributions import (
     MultivariateNormalInverseModifiedCholesky,
 )
 from ondil.estimators import MultivariateOnlineDistributionalRegressionPath
+
+np.set_printoptions(precision=3, suppress=True)
 
 
 # Define a function to compute the true parameters
