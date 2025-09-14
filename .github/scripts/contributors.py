@@ -91,6 +91,7 @@ def append_to_readme(committers, issuers, pr_authors, reviewers):
     section_header = "# Contributors"
     table = (
         "\n# Contributors\n\n"
+        "Sorted alphabetically by GitHub username.\n\n"
         "| Contribution | GitHub Users |\n"
         "|-------------------|--------------|\n"
         "| Code | " + ", ".join(gh(u) for u in committers) + " |\n"
