@@ -26,7 +26,6 @@ jobs:
           run: |
             pip install requests
             python .github/scripts/contributors.py
-            git add CONTRIBUTORS.md
 
         - name: Commit and push changes
           env:
@@ -34,4 +33,4 @@ jobs:
           uses: stefanzweifel/git-auto-commit-action@v6
           with:
             commit_message: 'chore: update contributors list [skip ci]" || echo "No changes'
-            file_pattern: 'CONTRIBUTORS.md'
+            file_pattern: 'README.md'
