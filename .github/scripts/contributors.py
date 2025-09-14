@@ -83,16 +83,20 @@ def fetch_contributors():
     return committers, issuers, pr_authors, reviewers
 
 
+def gh(username):
+    return f"[@{username}](https://github.com/{username})"
+
+
 def append_to_readme(committers, issuers, pr_authors, reviewers):
     section_header = "# Contributors"
     table = (
         "\n# Contributors\n\n"
         "| Contribution | GitHub Users |\n"
         "|-------------------|--------------|\n"
-        "| Code | " + ", ".join(f"@{u}" for u in committers) + " |\n"
+        "| Code | " + ", ".join(gh(u) for u in committers) + " |\n"
         "| Reported (closed) Issues | " + ", ".join(f"@{u}" for u in issuers) + " |\n"
-        "| Merged PRs | " + ", ".join(f"@{u}" for u in pr_authors) + " |\n"
-        "| PR Reviews | " + ", ".join(f"@{u}" for u in reviewers) + " |\n"
+        "| Merged PRs | " + ", ".join(gh(u) for u in pr_authors) + " |\n"
+        "| PR Reviews | " + ", ".join(gh(u) for u in reviewers) + " |\n"
     )
 
     readme_path = "README.md"
