@@ -105,7 +105,7 @@ We welcome every contribution from the community. Feel free to open an issue if 
 ## Contributors
 
 `ondil` was developed by Simon Hirsch, Jonathan Berrisch and Florian Ziel. 
-We're grateful for contributions below (sorted alphabetically by GitHub username). 
+We're grateful for contributions below (sorted alphabetically by GitHub username).
 
 | Contribution | GitHub Users |
 |-------------------|--------------|
