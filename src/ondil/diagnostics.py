@@ -5,7 +5,7 @@ import scipy.stats as stats
 from sklearn.base import BaseEstimator
 
 from . import HAS_MPL
-from .base import DiagnosticDisply
+from .base import DiagnosticDisplay
 from .error import check_matplotlib
 from .robust_math import SMALL_NUMBER
 
@@ -14,7 +14,7 @@ check_matplotlib(HAS_MPL)
 import matplotlib.pyplot as plt  # noqa
 
 
-class PITHistogramDisplay(DiagnosticDisply):
+class PITHistogramDisplay(DiagnosticDisplay):
 
     def __init__(self, X, y, unif):
         self.X_ = X
@@ -72,7 +72,7 @@ class PITHistogramDisplay(DiagnosticDisply):
         return self
 
 
-class QQDisplay(DiagnosticDisply):
+class QQDisplay(DiagnosticDisplay):
     def __init__(self, X, y, theoretical, empirical):
         self.X_ = X
         self.y_ = y
@@ -118,7 +118,7 @@ class QQDisplay(DiagnosticDisply):
         return self
 
 
-class WormPlotDisplay(DiagnosticDisply):
+class WormPlotDisplay(DiagnosticDisplay):
     def __init__(self, X, y, xx, yy, z, lower_bound, upper_bound):
         self.X_ = X
         self.y_ = y

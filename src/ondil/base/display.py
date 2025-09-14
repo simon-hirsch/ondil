@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple
 
 
-class DiagnosticDisply(ABC):
+class DiagnosticDisplay(ABC):
 
     @classmethod
     @abstractmethod
