@@ -16,6 +16,8 @@ jobs:
             python-version: "3.13"
 
         - name: Generate CONTRIBUTORS.md
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             pip install requests
             python .github/scripts/contributors.py
