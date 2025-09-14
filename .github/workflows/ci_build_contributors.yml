@@ -32,5 +32,5 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           uses: stefanzweifel/git-auto-commit-action@v6
           with:
-            commit_message: 'chore: update contributors list [skip ci]" || echo "No changes'
+            commit_message: '[AUTOMATED] update contributors list [skip ci]" || echo "No changes'
             file_pattern: 'README.md'
