@@ -182,7 +182,6 @@ class MatrixDiagTriu(LinkFunction):
 
 
 class MatrixDiagTril(LinkFunction):
-
     valid_shapes = [ParameterShapes.LOWER_TRIANGULAR_MATRIX]
 
     def __init__(self, diag_link: LinkFunction, tril_link: LinkFunction):

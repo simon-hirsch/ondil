@@ -1,4 +1,5 @@
 from typing import Literal, Union
+
 import numpy as np
 
 
@@ -82,14 +83,16 @@ class InformationCriterion:
         c = self.criterion
         n, p, ll = self.n_observations, self.n_parameters, log_likelihood
         if c == "aic":
-            return - 2 * ll + p * 2 
+            return -2 * ll + p * 2
         elif c == "aicc":
             if n - p - 1 == 0:
-                raise ValueError("Invalid inputs: n - p - 1 must not be zero for AICC calculation.")
-            return - 2 * ll + p * 2 * n / ( n - p - 1)
+                raise ValueError(
+                    "Invalid inputs: n - p - 1 must not be zero for AICC calculation."
+                )
+            return -2 * ll + p * 2 * n / (n - p - 1)
         elif c == "bic":
-            return - 2 * ll + p * np.log(n) 
+            return -2 * ll + p * np.log(n)
         elif c == "hqc":
-            return - 2 * ll + p * 2 * np.log(np.log(n))
+            return -2 * ll + p * 2 * np.log(np.log(n))
         elif c == "max":
             return -ll
