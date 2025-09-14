@@ -75,10 +75,10 @@ def fetch_contributors():
                     reviewers.add(user["login"])
 
     # Remove None values if any
-    committers.discard(None)
-    issuers.discard(None)
-    pr_authors.discard(None)
-    reviewers.discard(None)
+    committers = sorted(x for x in committers if x is not None)
+    issuers = sorted(x for x in issuers if x is not None)
+    pr_authors = sorted(x for x in pr_authors if x is not None)
+    reviewers = sorted(x for x in reviewers if x is not None)
 
     return committers, issuers, pr_authors, reviewers
 
@@ -89,12 +89,10 @@ def append_to_readme(committers, issuers, pr_authors, reviewers):
         "\n# Contributors\n\n"
         "| Contribution | GitHub Users |\n"
         "|-------------------|--------------|\n"
-        "| Code | " + ", ".join(f"@{u}" for u in sorted(committers)) + " |\n"
-        "| Reported (closed) Issues | "
-        + ", ".join(f"@{u}" for u in sorted(issuers))
-        + " |\n"
-        "| Merged PRs | " + ", ".join(f"@{u}" for u in sorted(pr_authors)) + " |\n"
-        "| PR Reviews | " + ", ".join(f"@{u}" for u in sorted(reviewers)) + " |\n"
+        "| Code | " + ", ".join(f"@{u}" for u in committers) + " |\n"
+        "| Reported (closed) Issues | " + ", ".join(f"@{u}" for u in issuers) + " |\n"
+        "| Merged PRs | " + ", ".join(f"@{u}" for u in pr_authors) + " |\n"
+        "| PR Reviews | " + ", ".join(f"@{u}" for u in reviewers) + " |\n"
     )
 
     readme_path = "README.md"
