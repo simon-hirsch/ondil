@@ -1,29 +1,14 @@
-from abc import ABC, abstractmethod
 from typing import Tuple
 
 import numpy as np
 import scipy.stats as stats
 
-from . import HAS_MPL
+from .base import DiagnosticDisply
+from .error import check_matplotlib
 
-if not HAS_MPL:
-    raise ImportError("Matplotlib is required for diagnostics.")
-else:
-    import matplotlib.pyplot as plt
+check_matplotlib()
 
-
-class DiagnosticDisply(ABC):
-
-    @classmethod
-    @abstractmethod
-    def from_estimator(
-        cls, estimator, X, y, ax=None, figsize: Tuple[float, float] = (10, 5), **kwargs
-    ):
-        raise NotImplementedError("Should implement from_estimator method")
-
-    @abstractmethod
-    def plot(self, ax=None, figsize: Tuple[float, float] = (10, 5), **kwargs):
-        raise NotImplementedError("Should implement plot method")
+import matplotlib.pyplot as plt  # noqa
 
 
 class PITHistogramDisplay(DiagnosticDisply):
