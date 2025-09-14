@@ -88,9 +88,9 @@ def gh(username):
 
 
 def append_to_readme(committers, issuers, pr_authors, reviewers):
-    section_header = "# Contributors"
+    section_header = "## Contributors"
     table = (
-        "\n# Contributors\n\n"
+        "\n## Contributors\n\n"
         "Sorted alphabetically by GitHub username.\n\n"
         "| Contribution | GitHub Users |\n"
         "|-------------------|--------------|\n"
@@ -106,11 +106,11 @@ def append_to_readme(committers, issuers, pr_authors, reviewers):
             content = f.read()
         if section_header in content:
             # Replace existing section
-            pattern = r"\n# Contributors\n\n\|.*?\|\n(?:\|.*?\|\n)*"
+            pattern = r"\n## Contributors\n\n\|.*?\|\n(?:\|.*?\|\n)*"
             new_content = re.sub(pattern, table, content, flags=re.DOTALL)
             if new_content == content:
                 # Fallback: replace from header to next header or EOF
-                pattern2 = r"\n# Contributors.*?(?=\n#|\Z)"
+                pattern2 = r"\n## Contributors.*?(?=\n##|\Z)"
                 new_content = re.sub(pattern2, table, content, flags=re.DOTALL)
             content = new_content
         else:
