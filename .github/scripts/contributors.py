@@ -1,4 +1,5 @@
 import os
+import re
 
 import requests
 
@@ -82,23 +83,42 @@ def fetch_contributors():
     return committers, issuers, pr_authors, reviewers
 
 
-def write_file(committers, issuers, pr_authors, reviewers):
-    with open("CONTRIBUTORS.md", "w", encoding="utf-8") as f:
-        f.write("# Contributors\n\n")
-        f.write("### Code\n")
-        for u in sorted(committers):
-            f.write(f"- @{u}\n")
-        f.write("\n### Closed Issues\n")
-        for u in sorted(issuers):
-            f.write(f"- @{u}\n")
-        f.write("\n### Merged PRs\n")
-        for u in sorted(pr_authors):
-            f.write(f"- @{u}\n")
-        f.write("\n### PR Reviews\n")
-        for u in sorted(reviewers):
-            f.write(f"- @{u}\n")
+def append_to_readme(committers, issuers, pr_authors, reviewers):
+    section_header = "# Contributors"
+    table = (
+        "\n# Contributors\n\n"
+        "| Contribution | GitHub Users |\n"
+        "|-------------------|--------------|\n"
+        "| Code | " + ", ".join(f"@{u}" for u in sorted(committers)) + " |\n"
+        "| Reported (closed) Issues | "
+        + ", ".join(f"@{u}" for u in sorted(issuers))
+        + " |\n"
+        "| Merged PRs | " + ", ".join(f"@{u}" for u in sorted(pr_authors)) + " |\n"
+        "| PR Reviews | " + ", ".join(f"@{u}" for u in sorted(reviewers)) + " |\n"
+    )
+
+    readme_path = "README.md"
+    if os.path.exists(readme_path):
+        with open(readme_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        if section_header in content:
+            # Replace existing section
+            pattern = r"\n# Contributors\n\n\|.*?\|\n(?:\|.*?\|\n)*"
+            new_content = re.sub(pattern, table, content, flags=re.DOTALL)
+            if new_content == content:
+                # Fallback: replace from header to next header or EOF
+                pattern2 = r"\n# Contributors.*?(?=\n#|\Z)"
+                new_content = re.sub(pattern2, table, content, flags=re.DOTALL)
+            content = new_content
+        else:
+            content += table
+        with open(readme_path, "w", encoding="utf-8") as f:
+            f.write(content)
+    else:
+        with open(readme_path, "w", encoding="utf-8") as f:
+            f.write(table)
 
 
 if __name__ == "__main__":
     c, i, p, r = fetch_contributors()
-    write_file(c, i, p, r)
+    append_to_readme(c, i, p, r)
