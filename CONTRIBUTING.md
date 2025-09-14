@@ -21,7 +21,7 @@ We appreciate all contributions and will acknowledge contributions for
 - reported (fixed) issues
 - code reviews
 
-in the `README.md` automatically.
+in the `README.md` automatically - have a look at the [contributors section](https://github.com/simon-hirsch/ondil/tree/main?tab=readme-ov-file#contributors).
 
 ## Current Focus Areas
 
