@@ -95,7 +95,7 @@ def append_to_readme(committers, issuers, pr_authors, reviewers):
         "| Contribution | GitHub Users |\n"
         "|-------------------|--------------|\n"
         "| Code | " + ", ".join(gh(u) for u in committers) + " |\n"
-        "| Reported (closed) Issues | " + ", ".join(f"@{u}" for u in issuers) + " |\n"
+        "| Reported (closed) Issues | " + ", ".join(gh(u) for u in issuers) + " |\n"
         "| Merged PRs | " + ", ".join(gh(u) for u in pr_authors) + " |\n"
         "| PR Reviews | " + ", ".join(gh(u) for u in reviewers) + " |\n"
     )
