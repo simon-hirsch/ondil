@@ -122,3 +122,12 @@ Simon is employed at Statkraft and gratefully acknowledges support received from
 2) Install the necessary dependencies from the `requirements.txt` using `conda create --name <env> --file requirements.txt`.
 3) Run `pip install .` optionally using `--force` or `--force --no-deps` to ensure the package is build from the updated wheels. If you want to 100% sure no cached wheels are there or you need the tarball, run `python -m build` before installing.
 4) Enjoy.
+
+# Contributors
+
+| Contribution | GitHub Users |
+|-------------------|--------------|
+| Code | @BerriJ, @Jaiminoza229984, @flziel, @joza26, @murthy-econometrics-5819, @simon-hirsch |
+| Reported (closed) Issues | @BerriJ, @fkiraly, @joshdunnlime, @murthy-econometrics-5819, @simon-hirsch |
+| Merged PRs | @BerriJ, @Jaiminoza229984, @flziel, @murthy-econometrics-5819, @simon-hirsch |
+| PR Reviews | @BerriJ, @copilot-pull-request-reviewer[bot], @fkiraly, @simon-hirsch |
