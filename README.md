@@ -118,4 +118,22 @@ We're grateful for contributions below (sorted alphabetically by GitHub username
 
 Simon Hirsch is employed at Statkraft and gratefully acknowledges support received from Statkraft for his Ph.D. studies. This work contains the author's opinion and not necessarily reflects Statkraft's position.
 
+## Citation
 
+If you use `ondil` in your research, please cite the following paper(s), depending on what you've used. Thank you!
+
+```bibtex
+@article{hirsch2024online,
+  title={Online distributional regression},
+  author={Hirsch, Simon and Berrisch, Jonathan and Ziel, Florian},
+  journal={arXiv preprint arXiv:2407.08750},
+  year={2024}
+}
+
+@article{hirsch2025online,
+  title={Online Multivariate Regularized Distributional Regression for High-dimensional Probabilistic Electricity Price Forecasting},
+  author={Hirsch, Simon},
+  journal={arXiv preprint arXiv:2504.02518},
+  year={2025}
+}
+```
