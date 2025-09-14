@@ -1,6 +1,7 @@
 from .identitylinks import Identity
 from .logitlinks import Logit
 from .loglinks import Log, LogIdent, LogShiftTwo, LogShiftValue
+from .matrixlinks import MatrixDiag, MatrixDiagTril, MatrixDiagTriu
 from .softpluslinks import (
     InverseSoftPlus,
     InverseSoftPlusShiftTwo,
@@ -21,4 +22,7 @@ __all__ = [
     "Sqrt",
     "SqrtShiftTwo",
     "SqrtShiftValue",
+    "MatrixDiag",
+    "MatrixDiagTriu",
+    "MatrixDiagTril",
 ]

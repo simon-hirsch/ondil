@@ -9,11 +9,15 @@
 
 ## Introduction
 
-This package provides an online estimation of distributional regression The main contribution is an online/incremental implementation of the generalized additive models for location, shape and scale (GAMLSS, see [Rigby & Stasinopoulos, 2005](https://academic.oup.com/jrsssc/article-abstract/54/3/507/7113027)) developed in [Hirsch, Berrisch & Ziel, 2024](https://arxiv.org/abs/2407.08750).
+This package provides an online estimation of distributional regression and linear regression models in Python. We provide:
 
-Please have a look at the [documentation](https://simon-hirsch.github.io/ondil/) or the [example notebook](https://github.com/simon-hirsch/ondil/blob/main/example.ipynb).
+- Online linear regression models including regularization (Lasso, Ridge, Elastic Net).
+- An online implementation of the generalized additive models for location, shape and scale (GAMLSS, see [Rigby & Stasinopoulos, 2005](https://academic.oup.com/jrsssc/article-abstract/54/3/507/7113027)) developed in [Hirsch, Berrisch & Ziel, 2024](https://arxiv.org/abs/2407.08750).
+- The multivariate extension for online distributional regression models developed in [Hirsch, 2025](https://arxiv.org/abs/2504.02518).
 
-We're actively working on the package and welcome contributions from the community. Have a look at the [Release Notes](https://github.com/simon-hirsch/ondil/releases) and the [Issue Tracker](https://github.com/simon-hirsch/ondil/issues).
+All models are implemented in a way that they are fully compatible with `scikit-learn` estimators and transformers. The main advantage of the online approach is that the model can be updated incrementally using `model.update(X, y)` without the need to refit the whole model from scratch. This is especially useful for large datasets or streaming data. 
+
+Please have a look at the [documentation](https://simon-hirsch.github.io/ondil/) or the [example files](https://github.com/simon-hirsch/ondil/tree/main/examples). We're actively working on the package and welcome contributions from the community. Have a look at the [Release Notes](https://github.com/simon-hirsch/ondil/releases) and the [Issue Tracker](https://github.com/simon-hirsch/ondil/issues).
 
 ## Distributional Regression
 
@@ -40,22 +44,23 @@ This allows us to specify very flexible models that consider the conditional beh
 Basic estimation and updating procedure:
 
 ```python
-import ondil
 import numpy as np
 from sklearn.datasets import load_diabetes
+from ondil.estimators import OnlineDistributionalRegression
+from ondil.distributions import StudentT
 
 X, y = load_diabetes(return_X_y=True)
 
-# Model coefficients 
+# Model coefficients
 equation = {
-    0 : "all", # Can also use "intercept" or np.ndarray of integers / booleans
-    1 : "all", 
-    2 : "all", 
+    0: "all",  # Can also use "intercept" or np.ndarray of integers / booleans
+    1: "all",
+    2: "all",
 }
 
 # Create the estimator
-online_gamlss_lasso = ondil.estimators.OnlineDistributionalRegression(
-    distribution=ondil.StudentT(),
+online_gamlss_lasso = OnlineDistributionalRegression(
+    distribution=StudentT(),
     method="lasso",
     equation=equation,
     fit_intercept=True,
@@ -64,24 +69,19 @@ online_gamlss_lasso = ondil.estimators.OnlineDistributionalRegression(
 
 # Initial Fit
 online_gamlss_lasso.fit(
-    X=X[:-11, :], 
-    y=y[:-11], 
+    X=X[:-11, :],
+    y=y[:-11],
 )
 print("Coefficients for the first N-11 observations \n")
 print(online_gamlss_lasso.beta)
 
 # Update call
-online_gamlss_lasso.update(
-    X=X[[-11], :], 
-    y=y[[-11]]
-)
+online_gamlss_lasso.update(X=X[[-11], :], y=y[[-11]])
 print("\nCoefficients after update call \n")
 print(online_gamlss_lasso.beta)
 
 # Prediction for the last 10 observations
-prediction = online_gamlss_lasso.predict_distribution_parameters(
-    X=X[-10:, :]
-)
+prediction = online_gamlss_lasso.predict_distribution_parameters(X=X[-10:, :])
 
 print("\n Predictions for the last 10 observations")
 # Location, scale and shape (degrees of freedom)
@@ -92,7 +92,7 @@ print(prediction)
 
 The package is available from [pypi](https://pypi.org/project/ondil/) - do `pip install ondil` and enjoy.
 
-`ondil` is designed to have minimal dependencies. We rely on `python>=3.10`, `numpy`, `numba` and `scipy` in a reasonably up-to-date versions.
+`ondil` is designed to have minimal dependencies. We rely on `python>=3.10`, `numpy`, `numba`, `scipy` and `scikit-learn` in a reasonably up-to-date versions.
 
 ## Authors
 

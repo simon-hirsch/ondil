@@ -5,6 +5,7 @@ import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Identity, Log
+from ..types import ParameterShapes
 
 
 class Normal(ScipyMixin, Distribution):
@@ -26,9 +27,15 @@ class Normal(ScipyMixin, Distribution):
 
     corresponding_gamlss: str = "NO"
     parameter_names = {0: "mu", 1: "sigma"}
-    parameter_support = {0: (-np.inf, np.inf), 1: (np.nextafter(0, 1), np.inf)}
+    parameter_support = {
+        0: (-np.inf, np.inf),
+        1: (np.nextafter(0, 1), np.inf),
+    }
     distribution_support = (-np.inf, np.inf)
-
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+    }
     # Scipy equivalent and parameter mapping ondil -> scipy
     scipy_dist = st.norm
     scipy_names = {"mu": "loc", "sigma": "scale"}
@@ -101,9 +108,15 @@ class NormalMeanVariance(ScipyMixin, Distribution):
 
     corresponding_gamlss: str = "NO2"
     parameter_names = {0: "mu", 1: "sigma"}
-    parameter_support = {0: (-np.inf, np.inf), 1: (np.nextafter(0, 1), np.inf)}
+    parameter_support = {
+        0: (-np.inf, np.inf),
+        1: (np.nextafter(0, 1), np.inf),
+    }
     distribution_support = (-np.inf, np.inf)
-
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+    }
     # Scipy equivalent and parameter mapping ondil -> scipy
     scipy_dist = st.norm
     scipy_names = {"mu": "loc", "sigma": "scale"}

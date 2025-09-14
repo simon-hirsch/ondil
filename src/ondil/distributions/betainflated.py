@@ -6,6 +6,7 @@ import scipy.stats as st
 
 from ..base import Distribution, LinkFunction
 from ..links import Log, Logit
+from ..types import ParameterShapes
 
 
 class BetaInflated(Distribution):
@@ -45,6 +46,12 @@ class BetaInflated(Distribution):
         3: (np.nextafter(0, 1), np.inf),  ##
     }
     distribution_support = (0, 1)
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+        2: ParameterShapes.SCALAR,
+        3: ParameterShapes.SCALAR,
+    }
 
     def __init__(
         self,

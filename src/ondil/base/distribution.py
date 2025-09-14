@@ -21,11 +21,17 @@ class Distribution(ABC):
     @property
     def corresponding_gamlss(self) -> str | None:
         """The name of the corresponding implementation in 'gamlss.dist' R package."""
-        pass
+        return None
 
     @property
     @abstractmethod
     def parameter_names(self) -> dict:
+        """Parameter name for each column of theta."""
+        pass
+
+    @property
+    @abstractmethod
+    def parameter_shape(self) -> dict:
         """Parameter name for each column of theta."""
         pass
 
@@ -77,6 +83,14 @@ class Distribution(ABC):
                     category=OutOfSupportWarning,
                 )
 
+            # TODO: Add valid shapes to all link functions.
+            if self.parameter_shape[param] not in self.links[param].valid_shapes:
+                raise ValueError(
+                    f"Link function does not match parameter structure for parameter {param}. \n"
+                    f"Parameter structure is {self.parameter_shape[param]}. \n"
+                    f"Link function supports {self.links[param].valid_shapes}"
+                )
+
     def _validate_dln_dpn_inputs(
         self, y: np.ndarray, theta: np.ndarray, param: int
     ) -> None:
@@ -95,21 +109,45 @@ class Distribution(ABC):
         if params[0] == params[1]:
             raise ValueError("Cross derivatives must use different parameters.")
 
-    def link_function(self, y: np.ndarray, param: int = 0) -> np.ndarray:
+    def link_function(
+        self,
+        y: np.ndarray,
+        param: int = 0,
+    ) -> np.ndarray:
         """Apply the link function for param on y."""
         return self.links[param].link(y)
 
-    def link_inverse(self, y: np.ndarray, param: int = 0) -> np.ndarray:
+    def link_inverse(
+        self,
+        y: np.ndarray,
+        param: int = 0,
+    ) -> np.ndarray:
         """Apply the inverse of the link function for param on y."""
         return self.links[param].inverse(y)
 
-    def link_function_derivative(self, y: np.ndarray, param: int = 0) -> np.ndarray:
+    def link_function_derivative(
+        self,
+        y: np.ndarray,
+        param: int = 0,
+    ) -> np.ndarray:
         """Apply the derivative of the link function for param on y."""
         return self.links[param].link_derivative(y)
 
-    def link_inverse_derivative(self, y: np.ndarray, param: int = 0) -> np.ndarray:
+    def link_inverse_derivative(
+        self,
+        y: np.ndarray,
+        param: int = 0,
+    ) -> np.ndarray:
         """Apply the derivative of the inverse link function for param on y."""
         return self.links[param].inverse_derivative(y)
+
+    def link_function_second_derivative(
+        self,
+        y: np.ndarray,
+        param: int = 0,
+    ) -> np.ndarray:
+        """Apply the second derivative of the link function for param on y."""
+        return self.links[param].link_second_derivative(y)
 
     @abstractmethod
     def initial_values(
@@ -229,6 +267,30 @@ class Distribution(ABC):
         Returns:
             np.ndarray: An array of log CDF values corresponding to the data points in `y`.
         """
+
+
+class MultivariateDistributionMixin(ABC):
+
+    # TODO: The element link functions should be defined here as well.
+
+    @staticmethod
+    @abstractmethod
+    def fitted_elements(dim: int) -> Dict[int, int]:
+        return NotImplementedError(
+            "This method should return a list of fitted elements for the multivariate distribution."
+        )
+
+    @abstractmethod
+    def element_dl1_dp1(
+        self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False
+    ):
+        raise NotImplementedError("Not implemented in ABC")
+
+    @abstractmethod
+    def element_dl2_dp2(
+        self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False
+    ):
+        raise NotImplementedError("Not implemented in ABC")
 
 
 class ScipyMixin(ABC):

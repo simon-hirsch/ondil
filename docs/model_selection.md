@@ -5,4 +5,4 @@
 
 ## API Reference
 
-::: ondil.InformationCriterion
+::: ondil.information_criteria.InformationCriterion

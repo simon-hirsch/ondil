@@ -6,13 +6,14 @@ import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Log
+from ..types import ParameterShapes
 
 
 class InverseGamma(ScipyMixin, Distribution):
     """
     The Inverse Gamma distribution as parameterized in GAMLSS:
 
-    Parameters:
+    The distribution has two parameters:
         - mu: mean-related parameter
         - sigma: dispersion parameter
 
@@ -28,6 +29,10 @@ class InverseGamma(ScipyMixin, Distribution):
     parameter_support = {
         0: (np.nextafter(0, 1), np.inf),
         1: (np.nextafter(0, 1), np.inf),
+    }
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
     }
     distribution_support = (0, np.inf)
     scipy_dist = st.invgamma

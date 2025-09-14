@@ -6,6 +6,7 @@ import scipy.stats as st
 
 from ..base import Distribution, LinkFunction
 from ..links import Log, Logit
+from ..types import ParameterShapes
 
 
 class ZeroAdjustedGamma(Distribution):
@@ -37,6 +38,11 @@ class ZeroAdjustedGamma(Distribution):
         2: (np.nextafter(0, 1), np.nextafter(1, 0)),
     }
     distribution_support = (0, np.inf)
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+        2: ParameterShapes.SCALAR,
+    }
 
     def __init__(
         self,
