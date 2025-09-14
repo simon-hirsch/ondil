@@ -3,10 +3,11 @@ from typing import Tuple
 import numpy as np
 import scipy.stats as stats
 
+from . import HAS_MPL
 from .base import DiagnosticDisply
 from .error import check_matplotlib
 
-check_matplotlib()
+check_matplotlib(HAS_MPL)
 
 import matplotlib.pyplot as plt  # noqa
 
