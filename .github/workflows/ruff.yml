@@ -30,7 +30,7 @@ jobs:
     - name: Commit changes
       uses: stefanzweifel/git-auto-commit-action@v6
       with:
-        commit_message: 'style fixes by ruff'
+        commit_message: '[AUTOMATED] Style fixes by ruff'
         file_pattern: '*.py'
         skip_fetch: false
         skip_checkout: false
