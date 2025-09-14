@@ -18,6 +18,7 @@ if find_spec("matplotlib") is not None:
 
 from . import (
     base,
+    diagnostics,
     distributions,
     error,
     estimators,
@@ -33,6 +34,7 @@ __version__ = version("ondil")
 
 __all__ = [
     "base",
+    "diagnostics",
     "error",
     "information_criteria",
     "links",

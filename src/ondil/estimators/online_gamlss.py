@@ -1,10 +1,9 @@
 import copy
 import numbers
 import warnings
-from typing import Any, Dict, Literal, Optional, Tuple, Union
+from typing import Any, Dict, Literal, Optional, Union
 
 import numpy as np
-import scipy.stats as st
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
@@ -14,10 +13,10 @@ from sklearn.utils.validation import (
     validate_data,
 )
 
-from .. import HAS_MPL, HAS_PANDAS, HAS_POLARS
+from .. import HAS_PANDAS, HAS_POLARS
 from ..base import Distribution, EstimationMethod, OndilEstimatorMixin
 from ..distributions import Normal
-from ..error import OutOfSupportError, check_matplotlib
+from ..error import OutOfSupportError
 from ..gram import init_forget_vector
 from ..information_criteria import InformationCriterion
 from ..methods import get_estimation_method
@@ -28,8 +27,6 @@ if HAS_PANDAS:
     import pandas as pd
 if HAS_POLARS:
     import polars as pl  # noqa
-if HAS_MPL:
-    import matplotlib.pyplot as plt  # noqa
 
 
 class OnlineDistributionalRegression(
@@ -231,162 +228,6 @@ class OnlineDistributionalRegression(
     def beta_path(self):
         check_is_fitted(self)
         return self.coef_path_
-
-    def plot_pit_histogram(
-        self,
-        X: np.ndarray,
-        y: np.ndarray,
-        figsize: Tuple[float, float] = (10, 5),
-        ax: Optional[Any] = None,
-        **kwargs,
-    ):
-        """Create a PIT histogram plot for model diagnostics.
-
-        We use sqrt(n) bins for the histogram by default.
-        Note that for n > 10k, this can be a lot of bins and should
-        be changed with the `bins` parameter in the kwargs.
-
-        Args:
-            X (np.ndarray): Covariate matrix $X$.
-            y (np.ndarray): Response variable $y$.
-            figsize (Tuple[float, float], optional): Figure size. Defaults to (10, 5).
-            ax (matplotlib axis, optional): Axis to plot on. Defaults to None.
-            **kwargs (dict): additional parameters that will be passed to `matplotlib.pyplot.hist()`.
-
-        Returns:
-            Figure (plt.ax): Returns the matplotlib axis plot.
-        """
-        check_matplotlib(HAS_MPL)
-        check_is_fitted(self)
-        X, y = validate_data(
-            self, X=X, y=y, reset=False, dtype=[np.float64, np.float32]
-        )
-
-        pred = self.predict_distribution_parameters(X)
-        unif = self.distribution.cdf(y, pred)
-
-        bins = kwargs.pop("bins", np.linspace(0, 1, min(round(np.sqrt(y.shape[0])) + 1, 50)))
-        density = kwargs.pop("density", True)
-        color = kwargs.pop("color", "grey")
-        edgecolor = kwargs.pop("edgecolor", "black")
-        lw = kwargs.pop("lw", 0.5)
-
-        if ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
-        ax.set_title("PIT Histogram")
-        ax.hist(
-            unif, bins=bins, density=density, color=color, edgecolor=edgecolor, lw=lw
-        )
-        ax.set_xlabel("Uniform Space")
-        ax.set_ylabel("Density")
-        ax.set_xlim(0, 1)
-        ax.axhline(1, color="red")
-        ax.grid()
-
-        return ax
-
-    def plot_qq(
-        self,
-        X: np.ndarray,
-        y: np.ndarray,
-        figsize: Tuple[float, float] = (10, 5),
-        ax: Optional[Any] = None,
-        **kwargs,
-    ):
-        """Create a QQ plot for model diagnostics.
-
-        This plot compares the empirical quantiles of the response variable and the predicted quantiles from the distribution.
-
-        Args:
-            X (np.ndarray): Covariate matrix $X$.
-            y (np.ndarray): Response variable $y$.
-            figsize (Tuple[float, float], optional): Figure size. Defaults to (10, 5).
-            ax (matplotlib axis, optional): Axis to plot on. Defaults to None.
-            **kwargs: Additional arguments passed to plt.scatter.
-
-        Returns:
-            matplotlib axis: The axis with the QQ plot.
-        """
-        check_matplotlib(HAS_MPL)
-        check_is_fitted(self)
-        X, y = validate_data(
-            self, X=X, y=y, reset=False, dtype=[np.float64, np.float32]
-        )
-
-        pred = self.predict_distribution_parameters(X)
-        quantiles = self.distribution.cdf(y, pred)
-        quantiles = np.clip(quantiles, 1e-6, 1 - 1e-6)  # avoid infs
-
-        n = len(y)
-        theoretical = np.linspace(1 / (n + 1), n / (n + 1), n)
-        empirical = np.sort(quantiles)
-
-        if ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
-        ax.scatter(theoretical, empirical, **kwargs)
-        ax.plot([0, 1], [0, 1], color="red", lw=1)
-        ax.set_xlabel("Theoretical Quantiles")
-        ax.set_ylabel("Empirical Quantiles")
-        ax.set_title("QQ Plot")
-        ax.grid()
-        return ax
-
-    def plot_worm(
-        self,
-        X: np.ndarray,
-        y: np.ndarray,
-        level: float = 0.95,
-        figsize: Tuple[float, float] = (10, 5),
-        ax: Optional[Any] = None,
-        **kwargs,
-    ):
-        """Create a worm plot (de-trended QQ plot of the residuals) for model diagnostics.
-
-        Args:
-            X (np.ndarray): Covariate matrix $X$.
-            y (np.ndarray): Response variable $y$.
-            level (float, optional): Confidence level for the confidence bands. Defaults to 0.95.
-            figsize (Tuple[float, float], optional): Figure size. Defaults to (10, 5).
-            ax (matplotlib axis, optional): Axis to plot on. Defaults to None.
-            **kwargs: Additional arguments passed to plt.scatter.
-
-        Returns:
-            matplotlib axis: The axis with the worm plot.
-        """
-        check_matplotlib(HAS_MPL)
-        check_is_fitted(self)
-        X, y = validate_data(
-            self, X=X, y=y, reset=False, dtype=[np.float64, np.float32]
-        )
-
-        # See https://github.com/gamlss-dev/gamlss/blob/main/R/wp.R
-
-        pred = self.predict(X)
-        residuals = y - pred
-
-        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.probplot.html
-        # equivalent to R's qqnorm and qqline
-        xx, yy = st.probplot(residuals, fit=False)
-        yy = yy - xx
-        n = len(xx)
-        z = np.linspace(np.min(xx), np.max(xx), n)
-        p = st.norm(loc=0, scale=1).cdf(z)
-        se = (1 / st.norm().pdf(z)) * (np.sqrt(p * (1 - p) / n))
-        lower_bound = se * st.norm.ppf((1 - level) / 2)
-        upper_bound = se * st.norm.ppf((1 + level) / 2)
-
-        if ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
-        ax.scatter(xx, yy, **kwargs)
-        ax.plot(z, lower_bound, color="red", label="Lower confidence bound")
-        ax.plot(z, upper_bound, color="red", label="Upper confidence bound")
-        ax.fill_between(z, lower_bound, upper_bound, color="grey", alpha=0.2)
-        ax.axhline(0, color="black", lw=1, ls="--")
-        ax.set_xlabel("Theoretical Quantiles")
-        ax.set_ylabel("Empirical - Theoretical Quantiles")
-        ax.set_title("Worm Plot (De-trended QQ Plot)")
-        ax.grid()
-        return ax
 
     def _prepare_estimator(self):
         self._equation = self._process_equation(self.equation)
