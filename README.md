@@ -125,9 +125,11 @@ Simon is employed at Statkraft and gratefully acknowledges support received from
 
 # Contributors
 
+Sorted alphabetically by GitHub username.
+
 | Contribution | GitHub Users |
 |-------------------|--------------|
-| Code | @BerriJ, @Jaiminoza229984, @flziel, @joza26, @murthy-econometrics-5819, @simon-hirsch |
+| Code | [@BerriJ](https://github.com/BerriJ), [@Jaiminoza229984](https://github.com/Jaiminoza229984), [@flziel](https://github.com/flziel), [@joza26](https://github.com/joza26), [@murthy-econometrics-5819](https://github.com/murthy-econometrics-5819), [@simon-hirsch](https://github.com/simon-hirsch) |
 | Reported (closed) Issues | @BerriJ, @fkiraly, @joshdunnlime, @murthy-econometrics-5819, @simon-hirsch |
-| Merged PRs | @BerriJ, @Jaiminoza229984, @flziel, @murthy-econometrics-5819, @simon-hirsch |
-| PR Reviews | @BerriJ, @copilot-pull-request-reviewer[bot], @fkiraly, @simon-hirsch |
+| Merged PRs | [@BerriJ](https://github.com/BerriJ), [@Jaiminoza229984](https://github.com/Jaiminoza229984), [@flziel](https://github.com/flziel), [@murthy-econometrics-5819](https://github.com/murthy-econometrics-5819), [@simon-hirsch](https://github.com/simon-hirsch) |
+| PR Reviews | [@BerriJ](https://github.com/BerriJ), [@copilot-pull-request-reviewer[bot]](https://github.com/copilot-pull-request-reviewer[bot]), [@fkiraly](https://github.com/fkiraly), [@simon-hirsch](https://github.com/simon-hirsch) |
