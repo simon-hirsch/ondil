@@ -2,10 +2,12 @@ from typing import Tuple
 
 import numpy as np
 import scipy.stats as stats
+from sklearn.base import BaseEstimator
 
 from . import HAS_MPL
 from .base import DiagnosticDisply
 from .error import check_matplotlib
+from .robust_math import SMALL_NUMBER
 
 check_matplotlib(HAS_MPL)
 
@@ -22,10 +24,10 @@ class PITHistogramDisplay(DiagnosticDisply):
     @classmethod
     def from_estimator(
         cls,
-        estimator,
-        X,
-        y,
-        ax=None,
+        estimator: BaseEstimator,
+        X: np.ndarray,
+        y: np.ndarray,
+        ax: plt.Axes = None,
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "PITHistogramDisplay":
@@ -35,7 +37,7 @@ class PITHistogramDisplay(DiagnosticDisply):
 
     def plot(
         self,
-        ax=None,
+        ax: plt.Axes = None,
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "PITHistogramDisplay":
@@ -80,16 +82,16 @@ class QQDisplay(DiagnosticDisply):
     @classmethod
     def from_estimator(
         cls,
-        estimator,
-        X,
-        y,
-        ax=None,
+        estimator: BaseEstimator,
+        X: np.ndarray,
+        y: np.ndarray,
+        ax: plt.Axes = None,
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "QQDisplay":
         pred = estimator.predict_distribution_parameters(X)
         quantiles = estimator.distribution.cdf(y, pred)
-        quantiles = np.clip(quantiles, 1e-6, 1 - 1e-6)
+        quantiles = np.clip(quantiles, SMALL_NUMBER, 1 - SMALL_NUMBER)
         n = len(y)
         theoretical = np.linspace(1 / (n + 1), n / (n + 1), n)
         empirical = np.sort(quantiles)
@@ -97,7 +99,7 @@ class QQDisplay(DiagnosticDisply):
 
     def plot(
         self,
-        ax=None,
+        ax: plt.Axes = None,
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "QQDisplay":
@@ -129,10 +131,10 @@ class WormPlotDisplay(DiagnosticDisply):
     @classmethod
     def from_estimator(
         cls,
-        estimator,
-        X,
-        y,
-        ax=None,
+        estimator: BaseEstimator,
+        X: np.ndarray,
+        y: np.ndarray,
+        ax: plt.Axes = None,
         figsize: Tuple[float, float] = (10, 5),
         level: float = 0.95,
         **kwargs,
@@ -155,7 +157,7 @@ class WormPlotDisplay(DiagnosticDisply):
 
     def plot(
         self,
-        ax=None,
+        ax: plt.Axes = None,
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "WormPlotDisplay":
