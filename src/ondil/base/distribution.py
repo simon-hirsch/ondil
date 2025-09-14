@@ -270,7 +270,6 @@ class Distribution(ABC):
 
 
 class MultivariateDistributionMixin(ABC):
-
     # TODO: The element link functions should be defined here as well.
 
     @staticmethod
