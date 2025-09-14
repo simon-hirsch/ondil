@@ -22,7 +22,7 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 | --------------------------------------------------------------- | -------------------------------------- | ----------------------- |
 | [`Normal`](#ondil.distributions.Normal)                         | Gaussian (mean and standard deviation) | `scipy.stats.norm`      |
 | [`NormalMeanVariance`](#ondil.distributions.NormalMeanVariance) | Gaussian (mean and variance)           | `scipy.stats.norm`      |
-| [`T`](#ondil.distributions.T)                                   | Student's $t$ distribution             | `scipy.stats.t`         |
+| [`StudentT`](#ondil.distributions.StudentT)                     | Student's $t$ distribution             | `scipy.stats.t`         |
 | [`JSU`](#ondil.distributions.JSU)                               | Johnson's SU distribution              | `scipy.stats.johnsonsu` |
 | [`Gamma`](#ondil.distributions.Gamma)                           | Gamma distribution                     | `scipy.stats.gamma`     |
 | [`LogNormal`](#ondil.distributions.LogNormal)                   | Log-normal distribution                | `scipy.stats.lognorm`   |
@@ -36,6 +36,18 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 | [`ReverseGumbel`](#ondil.distributions.ReverseGumbel)           | Reverse Gumbel distribution            | `scipy.stats.gumbel_r`  |
 | [`InverseGamma`](#ondil.distributions.InverseGamma)             | Inverse Gamma distribution             | `scipy.stats.invgamma`  |
 | [`BetaInflatedZero`](#ondil.distributions.BetaInflatedZero)     | Zero Inflated Beta distribution        | -                       |
+| [`ZeroAdjustedGamma`](#ondil.distributions.ZeroAdjustedGamma)   | Zero Adjusted Gamma distribution       | -                       |
+
+| Distribution                                                           | Description                                   | Scale Matrix Parameterization         | Formula                                                                                 |
+| ---------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------- |
+| [`MultivariateNormalInverseCholesky`](#ondil.distributions.MultivariateNormalInverseCholesky)             | Multivariate normal (inverse Cholesky)        | Inverse Cholesky factorization        | \$\\Sigma = (L L^{\\top})^{-1}\$, where \$L\$ is lower triangular                               |
+| [`MultivariateNormalInverseModifiedCholesky`](#ondil.distributions.MultivariateNormalInverseModifiedCholesky) | Multivariate normal (inverse modified Cholesky) | Inverse modified Cholesky factorization | \$\\Sigma = (T D T^{\\top})^{-1}\$, \$T\$ unit lower triangular, \$D\$ diagonal                   |
+| [`MultivariateNormalInverseLowRank`](#ondil.distributions.MultivariateNormalInverseLowRank)               | Multivariate normal (inverse low-rank)        | Inverse low-rank factorization        | \$\\Sigma = (U U^{\\top} + D)^{-1}\$, \$U\$ low-rank, \$D\$ diagonal                             |
+| [`MultivariateStudentTInverseCholesky`](#ondil.distributions.MultivariateStudentTInverseCholesky)         | Multivariate Student's \$t\$ (inverse Cholesky) | Inverse Cholesky factorization        | \$\\Sigma = (L L^{\\top})^{-1}\$, where \$L\$ is lower triangular                               |
+| [`MultivariateStudentTInverseModifiedCholesky`](#ondil.distributions.MultivariateStudentTInverseModifiedCholesky) | Multivariate Student's \$t\$ (inverse modified Cholesky) | Inverse modified Cholesky factorization | \$\\Sigma = (T D T^{\\top})^{-1}\$, \$T\$ unit lower triangular, \$D\$ diagonal                   |
+| [`MultivariateStudentTInverseLowRank`](#ondil.distributions.MultivariateStudentTInverseLowRank)           | Multivariate Student's \$t\$ (inverse low-rank) | Inverse low-rank factorization        | \$\\Sigma = (U U^{\\top} + D)^{-1}\$, \$U\$ low-rank, \$D\$ diagonal                             |
+
+
 
 ## API Reference
 
@@ -43,7 +55,7 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 
 ::: ondil.distributions.NormalMeanVariance
 
-::: ondil.distributions.T
+::: ondil.distributions.StudentT
 
 ::: ondil.distributions.JSU
 
@@ -69,7 +81,23 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 
 ::: ondil.distributions.InverseGamma
 
+::: ondil.distributions.ZeroAdjustedGamma
+
 ::: ondil.distributions.BetaInflatedZero
+
+## Multivariate Distributions
+
+::: ondil.distributions.MultivariateNormalInverseCholesky
+
+::: ondil.distributions.MultivariateNormalInverseModifiedCholesky
+
+::: ondil.distributions.MultivariateNormalInverseLowRank
+
+::: ondil.distributions.MultivariateStudentTInverseCholesky
+
+::: ondil.distributions.MultivariateStudentTInverseModifiedCholesky
+
+::: ondil.distributions.MultivariateStudentTInverseLowRank
 
 ## Base Class
 
