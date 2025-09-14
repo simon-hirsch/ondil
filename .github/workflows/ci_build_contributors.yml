@@ -18,7 +18,7 @@ jobs:
         - name: Generate CONTRIBUTORS.md
           run: |
             pip install requests
-            python .github/scripts/generate_contributors.py
+            python .github/scripts/contributors.py
 
         - name: Commit and push changes
           run: |
