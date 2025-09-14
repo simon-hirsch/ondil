@@ -91,7 +91,8 @@ def append_to_readme(committers, issuers, pr_authors, reviewers):
     section_header = "## Contributors"
     table = (
         "\n## Contributors\n\n"
-        "Sorted alphabetically by GitHub username.\n\n"
+        "`ondil` was developed by Simon Hirsch, Jonathan Berrisch and Florian Ziel. \n"
+        "We're grateful for contributions below (sorted alphabetically by GitHub username).\n\n"
         "| Contribution | GitHub Users |\n"
         "|-------------------|--------------|\n"
         "| Code | " + ", ".join(gh(u) for u in committers) + " |\n"
