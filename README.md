@@ -94,49 +94,18 @@ The package is available from [pypi](https://pypi.org/project/ondil/) - do `pip 
 
 `ondil` is designed to have minimal dependencies. We rely on `python>=3.10`, `numpy`, `numba`, `scipy` and `scikit-learn` in a reasonably up-to-date versions.
 
-## Authors
-
-- Simon Hirsch, University of Duisburg-Essen & Statkraft
-- Jonathan Berrisch, University of Duisburg-Essen
-- Florian Ziel, University of Duisburg-Essen
-
 ## I was looking for `rolch` but I found `ondil`?
 
 `rolch` (Regularized Online Learning for Conditional Heteroskedasticity) was the original name of this package, but we decided to rename it to `ondil` (Online Distributional Learning) to better reflect its purpose and functionality, since conditional heteroskedasticity (=non constant variance) is just one of the many applications for distributional regression models that can be estimated with this package.
 
 ## Contributing
 
-We welcome every contribution from the community. Feel free to open an issue if you find bugs or want to propose changes.
-
-We're still in an early phase and welcome feedback, especially on the usability and "look and feel" of the package. Secondly, we're working to port distributions from the `R`-GAMLSS package and welcome according PRs.
-
-To get started, just create a fork and get going. We will modularize the code over the next versions and increase our testing coverage. We use `ruff` and `black` as formatters.
-
-## Acknowledgements & Disclosure
-
-Simon is employed at Statkraft and gratefully acknowledges support received from Statkraft for his PhD studies. This work contains the author's opinion and not necessarily reflects Statkraft's position.
-
-## Install from Source
-
-1) Clone this repo.
-2) Install the necessary dependencies from the `requirements.txt` using `conda create --name <env> --file requirements.txt`.
-3) Run `pip install .` optionally using `--force` or `--force --no-deps` to ensure the package is build from the updated wheels. If you want to 100% sure no cached wheels are there or you need the tarball, run `python -m build` before installing.
-4) Enjoy.
-
-# Contributors
-
-Sorted alphabetically by GitHub username.
-
-| Contribution | GitHub Users |
-|-------------------|--------------|
-| Code | [@BerriJ](https://github.com/BerriJ), [@Jaiminoza229984](https://github.com/Jaiminoza229984), [@flziel](https://github.com/flziel), [@joza26](https://github.com/joza26), [@murthy-econometrics-5819](https://github.com/murthy-econometrics-5819), [@simon-hirsch](https://github.com/simon-hirsch) |
-| Reported (closed) Issues | [@BerriJ](https://github.com/BerriJ), [@fkiraly](https://github.com/fkiraly), [@joshdunnlime](https://github.com/joshdunnlime), [@murthy-econometrics-5819](https://github.com/murthy-econometrics-5819), [@simon-hirsch](https://github.com/simon-hirsch) |
-| Merged PRs | [@BerriJ](https://github.com/BerriJ), [@Jaiminoza229984](https://github.com/Jaiminoza229984), [@flziel](https://github.com/flziel), [@murthy-econometrics-5819](https://github.com/murthy-econometrics-5819), [@simon-hirsch](https://github.com/simon-hirsch) |
-| PR Reviews | [@BerriJ](https://github.com/BerriJ), [@copilot-pull-request-reviewer[bot]](https://github.com/copilot-pull-request-reviewer[bot]), [@fkiraly](https://github.com/fkiraly), [@simon-hirsch](https://github.com/simon-hirsch) |
+We welcome every contribution from the community. Feel free to open an issue if you find bugs or want to propose changes. We're still in an early phase and welcome feedback, especially on the usability and "look and feel" of the package. Secondly, we're working to port distributions from the `R`-GAMLSS package and welcome according PRs.
 
 ## Contributors
 
-Sorted alphabetically by GitHub username.
+`ondil` was developed by Simon Hirsch, Jonathan Berrisch and Florian Ziel. 
+We're grateful for contributions below (sorted alphabetically by GitHub username). 
 
 | Contribution | GitHub Users |
 |-------------------|--------------|
@@ -144,3 +113,9 @@ Sorted alphabetically by GitHub username.
 | Reported (closed) Issues | [@BerriJ](https://github.com/BerriJ), [@fkiraly](https://github.com/fkiraly), [@joshdunnlime](https://github.com/joshdunnlime), [@murthy-econometrics-5819](https://github.com/murthy-econometrics-5819), [@simon-hirsch](https://github.com/simon-hirsch) |
 | Merged PRs | [@BerriJ](https://github.com/BerriJ), [@Jaiminoza229984](https://github.com/Jaiminoza229984), [@flziel](https://github.com/flziel), [@murthy-econometrics-5819](https://github.com/murthy-econometrics-5819), [@simon-hirsch](https://github.com/simon-hirsch) |
 | PR Reviews | [@BerriJ](https://github.com/BerriJ), [@copilot-pull-request-reviewer[bot]](https://github.com/copilot-pull-request-reviewer[bot]), [@fkiraly](https://github.com/fkiraly), [@simon-hirsch](https://github.com/simon-hirsch) |
+
+## Acknowledgements & Disclosure
+
+Simon Hirsch is employed at Statkraft and gratefully acknowledges support received from Statkraft for his Ph.D. studies. This work contains the author's opinion and not necessarily reflects Statkraft's position.
+
+
