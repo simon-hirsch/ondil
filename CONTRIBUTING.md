@@ -11,9 +11,9 @@ We welcome contributions from the community! Whether you're fixing a bug, adding
 - **Pull requests:** Contributed code and documentation improvements are welcome follow the usual steps:
   1. Fork and branch from `main`.
   2. Write clear commits.
-  3. Ensure all tests pass. We enforce this in the CI.
+  3. Ensure all tests pass. We enforce this in the CI. We use `pytest`. The requirements for all tests can be installed with `pip install requirements_tests.txt -r`. 
   4. Follow the code style (we use `ruff` and `black`), which will (soon) also be enforced in the CI.
-  4. Open a PR and request review from maintainers [@BerriJ](https://github.com/berrij/), [@simonhirsch](https://github.com/simon-hirsch/) or [@flziel](https://github.com/flziel/). We do our best to quickly react and review PRs.
+  5. Open a PR and request review from maintainers [@BerriJ](https://github.com/berrij/), [@simonhirsch](https://github.com/simon-hirsch/) or [@flziel](https://github.com/flziel/). We do our best to quickly react and review PRs.
 
 We appreciate all contributions and will acknowledge contributions for
 
