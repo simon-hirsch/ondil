@@ -306,8 +306,8 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         u = np.clip(u, UMIN, UMAX)
         v = np.clip(v, UMIN, UMAX)
 
-        # Swap u and v if un == 2
-        if un == 2:
+        # Swap u and v if un == 1
+        if un == 1:
             u, v = v, u
 
         # Handle edge cases
@@ -329,6 +329,43 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         # Clip output for numerical stability
         h = np.clip(h, UMIN, UMAX)
         return h
+
+    def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
+        """
+        Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
+
+        Args:
+            u (np.ndarray): Array of shape (n,) with values in (0, 1).
+            v (np.ndarray): Array of shape (n,) with values in (0, 1).
+            theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
+            un (int): Determines which conditional to compute.
+
+        Returns:
+            np.ndarray: Array of shape (n,) with inverse conditional probabilities.
+        """
+        M = u.shape[0]
+        UMIN = 1e-12
+        UMAX = 1 - 1e-12
+
+        u = np.clip(u, UMIN, UMAX)
+        v = np.clip(v, UMIN, UMAX)
+
+        # Swap u and v if un == 1
+        if un == 1:
+            u, v = v, u
+
+        hinv = np.empty(M)
+        qnorm_u = st.norm.ppf(u)
+        qnorm_v = st.norm.ppf(v)
+
+        for m in range(M):
+            theta_m = theta[0][m] if hasattr(theta[0], '__len__') else theta[0]
+            x = qnorm_u[m] * np.sqrt(1.0 - theta_m**2) + theta_m * qnorm_v[m]
+            hinv[m] = st.norm.cdf(x)
+
+        # Clip output for numerical stability
+        hinv = np.clip(hinv, UMIN, UMAX)
+        return hinv
 
 ##########################################################
 ### numba JIT-compiled functions for the derivatives #####

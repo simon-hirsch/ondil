@@ -181,7 +181,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         early_stopping_rel_tol: float = 0.001,
         weight_delta: float | Dict[int, float] = 1.0,
         max_iterations_inner: int = 10,
-        max_iterations_outer: int = 10,
+        max_iterations_outer: int = 20,
         overshoot_correction: Optional[Dict[int, float]] = None,
         dampen_estimation: bool | int = False,
         debug: bool = False,
@@ -293,7 +293,6 @@ class MultivariateOnlineDistributionalRegressionPath(
             # No warning since we expect that floats/strings/ints are either the defaults
             # Or given on purpose for all params the ame
             attribute = {p: attribute for p in range(self.distribution.n_params)}
-
         return attribute
 
     def _prepare_estimator(self):
@@ -750,7 +749,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         )
         # Call the fit
         self._outer_fit(X=X_scaled, y=y, theta=theta)
-        self._print_message(message="Finished fitting distribution parameters.")
+        #self._print_message(message="Finished fitting distribution parameters.")
 
         return self
 
@@ -1064,8 +1063,13 @@ class MultivariateOnlineDistributionalRegressionPath(
                             eta = self._make_initial_eta(theta)
                             tau = self._make_initial_eta(theta)
                             tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
+<<<<<<< HEAD
  
 >>>>>>> 88bffd4 (minor updates)
+=======
+                            #tau[a][p] = theta[a][p]
+
+>>>>>>> c403d59 (Update bicop_normal and online_mvdistreg with latest changes)
                         if p == 0:
                             eta[a][p] = self.distribution.link_function(tau[a][p], p)
                             eta[a][p] = self.distribution.cube_to_flat(eta[a][p], p)
@@ -1233,10 +1237,38 @@ class MultivariateOnlineDistributionalRegressionPath(
                             y_gram=self._y_gram[p][k][a][:, None],
                             is_regularized=self.is_regularized_[p][k],
                         )
+
                         eta_elem = x @ self.coef_path_[p][k][a].T
-                        theta_elem = self.distribution.element_link_inverse(
-                            eta_elem, param=p, k=k, d=self.dim_
-                        )
+
+                        if issubclass(self.distribution.__class__, CopulaMixin) or (
+                            issubclass(self.distribution.__class__, MarginalCopulaMixin)
+                            and p > 1
+                        ):
+
+                            eta_elem = self.distribution.flat_to_cube(
+                            eta_elem, param=p
+                            )
+
+                            tau_elem = (1-1e-5)*self.distribution.link_inverse(
+                                eta_elem, param=p
+                            )
+                            eta_elem = self.distribution.link_function(
+                                self.distribution.flat_to_cube(tau_elem, param=p), param=p
+                            )
+
+                            theta_elem = self.distribution.param_link_inverse(
+                                self.distribution.flat_to_cube(tau_elem, param=p), param=p
+                            )
+
+                            
+                        else: 
+                            eta_elem = self.distribution.flat_to_cube(
+                            eta_elem, param=p
+                            )
+
+                            theta_elem = self.distribution.element_link_inverse(
+                                eta_elem, param=p, k=k, d=self.dim_
+                            )
 
                         opt_ic = self._fit_model_selection(
                             y=y,
@@ -1253,6 +1285,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                         theta[a] = self.distribution.set_theta_element(
                             theta[a], theta_elem[:, opt_ic], param=p, k=k
                         )
+
                     else:
                         self.coef_path_[p][k][a] = None
                         self.coef_[p][k][a] = self._method[p][k].fit_beta(
@@ -1284,6 +1317,11 @@ class MultivariateOnlineDistributionalRegressionPath(
                             theta[a][p] = self.distribution.param_link_inverse(
                                 self.distribution.flat_to_cube(tau[a][p], param=p), param=p
                             )
+
+                            #theta[a][p] = tau[a][p]
+
+
+
                         else:
                             tau[a][p] = (1-1e-5)*self.distribution.link_inverse(
                                 self.distribution.flat_to_cube(eta[a], param=p), param=p
@@ -1294,6 +1332,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                             theta[a][p] = self.distribution.param_link_inverse(
                                 self.distribution.flat_to_cube(tau[a], param=p), param=p
                             )
+                            #theta[a][p] = tau[a][p]
 
 
                     elif issubclass(self.distribution.__class__, MarginalCopulaMixin) and p <= 1:
@@ -1339,9 +1378,10 @@ class MultivariateOnlineDistributionalRegressionPath(
                 ).sum()
             ## Check the most important convergence measures here now
             if inner_iteration == (self.max_iterations_inner - 1):
-                warnings.warn(
-                    "Reached max inner iterations. Algorithm may or may not be converged."
-                )
+                0
+                #warnings.warn(
+                #    "Reached max inner iterations. Algorithm may or may not be converged."
+                #)
             self.iteration_count_[outer_iteration, p, a] = inner_iteration
             self.iteration_likelihood_[outer_iteration, inner_iteration, p, a] = (
                 self._current_likelihood[a]
@@ -1368,7 +1408,7 @@ class MultivariateOnlineDistributionalRegressionPath(
 
             # If the LL is decreasing, we're resetting to the previous iteration
             if ((outer_iteration > 0) | (inner_iteration > 1)) & decreasing:
-                warnings.warn("Likelihood is decreasing. Breaking.")
+                #warnings.warn("Likelihood is decreasing. Breaking.")
                 # Reset to values from the previous iteration
                 theta = prev_theta
                 self._model_selection = prev_model_selection
@@ -1437,6 +1477,8 @@ class MultivariateOnlineDistributionalRegressionPath(
             nonzero = nonzero + self.count_coef_to_be_fitted(
                 outer_iteration, inner_iteration, adr=a, param=param, k=k
             )
+
+
             ic = InformationCriterion(
                 n_observations=self.n_observations_,
                 n_parameters=nonzero,
@@ -1447,6 +1489,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 "non_zero": nonzero,
                 "ic": ic,
             }
+
             opt_ic = np.argmin(ic)
 
         return opt_ic
@@ -2096,9 +2139,10 @@ class MultivariateOnlineDistributionalRegressionPath(
 
             # Are we in the last iteration
             if inner_iteration == (self.max_iterations_inner - 1):
-                warnings.warn(
-                    "Reached max inner iterations. Algorithm may or may not be converged."
-                )
+                0
+                #warnings.warn(
+                #    "Reached max inner iterations. Algorithm may or may not be converged."
+                #)
 
             # Are we converged
             if inner_iteration > 0:
@@ -2265,3 +2309,5 @@ class MultivariateOnlineDistributionalRegressionPath(
         self.theta_ = theta
         self.optimal_theta_ = self.theta_[self.optimal_adr_]
         self.last_fit_adr_max_ = self.optimal_adr_
+
+
