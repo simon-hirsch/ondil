@@ -1364,19 +1364,22 @@ class MultivariateOnlineDistributionalRegressionPath(
         out = {}
         for a in range(self.adr_steps_):
             out[a] = {}
-            for p in range(self.distribution.n_params):
-                array = np.zeros((N, self.n_dist_elements_[p]))
-                for k in range(self.n_dist_elements_[p]):
-                    array[:, k] = (
-                        make_model_array(
-                            X=X_scaled,
-                            eq=self._equation[p][k],
-                            fit_intercept=self._fit_intercept[p],
-                        )
-                        @ self.coef_[p][k][a, :]
-                    ).squeeze()
-                out[a][p] = self.distribution.flat_to_cube(array, p)
-                out[a][p] = self.distribution.link_inverse(out[a][p], p)
+            if a >= self.optimal_adr_:
+                for p in range(self.distribution.n_params):
+                    array = np.zeros((N, self.n_dist_elements_[p]))
+                    for k in range(self.n_dist_elements_[p]):
+                        array[:, k] = (
+                            make_model_array(
+                                X=X_scaled,
+                                eq=self._equation[p][k],
+                                fit_intercept=self._fit_intercept[p],
+                            )
+                            @ self.coef_[p][k][a, :]
+                        ).squeeze()
+                    out[a][p] = self.distribution.flat_to_cube(array, p)
+                    out[a][p] = self.distribution.link_inverse(out[a][p], p)
+            else:
+                out[a] = copy.deepcopy(out[self.optimal_adr_])
 
         return out
 
