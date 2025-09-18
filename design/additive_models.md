@@ -26,7 +26,7 @@ model = AdditiveDistributionalRegression(
         0 : [
             LinearTerm(features=["feature1", "feature2"]),
             SplineTerm(features=["feature3"], n_splines=10, degree=3),
-            AutoregresiveTerm(lags=3),
+            AutoregresiveTerm(features=["feature1", "feature4"],lags=[[1,2,7],[1]] ),
         ], 
         1 : [LinearTerm(features=["feature1"])]
     }, 
