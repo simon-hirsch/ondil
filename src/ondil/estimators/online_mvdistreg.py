@@ -129,6 +129,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         "forget": [Interval(numbers.Real, 0.0, 1.0, closed="left"), dict],
         "learning_rate": [Interval(numbers.Real, 0.0, 1.0, closed="left")],
         "fit_intercept": [bool, dict],
+        "regularize_intercept": [bool, dict],
         "scale_inputs": [bool, np.ndarray],
         "verbose": [Interval(numbers.Integral, 0, None, closed="left")],
         "method": [StrOptions({"ols", "lasso"}), dict],
@@ -166,6 +167,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         forget: float | Dict = 0.0,
         learning_rate: float = 0.0,
         fit_intercept: bool = True,
+        regularize_intercept: bool = False,
         scale_inputs: bool = True,
         verbose: int = 1,
         method: Literal["ols", "lasso"] | Dict[int, Literal["ols", "lasso"]] = "ols",
@@ -200,6 +202,7 @@ class MultivariateOnlineDistributionalRegressionPath(
             forget (float | Dict, optional): Forgetting factor for online updates, can be a float or per-dimension dict. Defaults to 0.0.
             learning_rate (float, optional): Learning rate for online updates. Defaults to 0.0.
             fit_intercept (bool, optional): Whether to fit an intercept term. Defaults to True.
+            regularize_intercept (bool, optional): Whether to regularize the intercept term. Defaults to False.
             scale_inputs (bool, optional): Whether to scale input features. Defaults to True.
             verbose (int, optional): Verbosity level for logging. Defaults to 1.
             method (Literal["ols", "lasso"] | Dict[int, Literal["ols", "lasso"]], optional): Regression method(s) to use, either "ols", "lasso", or per-dimension dict. Defaults to "ols".
@@ -226,6 +229,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         self.distribution = distribution
         self.forget = forget
         self.fit_intercept = fit_intercept
+        self.regularize_intercept = regularize_intercept
         self.dampen_estimation = dampen_estimation
         self.weight_delta = weight_delta
 
@@ -294,21 +298,39 @@ class MultivariateOnlineDistributionalRegressionPath(
 
     def _prepare_estimator(self):
         self._scaler = OnlineScaler(
-            forget=self.learning_rate, to_scale=self.scale_inputs
+            forget=self.learning_rate,
+            to_scale=self.scale_inputs,
         )
         # For simplicity
-        self._forget = self._process_parameter(self.forget, default=0.0, name="forget")
+        self._forget = self._process_parameter(
+            self.forget,
+            default=0.0,
+            name="forget",
+        )
         self._fit_intercept = self._process_parameter(
-            self.fit_intercept, default=True, name="fit_intercept"
+            self.fit_intercept,
+            default=True,
+            name="fit_intercept",
+        )
+        self._regularize_intercept = self._process_parameter(
+            self.regularize_intercept,
+            default=False,
+            name="regularize_intercept",
         )
         self._dampen_estimation = self._process_parameter(
-            self.dampen_estimation, default=False, name="dampen_estimation"
+            self.dampen_estimation,
+            default=False,
+            name="dampen_estimation",
         )
         self._weight_delta = self._process_parameter(
-            self.weight_delta, default=1.0, name="weight_delta"
+            self.weight_delta,
+            default=1.0,
+            name="weight_delta",
         )
         self._overshoot_correction = self._process_parameter(
-            self.overshoot_correction, default=None, name="overshoot_correction"
+            self.overshoot_correction,
+            default=None,
+            name="overshoot_correction",
         )
 
     def _make_iteration_indices(self, param: int):
@@ -597,7 +619,8 @@ class MultivariateOnlineDistributionalRegressionPath(
         self._scaler.fit(X)
         X_scaled = self._scaler.transform(X=X)
 
-        # Some stuff
+        # Create the regularization mask
+        # For the "lower estimation" i.e. the CD path.
         self.is_regularized_ = {
             p: {
                 k: np.repeat(True, self.n_features_[p][k])
@@ -605,7 +628,13 @@ class MultivariateOnlineDistributionalRegressionPath(
             }
             for p in range(self.distribution.n_params)
         }
+        for p in range(self.distribution.n_params):
+            for k in range(self.n_dist_elements_[p]):
+                if not self._regularize_intercept[p]:
+                    if self._fit_intercept[p]:
+                        self.is_regularized_[p][k][0] = False
 
+        # Iteration index for the elements of each distribution parameter
         self._iter_index = {
             p: self._make_iteration_indices(p)
             for p in range(self.distribution.n_params)
@@ -1371,19 +1400,22 @@ class MultivariateOnlineDistributionalRegressionPath(
         out = {}
         for a in range(self.adr_steps_):
             out[a] = {}
-            for p in range(self.distribution.n_params):
-                array = np.zeros((N, self.n_dist_elements_[p]))
-                for k in range(self.n_dist_elements_[p]):
-                    array[:, k] = (
-                        make_model_array(
-                            X=X_scaled,
-                            eq=self._equation[p][k],
-                            fit_intercept=self._fit_intercept[p],
-                        )
-                        @ self.coef_[p][k][a, :]
-                    ).squeeze()
-                out[a][p] = self.distribution.flat_to_cube(array, p)
-                out[a][p] = self.distribution.link_inverse(out[a][p], p)
+            if a <= self.optimal_adr_:
+                for p in range(self.distribution.n_params):
+                    array = np.zeros((N, self.n_dist_elements_[p]))
+                    for k in range(self.n_dist_elements_[p]):
+                        array[:, k] = (
+                            make_model_array(
+                                X=X_scaled,
+                                eq=self._equation[p][k],
+                                fit_intercept=self._fit_intercept[p],
+                            )
+                            @ self.coef_[p][k][a, :]
+                        ).squeeze()
+                    out[a][p] = self.distribution.flat_to_cube(array, p)
+                    out[a][p] = self.distribution.link_inverse(out[a][p], p)
+            else:
+                out[a] = copy.deepcopy(out[self.optimal_adr_])
 
         return out
 
