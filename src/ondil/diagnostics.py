@@ -1,4 +1,6 @@
-from typing import Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
 import scipy.stats as stats
@@ -9,9 +11,8 @@ from .base import DiagnosticDisplay
 from .error import check_matplotlib
 from .robust_math import SMALL_NUMBER
 
-check_matplotlib(HAS_MPL)
-
-import matplotlib.pyplot as plt  # noqa
+if TYPE_CHECKING:
+    import matplotlib.pyplot as plt
 
 
 class PITHistogramDisplay(DiagnosticDisplay):
@@ -41,6 +42,10 @@ class PITHistogramDisplay(DiagnosticDisplay):
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "PITHistogramDisplay":
+
+        check_matplotlib(HAS_MPL)
+        import matplotlib.pyplot as plt  # noqa: F401
+
         bins = kwargs.pop(
             "bins", np.linspace(0, 1, min(round(np.sqrt(self.y_.shape[0])) + 1, 50))
         )
@@ -103,6 +108,10 @@ class QQDisplay(DiagnosticDisplay):
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "QQDisplay":
+
+        check_matplotlib(HAS_MPL)
+        import matplotlib.pyplot as plt  # noqa: F401
+
         color = kwargs.pop("color", "blue")
         s = kwargs.pop("s", 20)
         if ax is None:
@@ -161,6 +170,10 @@ class WormPlotDisplay(DiagnosticDisplay):
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "WormPlotDisplay":
+
+        check_matplotlib(HAS_MPL)
+        import matplotlib.pyplot as plt  # noqa: F401
+
         color = kwargs.pop("color", "blue")
         alpha = kwargs.pop("alpha", 0.2)
         if ax is None:
