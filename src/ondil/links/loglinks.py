@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 
 from ..base import LinkFunction
-from .robust_math import SMALL_NUMBER, robust_exp, robust_log
+from ..robust_math import SMALL_NUMBER, robust_exp, robust_log
 
 
 class Log(LinkFunction):

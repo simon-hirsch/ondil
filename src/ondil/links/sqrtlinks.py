@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 
 from ..base import LinkFunction
-from .robust_math import SMALL_NUMBER
+from ..robust_math import SMALL_NUMBER
 
 
 class Sqrt(LinkFunction):
