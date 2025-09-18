@@ -26,7 +26,7 @@ model = AdditiveDistributionalRegression(
         0 : [
             LinearTerm(features=["feature1", "feature2"]),
             SplineTerm(features=["feature3"], n_splines=10, degree=3),
-            AutoregresiveTerm(features=["feature1", "feature4"],lags=[[1,2,7],[1]] ),
+            AutoregresiveTerm(lags=np.arange(1, 8)),
         ], 
         1 : [LinearTerm(features=["feature1"])]
     }, 
@@ -132,3 +132,7 @@ For the future, the following would be nice:
 - `AutoRegressiveTerm` (no model selection)
 - `RegularizedICAutoRegressiveTerm` (with model selection using IC)
 - `ScikitLearnTerm` (wrapper around sklearn models, e.g., random forests, gradient boosting machines, etc.)
+
+The `AutoRegressive` Term in this respect is based on lagged values of $\theta$, not on lagged values of $X$ or $y$.
+
+Lagged values of $y$ could be added as an additional term. Lagged values of $X$ could be post-processed (to be discussed).
