@@ -386,8 +386,7 @@ class MultivariateOnlineDistributionalRegressionPath(
 
         return theta
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+
     def _handle_path_regularization(self, theta, p: int, a: int):
         if self.distribution._regularization_allowed[p]:
             mask = (
@@ -400,10 +399,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         else:
             # If no regularization is allowed, we just return the theta
             return theta
-=======
-
-=======
->>>>>>> 3a1e478 (Update after rebase)
       
     def _make_initial_eta(self, theta: np.ndarray):
 
@@ -439,7 +434,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         return eta
 
 
->>>>>>> 86f0732 (Add bivariate copula implementation)
 
     # Only MV
     def _is_element_adr_regularized(self, p: int, k: int, a: int):
@@ -661,14 +655,9 @@ class MultivariateOnlineDistributionalRegressionPath(
         # Handle scaling
         self._scaler.fit(X)
         X_scaled = self._scaler.transform(X=X)
-<<<<<<< HEAD
 
         # Create the regularization mask
         # For the "lower estimation" i.e. the CD path.
-=======
-  
-        # Some stuff
->>>>>>> 88bffd4 (minor updates)
         self.is_regularized_ = {
             p: {
                 k: np.repeat(True, self.n_features_[p][k])
@@ -1005,9 +994,9 @@ class MultivariateOnlineDistributionalRegressionPath(
                 prev_beta_path = copy.copy(self.coef_path_)
 
             # This will check if we
-            if (inner_iteration == 0) and (outer_iteration == 0) & (a == 0):
-                theta[a] = self.distribution.set_initial_guess(y, theta[a], p)
-                theta = self._handle_path_regularization(theta=theta, p=p, a=a)
+           # if (inner_iteration == 0) and (outer_iteration == 0) & (a == 0):
+           #     theta[a] = self.distribution.set_initial_guess(y, theta[a], p)
+           #     theta = self._handle_path_regularization(theta=theta, p=p, a=a)
 
             # Iterate through all elements of the distribution parameter
             for k in self._iter_index[p]:
@@ -1020,21 +1009,8 @@ class MultivariateOnlineDistributionalRegressionPath(
                         (self._lambda_n[p], self.n_features_[p][k])
                     )
                 else:
-<<<<<<< HEAD
-<<<<<<< HEAD
                     eta = self.distribution.link_function(theta[a][p], p)
                     eta = self.distribution.cube_to_flat(eta, param=p)
-=======
-                    if self.copula == True:
-
-                        if (inner_iteration == 0) and (outer_iteration == 0):
-                                theta[a] = self.distribution.set_initial_guess(theta[a], p)
-                                tau = self._make_initial_eta(theta)
-                                tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
->>>>>>> 86f0732 (Add bivariate copula implementation)
-
-                            #uniforms = np.column_stack([self.distribution[0].cdf(y), self.distribution[1].cdf(y)])
-=======
 
                     if issubclass(self.distribution.__class__, CopulaMixin) or (
                         issubclass(self.distribution.__class__, MarginalCopulaMixin)
@@ -1042,34 +1018,18 @@ class MultivariateOnlineDistributionalRegressionPath(
                     ):
                         if (inner_iteration == 0) and (outer_iteration == 0):
                             theta[a] = self.distribution.set_initial_guess(theta[a], p)
-<<<<<<< HEAD
-<<<<<<< HEAD
-                            tau = self._make_initial_eta(theta)
-                            tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
->>>>>>> bcbe737 (Add bivariate copula implementation II)
-
-                        tau = self._make_initial_eta(theta)
-=======
->>>>>>> a5b3a5c (Update Bivariate Copula Implementation)
-                        eta = self._make_initial_eta(theta)
-                        tau = self._make_initial_eta(theta)
-                        tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
-=======
                             tau = self._make_initial_eta(theta)
                             eta = self._make_initial_eta(theta)
-                            tau[a][p] = theta[a][p]
+                            tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
+                            #tau[a][p] = theta[a][p]
                             theta[a][p] = self.distribution.param_link_inverse(tau[a][p], p)
                         else:
                             eta = self._make_initial_eta(theta)
                             tau = self._make_initial_eta(theta)
                             tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
-<<<<<<< HEAD
- 
->>>>>>> 88bffd4 (minor updates)
-=======
+
                             #tau[a][p] = theta[a][p]
 
->>>>>>> c403d59 (Update bicop_normal and online_mvdistreg with latest changes)
                         if p == 0:
                             eta[a][p] = self.distribution.link_function(tau[a][p], p)
                             eta[a][p] = self.distribution.cube_to_flat(eta[a][p], p)
@@ -1690,7 +1650,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         out = {}
         for a in range(self.adr_steps_):
             out[a] = {}
-<<<<<<< HEAD
             if a <= self.optimal_adr_:
                 for p in range(self.distribution.n_params):
                     array = np.zeros((N, self.n_dist_elements_[p]))
@@ -1707,7 +1666,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                     out[a][p] = self.distribution.link_inverse(out[a][p], p)
             else:
                 out[a] = copy.deepcopy(out[self.optimal_adr_])
-=======
             for p in range(self.distribution.n_params):
                 array = np.zeros((N, self.n_dist_elements_[p]))
                 for k in range(self.n_dist_elements_[p]):
@@ -1727,8 +1685,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                     out[a][p] = self.distribution.link_inverse(out[a][p], p)
 
 
-                
->>>>>>> a5b3a5c (Update Bivariate Copula Implementation)
 
         return out
 
@@ -1824,7 +1780,6 @@ class MultivariateOnlineDistributionalRegressionPath(
 
         return self
 
-        return self
 
     # Different UV - MV
     def _inner_update(self, X, y, theta, outer_iteration, a, p):

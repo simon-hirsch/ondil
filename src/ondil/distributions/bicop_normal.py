@@ -65,7 +65,7 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         theta[param] = value
         return theta
     
-  
+
     
     def theta_to_params(self, theta):
         if len(theta) > 1:
@@ -295,6 +295,7 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
             u (np.ndarray): Array of shape (n,) with values in (0, 1).
             v (np.ndarray): Array of shape (n,) with values in (0, 1).
             theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
+            un (int): Determines which conditional to compute (0 for h(u|v), 1 for h(v|u)).
 
         Returns:
             np.ndarray: Array of shape (n,) with conditional probabilities.
@@ -367,6 +368,9 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         hinv = np.clip(hinv, UMIN, UMAX)
         return hinv
 
+
+    def get_regularization_size(self, dim: int) -> int:
+        return dim
 ##########################################################
 ### numba JIT-compiled functions for the derivatives #####
 ##########################################################
