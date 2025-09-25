@@ -46,7 +46,8 @@ dependencies=[
 [project.optional-dependencies]
 pandas = ["pandas >= 1.26"]
 polars = ["polars"]
-all = ["ondil[pandas, polars]"]
+mpl = ["matplotlib >= 3.7"]
+all = ["ondil[pandas, polars, mpl]"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

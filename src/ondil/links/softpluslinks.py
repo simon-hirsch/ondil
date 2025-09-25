@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 
 from ..base import LinkFunction
-from .robust_math import (
+from ..robust_math import (
     robust_exp,
     robust_softplus,
     robust_softplus_inverse,
