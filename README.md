@@ -6,6 +6,7 @@
 [![Downloads](https://static.pepy.tech/badge/ondil)](https://pepy.tech/project/ondil)
 [![Tests](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests.yml)
 [![Docs](https://github.com/simon-hirsch/ondil/actions/workflows/ci_build_docs.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_build_docs.yml)
+[![CodeFactor](https://www.codefactor.io/repository/github/simon-hirsch/ondil/badge)](https://www.codefactor.io/repository/github/simon-hirsch/ondil)
 
 ## Introduction
 
