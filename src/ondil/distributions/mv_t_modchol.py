@@ -8,8 +8,10 @@ import scipy.stats as st
 from ..base import Distribution, LinkFunction, MultivariateDistributionMixin
 from ..links import Identity, Log, LogShiftTwo, MatrixDiag, MatrixDiagTril
 from ..types import ParameterShapes
-from .mv_normal_modchol import _deriv1_mu as _deriv1_mu_normal
-from .mv_normal_modchol import _deriv2_mu as _deriv2_mu_normal
+from .mv_normal_modchol import (
+    _deriv1_mu as _deriv1_mu_normal,
+    _deriv2_mu as _deriv2_mu_normal,
+)
 
 # The MV gaussian distribution with modified Cholesky decomposition
 # We use the notation T' D T = PRECISION
@@ -494,7 +496,6 @@ def _deriv1_tmat(
     i: int = 0,
     j: int = 0,
 ) -> np.ndarray:
-
     k = y.shape[1]
     y_centered = y - mu
     Ty = (T_mat @ y_centered[..., None]).squeeze(-1)

@@ -5,7 +5,6 @@ from sklearn.utils.validation import check_is_fitted
 
 
 class OndilEstimatorMixin(ABC):
-
     @property
     def is_fitted(self) -> bool:
         """Has the estimator been fitted."""
@@ -63,7 +62,6 @@ class OndilEstimatorMixin(ABC):
 
 
 class Estimator(ABC):
-
     def __init__(self):
         self.n_observations: int
         self.n_training: float
