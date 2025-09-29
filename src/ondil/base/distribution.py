@@ -445,9 +445,10 @@ class ScipyMixin(ABC):
 
 
 class CopulaMixin(ABC):
-    def __init__(self, links, param_links: dict[int, LinkFunction]) -> None:
+    def __init__(self, links, param_links: dict[int, LinkFunction], rotation: int) -> None:
         self.links = links
         self.param_links = param_links
+        self.rotation = rotation
         self._validate_links()
 
     def __call__(self, *args, **kwds):

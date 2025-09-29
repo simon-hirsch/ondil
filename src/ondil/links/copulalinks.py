@@ -50,6 +50,44 @@ class FisherZLink(LinkFunction):
         # The derivative of the inverse Fisher Z transform (tanh(x/2)) is 0.5 * sech^2(x/2)
         return 0.5 * (1 / np.cosh(x / 2)) ** 2
 
+class GumbelLink(LinkFunction):
+    """
+    Link function for the Gumbel copula parameter.
+
+    The Gumbel copula parameter theta must be >= 1. This link function maps
+    theta from [1, inf) to the real line and vice versa using:
+        z = log(theta - 1)
+    The inverse is:
+        theta = exp(z) + 1
+    """
+
+    # The Gumbel parameter is defined for theta >= 1
+    link_support = (1.0, np.inf)
+
+    def __init__(self):
+        pass
+
+    def link(self, x: np.ndarray) -> np.ndarray:
+        # Map theta to real line: log(theta - 1)
+        return np.log(x - 1)
+
+    def inverse(self, x: np.ndarray) -> np.ndarray:
+        # Map real line to theta: exp(z) + 1
+        return np.exp(x) + 1
+
+    def link_derivative(self, x: np.ndarray) -> np.ndarray:
+        # Derivative of log(x - 1) w.r.t x
+        return 1 / (x - 1)
+
+    def link_second_derivative(self, x: np.ndarray) -> np.ndarray:
+        # Second derivative of log(x - 1) w.r.t x
+        return -1 / (x - 1) ** 2
+
+    def inverse_derivative(self, x: np.ndarray) -> np.ndarray:
+        # Derivative of exp(x) + 1 w.r.t x
+        return np.exp(x)
+
+
 
 class KendallsTauToParameter(LinkFunction):
     """
@@ -86,3 +124,88 @@ class KendallsTauToParameter(LinkFunction):
     def inverse_derivative(self, x: np.ndarray) -> np.ndarray:
         # Derivative of (2/pi) * arcsin(x) w.r.t x
         return (2 / np.pi) / np.sqrt(1 - x ** 2)
+
+
+class KendallsTauToParameterGumbel(LinkFunction):
+    """
+    The Gumbel copula link function.
+
+    The Gumbel copula link function is defined as:
+        $$ z = -\log\left(-\log\left(F_X(x)\right)\right) $$
+    The inverse is defined as:
+        $$ F_X(x) = \exp\left(-\exp\left(-z\right)\right) $$
+    This link function maps values from the range (0, 1) to the real line and vice versa.
+    """
+
+    # The Gumbel link function is defined for x in (0, 1), exclusive.
+    link_support = (np.nextafter(0, 1), np.nextafter(1, 0))
+
+    def __init__(self):
+        pass
+
+    def link(self, x: np.ndarray) -> np.ndarray:
+        return x/np.abs(x) - 1/x
+
+    def inverse(self, x: np.ndarray) -> np.ndarray:
+        return x / ((1 - np.abs(x)) * np.abs(x))
+
+    def link_derivative(self, x: np.ndarray) -> np.ndarray:
+        # Derivative of x/|x| - 1/x w.r.t x
+        # d/dx(x/|x|) = 0 for x != 0 (since x/|x| = sign(x))
+        # d/dx(-1/x) = 1/x^2
+        return 1 / (1-np.abs(x))**2
+
+    def link_second_derivative(self, x: np.ndarray) -> np.ndarray:
+        # Second derivative of x/|x| - 1/x w.r.t x
+        # d²/dx²(-1/x) = -2/x^3
+        return -2*np.sign(x)/(np.abs(x)-1)**3
+
+    def inverse_derivative(self, x: np.ndarray) -> np.ndarray:
+        # Derivative of x/((1-|x|)*|x|) w.r.t x
+        abs_x = np.abs(x)
+        sign_x = np.sign(x)
+        numerator = (1 - abs_x) * abs_x - x * sign_x * (1 - 2 * abs_x)
+        denominator = ((1 - abs_x) * abs_x) ** 2
+        return numerator / denominator
+
+
+class KendallsTauToParameterClayton(LinkFunction):
+    """
+    The Clayton copula link function.
+
+    The Clayton copula link function is defined as:
+        $$ z = -\log\left(-\log\left(F_X(x)\right)\right) $$
+    The inverse is defined as:
+        $$ F_X(x) = \exp\left(-\exp\left(-z\right)\right) $$
+    This link function maps values from the range (0, 1) to the real line and vice versa.
+    """
+
+    # The Gumbel link function is defined for x in (0, 1), exclusive.
+    link_support = (np.nextafter(0, 1), np.nextafter(1, 0))
+
+    def __init__(self):
+        pass
+
+    def link(self, x: np.ndarray) -> np.ndarray:
+        return x / (2 + np.abs(x))
+
+    def inverse(self, x: np.ndarray) -> np.ndarray:
+        return 2 * x / (1 - np.abs(x))
+
+    def link_derivative(self, x: np.ndarray) -> np.ndarray:
+        # Derivative of x/(2 + |x|) w.r.t x
+        abs_x = np.abs(x)
+        return 2 / (1 - abs_x)**2
+
+    def link_second_derivative(self, x: np.ndarray) -> np.ndarray:
+        # Second derivative of x/(2 + |x|) w.r.t x
+        abs_x = np.abs(x)
+        sign_x = np.sign(x)
+        return -4 * sign_x /  (abs_x -1)**3
+
+    def inverse_derivative(self, x: np.ndarray) -> np.ndarray:
+        # Derivative of 2*x/(1 - |x|) w.r.t x
+        abs_x = np.abs(x)
+        return 2 / (1 - abs_x)**2
+
+

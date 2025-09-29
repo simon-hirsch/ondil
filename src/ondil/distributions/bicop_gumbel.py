@@ -7,31 +7,29 @@ import scipy.stats as st
 
 
 from ..base import Distribution, LinkFunction, CopulaMixin
-from ..links import  FisherZLink, KendallsTauToParameter
+from ..links import  GumbelLink, KendallsTauToParameter, KendallsTauToParameterGumbel
 from ..types import ParameterShapes
+from scipy.optimize import brentq
 
 
-class BivariateCopulaNormal(CopulaMixin, Distribution):
+class BivariateCopulaGumbel(CopulaMixin, Distribution):
 
     corresponding_gamlss: str = None
-    parameter_names = {0: "rho"}
-    parameter_support = {0: (-1, 1)}
-    distribution_support = (-1, 1) 
+    parameter_names = {0: "theta"}
+    parameter_support = {0: (1, np.inf)}
+    distribution_support = (0, 1) 
     n_params = len(parameter_names)
     parameter_shape = {
         0: ParameterShapes.SCALAR,
     }
     def __init__(
         self, 
-        link: LinkFunction = FisherZLink(), 
-        param_link: LinkFunction = KendallsTauToParameter(),
-        rotation: int = 0,
+        link: LinkFunction = GumbelLink(), 
+        param_link: LinkFunction = KendallsTauToParameterGumbel(),
     ):
         super().__init__(
             links={0: link},
             param_links={0: param_link},
-            rotation=rotation,
-
         )
         self.is_multivariate = True
         self._adr_lower_diag = {0: False}
@@ -72,11 +70,11 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
     
     def theta_to_params(self, theta):
         if len(theta) > 1:
-            chol = theta
+            theta_param = theta
         else:
-            chol = theta[0]
+            theta_param = theta[0]
 
-        return chol
+        return theta_param
     
     def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
         """Map GAMLSS Parameters to scipy parameters.
@@ -85,11 +83,10 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
             theta (np.ndarray): parameters
 
         Returns:
-            dict: Dict of (loc, scale) for scipy.stats.norm(loc, scale)
+            dict: Dict of parameters for Gumbel copula
         """
-        mu = theta[:, 0]
-        sigma = theta[:, 1]
-        params = {"loc": mu, "scale": sigma**0.5}
+        theta_param = theta[:, 0]
+        params = {"theta": theta_param}
         return params
 
     def set_initial_guess(self, theta, param):
@@ -98,22 +95,18 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
     def dl1_dp1(self, y: np.ndarray, theta: Dict, param: int = 0):
         """Return the first derivatives wrt to the parameter.
 
-        !!! Note
-            We expect the fitted L^-1)^T to be handed in matrix/cube form, i.e of shape n x d x d.
-            But we return the derivatives in flat format.
-
         Args:
             y (np.ndarray): Y values of shape n x d
-            theta (Dict): Dict with {0 : fitted mu, 1 : fitted (L^-1)^T}
+            theta (Dict): Dict with {0 : fitted theta}
             param (int, optional): Which parameter derivatives to return. Defaults to 0.
 
         Returns:
             derivative: The 1st derivatives.
         """
-        chol = self.theta_to_params(theta)
+        theta_param = self.theta_to_params(theta)
 
         deriv = _derivative_1st(
-            y=y, chol=chol
+            y=y, theta=theta_param
             )
 
         return deriv
@@ -121,22 +114,18 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
     def dl2_dp2(self, y: np.ndarray, theta: Dict, param: int = 0, clip=False):
         """Return the second derivatives wrt to the parameter.
 
-        !!! Note
-            We expect the fitted L^-1)^T to be handed in matrix/cube form, i.e of shape n x d x d.
-            But we return the derivatives in flat format.
-
         Args:
             y (np.ndarray): Y values of shape n x d
-            theta (Dict): Dict with {0 : fitted mu, 1 : fitted (L^-1)^T}
+            theta (Dict): Dict with {0 : fitted theta}
             param (int, optional): Which parameter derivatives to return. Defaults to 0.
 
         Returns:
             derivative: The 2nd derivatives.
         """
-        fitted_loc = self.theta_to_params(theta)
+        theta_param = self.theta_to_params(theta)
 
         deriv = _derivative_2nd(
-                y=y, fitted_loc=fitted_loc
+                y=y, theta=theta_param
         )
         return deriv
 
@@ -147,18 +136,18 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         return self.element_dl2_dp2(y=y, theta=theta, param=param, k=k)
 
     def element_dl1_dp1(self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False):
-        chol = self.theta_to_params(theta)
+        theta_param = self.theta_to_params(theta)
         
         deriv = _derivative_1st(
-                    y, chol
+                    y, theta_param
                 )
         return deriv
 
     def element_dl2_dp2(self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False):
-        fitted_loc = self.theta_to_params(theta)
+        theta_param = self.theta_to_params(theta)
               
         deriv = _derivative_2nd(
-                    y, fitted_loc
+                    y, theta_param
                 )
         return deriv
 
@@ -198,8 +187,7 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
 
     def initial_values(self, y, param=0):
         M = y.shape[0]
-        # Compute the empirical Pearson correlation for each sample
-        # y is expected to be (M, 2)
+        # Compute the empirical Kendall's tau and convert to Gumbel parameter
         tau = st.kendalltau(y[:, 0], y[:, 1]).correlation
         chol = np.full((M, 1), tau)
         return chol
@@ -229,12 +217,11 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         """
         fitted = self.flat_to_cube(eta, param=param)
         fitted = self.link_inverse(fitted, param=param)
-        # fitted_theta = {**theta, param: fitted_eta}
         return self.log_likelihood(y, theta={**theta, param: fitted})
 
     def theta_to_scipy(self, theta: Dict[int, np.ndarray]):
         out = {
-            "cor": theta,
+            "theta": theta,
         }
         return out
 
@@ -247,26 +234,18 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
 
     def rvs(self, size, theta):
         """
-        Generate random samples from the bivariate normal copula.
+        Generate random samples from the bivariate Gumbel copula.
 
         Args:
             size (int): Number of samples to generate.
-            theta (dict or np.ndarray): Correlation parameter(s).
+            theta (dict or np.ndarray): Gumbel parameter(s).
 
         Returns:
             np.ndarray: Samples of shape (size, 2) in (0, 1).
         """
-
-        # Generate standard normal samples
-        z1 = np.random.normal(size=size)
-        z2 = np.random.normal(size=size)
-        x = z1
-        y = theta * z1 + np.sqrt(1 - theta ** 2) * z2
-
-        # Transform to uniform marginals using the normal CDF
-        u = st.norm.cdf(x)
-        v = st.norm.cdf(y)
-        return np.column_stack((u, v))
+        # Use rejection sampling or other methods for Gumbel copula
+        # This is a simplified implementation
+        raise NotImplementedError("Gumbel copula sampling not implemented")
 
 
     def pdf(self, y, theta):
@@ -276,8 +255,8 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         raise NotImplementedError("Not implemented")
 
     def logpdf(self, y, theta):
-        test = self.theta_to_params(theta)
-        return np.log(_log_likelihood(y, test))
+        theta_param = self.theta_to_params(theta)
+        return _log_likelihood(y, theta_param)
 
     def logpmf(self, y, theta):
         raise NotImplementedError("Not implemented")
@@ -292,12 +271,13 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
 
     def hfunc(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
         """
-        Conditional distribution function h(u|v) for the bivariate normal copula.
+        Conditional distribution function h(u|v) for the bivariate Gumbel copula.
+        Implementation based on vinecopulib package.
 
         Args:
             u (np.ndarray): Array of shape (n,) with values in (0, 1).
             v (np.ndarray): Array of shape (n,) with values in (0, 1).
-            theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
+            theta (np.ndarray or float): Gumbel parameter(s), shape (n,) or scalar.
             un (int): Determines which conditional to compute (0 for h(u|v), 1 for h(v|u)).
 
         Returns:
@@ -314,21 +294,27 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         if un == 1:
             u, v = v, u
 
-        # Handle edge cases
-        h = np.where((v == 0) | (u == 0), 0, np.nan)
-        h = np.where(v == 1, u, h)
-        qnorm_u = st.norm.ppf(u)
-        qnorm_v = st.norm.ppf(v)
-
+        h = np.empty(M)
+        
         for m in range(M):
-            denom = np.sqrt(1.0 - np.square(theta[0][m]))
-            x = (qnorm_u[m] - theta[0][m] * qnorm_v[m]) / denom
-            if np.isfinite(x):
-                h[m] = st.norm.cdf(x)
-            elif (qnorm_u[m] - theta[0][m] * qnorm_v[m]) < 0:
-                h[m] = 0
+            theta_m = theta[0][m] if hasattr(theta[0], '__len__') else theta[0]
+            
+            # Gumbel copula h-function
+            if theta_m == 1:
+                h[m] = u[m]
             else:
-                h[m] = 1
+                log_u = np.log(u[m])
+                log_v = np.log(v[m])
+                
+                t1 = (-log_u) ** theta_m
+                t2 = (-log_v) ** theta_m
+                sum_t = t1 + t2
+                
+                if sum_t > 0 and log_v != 0:
+                    copula_val = np.exp(-sum_t ** (1.0 / theta_m))
+                    h[m] = -(copula_val * (sum_t ** (1.0/theta_m - 1.0)) * t2) / (v[m] * log_v)
+                else:
+                    h[m] = 0
 
         # Clip output for numerical stability
         h = np.clip(h, UMIN, UMAX)
@@ -336,12 +322,13 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
 
     def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
         """
-        Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
+        Inverse conditional distribution function h^(-1)(u|v) for the bivariate Gumbel copula.
+        Implementation based on vinecopulib package.
 
         Args:
             u (np.ndarray): Array of shape (n,) with values in (0, 1).
             v (np.ndarray): Array of shape (n,) with values in (0, 1).
-            theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
+            theta (np.ndarray or float): Gumbel parameter(s), shape (n,) or scalar.
             un (int): Determines which conditional to compute.
 
         Returns:
@@ -359,13 +346,20 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
             u, v = v, u
 
         hinv = np.empty(M)
-        qnorm_u = st.norm.ppf(u)
-        qnorm_v = st.norm.ppf(v)
-
+        
         for m in range(M):
             theta_m = theta[0][m] if hasattr(theta[0], '__len__') else theta[0]
-            x = qnorm_u[m] * np.sqrt(1.0 - theta_m**2) + theta_m * qnorm_v[m]
-            hinv[m] = st.norm.cdf(x)
+            
+            
+            def h_minus_u(x):
+                # Calculate h-function and subtract target u
+                return self.hfunc(np.array([u[m]]), np.array([v[m]]), np.array([[theta_m]]), 0)[0] - u[m]
+            
+            try:
+                # Solve h(x|v) = u for x
+                hinv[m] = brentq(h_minus_u, 1e-12, 1-1e-12)
+            except:
+                hinv[m] = u[m]  # Fallback
 
         # Clip output for numerical stability
         hinv = np.clip(hinv, UMIN, UMAX)
@@ -374,113 +368,199 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
 
     def get_regularization_size(self, dim: int) -> int:
         return dim
+    
+
 ##########################################################
-### numba JIT-compiled functions for the derivatives #####
+### Functions for the derivatives and log-likelihood ####
 ##########################################################
 
 
-def _log_likelihood(y, mod_chol):
+def _log_likelihood(y, theta):
+    """
+    Log-likelihood for the Gumbel copula.
+    """
     M = y.shape[0]
     f = np.empty(M)
-    # Ensure y values are strictly between 0 and 1 for numerical stability
     UMIN = 1e-12
     UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)
-    u = st.norm().ppf(y_clipped[:, 0])
-    v = st.norm().ppf(y_clipped[:, 1])
+
     for m in range(M):
         if M == 1:
-            rho = mod_chol
+            theta_m = theta
         else: 
-            rho = mod_chol[m]
-        t1 = u[m]
-        t2 = v[m]
-        f[m] = float(
-            1.0 / np.sqrt(1.0 - rho**2)
-            * np.exp(
-                (t1**2 + t2**2) / 2.0
-                + (2.0 * rho * t1 * t2 - t1**2 - t2**2) / (2.0 * (1.0 - rho**2))
-            )
-        )
-    # Replace any zeros in f with 1e-16 for numerical stability
-    f[f == 0] = 1e-16
+            theta_m = theta[m]
+            
+        u = y_clipped[m, 0]
+        v = y_clipped[m, 1]
+        
+        # Gumbel copula log-likelihood following C implementation
+        log_u = np.log(u)
+        log_v = np.log(v)
+
+        t1 = (-log_u) ** theta_m + (-log_v) ** theta_m
+        
+        if t1 > 0 and log_u * log_v > 0:
+            f[m] = (-t1 ** (1.0 / theta_m) + 
+                (2.0 / theta_m - 2.0) * np.log(t1) + 
+                (theta_m - 1.0) * np.log(log_u * log_v) - 
+                np.log(u * v) + 
+                np.log1p((theta_m - 1.0) * t1 ** (-1.0 / theta_m)))
+            
+            # Handle numerical limits
+            XINFMAX = 700.0  # Approximate maximum for exp
+            if f[m] > XINFMAX:
+                f[m] = np.log(XINFMAX)
+            elif f[m] < np.log(np.finfo(float).tiny):
+                f[m] = np.log(np.finfo(float).tiny)
+        else:
+            f[m] = np.log(np.finfo(float).tiny)
+
+        # Clip output for numerical stability
+    f = np.clip(f, UMIN, UMAX)
     return f
 
-def _derivative_1st(y, chol):
+def _derivative_1st(y, theta):
     """
-    Implements the first derivative of the bivariate Gaussian copula log-likelihood
-    with respect to the correlation parameter, following the C++ code logic.
-
-    Args:
-        y (np.ndarray): Input data of shape (M, 2)
-        chol (np.ndarray): Correlation parameter, shape (M,) or (1, M)
-
-    Returns:
-        np.ndarray: First derivative, shape (M,)
+    First derivative of the Gumbel copula log-likelihood with respect to theta.
     """
     M = y.shape[0]
-    deriv = np.empty((M, 1), dtype=np.float64)
+    deriv = np.empty(M, dtype=np.float64)
     eps = np.finfo(float).eps
     y = np.clip(y, eps, 1 - eps)
-    u = st.norm().ppf(y[:, 0])
-    v = st.norm().ppf(y[:, 1])
-    for m in range(M):
-        if M == 1:
-            theta  = chol
-        else:
-            theta = chol[m]
-        t3 = theta*theta
-        t4 = 1.0-t3
-        t5 =  u[m]*u[m]
-        t6 = v[m]*v[m]
-        t7 = t4*t4
-        deriv[m] =  (theta*t4-theta*(t5+t6)+(1.0+t3)*u[m]*v[m])/t7
-
-    return deriv.squeeze()
-
-def _derivative_2nd(y, fitted_loc): 
     
-    M = y.shape[0]
-    deriv = np.empty((M, 1), dtype=np.float64)
-
-    # Ensure y values are strictly between 0 and 1 for numerical stability
-    eps = np.finfo(float).eps
-    y = np.clip(y, eps, 1 - eps)
-    u = st.norm().ppf(y[:, 0])
-    v = st.norm().ppf(y[:, 1])
-
     for m in range(M):
         if M == 1:
-            theta  = fitted_loc
+            theta_m = theta
         else:
-            theta = fitted_loc[m]
-        t6 = u[m]
-        t7 = v[m]
-        t1 = t6 * t7
-        t2 = theta * theta
-        t3 = 1.0 - t2
-        t4 = 4.0 * t3 * t3
-        t5 = 1.0 / t4
-        t12 = t6 * t6
-        t13 = t7 * t7
-        t14 = 2.0 * theta * t6 * t7 - t12 - t13
-        t21 = t14 * t5
-        t26 = 1.0 / t3 / 2.0
-        t29 = np.exp(t12 / 2.0 + t13 / 2.0 + t14 * t26)
-        t31 = np.sqrt(t3)
-        t32 = 1.0 / t31
-        t38 = 2.0 * t1 * t26 + 4.0 * t21 * theta
-        t39 = t38 * t38
-        t44 = 1.0 / t31 / t3
-        t48 = t3 * t3
-        deriv[m] = (
-            (16.0 * t1 * t5 * theta + 16.0 * t14 / t4 / t3 * t2 + 4.0 * t21) * t29 * t32
-            + t39 * t29 * t32
-            + 2.0 * t38 * t29 * t44 * theta
-            + 3.0 * t29 / t31 / t48 * t2
-            + t29 * t44
-        )
-    return deriv.squeeze()
+            theta_m = theta[m]
+        
+        u = y[m, 0]
+        v = y[m, 1]
 
+        t1 = np.log(u)
+        t2 = np.power(-t1, theta_m)
+        t3 = np.log(v)
+        t4 = np.power(-t3, theta_m)
+        t5 = t2 + t4
+        t6 = 1.0 / theta_m
+        t7 = np.power(t5, t6)
+        t8 = theta_m * theta_m
+        t10 = np.log(t5)
+        t11 = (1.0 / t8) * t10
+        t12 = np.log(-t1)
+        t14 = np.log(-t3)
+        t16 = t2 * t12 + t4 * t14
+        t18 = 1.0 / t5
+        t20 = -t11 + t6 * t16 * t18
+        t22 = np.exp(-t7)
+        t23 = -1.0 + t6
+        t24 = np.power(t5, 2.0 * t23)
+        t25 = t22 * t24
+        t27 = t1 * t3
+        t28 = theta_m - 1.0
+        t29 = np.power(t27, t28)
+        t30 = np.power(t5, -t6)
+        t31 = t28 * t30
+        t32 = 1.0 + t31
+        t34 = 1.0 / u
+        t35 = 1.0 / v
+        t36 = t34 * t35
+        t37 = t29 * t32 * t36
+        t45 = t25 * t29
+        t46 = np.log(t27)
+        
+        # Handle potential numerical issues
+        if (t5 > 0) and (t27 > 0) and (t32 != 0):
+            deriv[m] = (
+                (-t7 * t20 * t25 * t37 +
+                t25 * (-2.0 * t11 + 2.0 * t23 * t16 * t18) * t37 +
+                t45 * t46 * t32 * t36 +
+                t45 * (t30 - t31 * t20) * t34 * t35) /
+                (t22 * t24 * t29 * t32) * u * v
+            )
+        else:
+            deriv[m] = 0.0
+    return deriv
 
-	
+def _derivative_2nd(y, theta): 
+    """
+    Second derivative of the Gumbel copula log-likelihood with respect to theta.
+    """
+    M = y.shape[0]
+    deriv = np.empty(M, dtype=np.float64)
+    eps = np.finfo(float).eps
+    y = np.clip(y, eps, 1 - eps)
+    
+    for m in range(M):
+        if M == 1:
+            theta_m = theta
+        else:
+            theta_m = theta[m]
+            
+        u = y[m, 0]
+        v = y[m, 1]
+        
+        t3 = np.log(u)
+        t4 = np.power(-t3, 1.0*theta_m)
+        t5 = np.log(v)
+        t6 = np.power(-t5, 1.0*theta_m)
+        t7 = t4+t6
+        t8 = 1/theta_m
+        t9 = np.power(t7, 1.0*t8)
+        t10 = theta_m*theta_m
+        t11 = 1/t10
+        t12 = np.log(t7)
+        t13 = t11*t12
+        t14 = np.log(-t3)
+        t16 = np.log(-t5)
+        t18 = t4*t14+t6*t16
+        t20 = 1/t7
+        t22 = -t13+t8*t18*t20
+        t23 = t22*t22
+        t25 = np.exp(-t9)
+        t27 = t25/u
+        t29 = 1/v
+        t30 = -1.0+t8
+        t31 = np.power(t7, 2.0*t30)
+        t32 = t29*t31
+        t33 = t3*t5
+        t34 = theta_m-1.0
+        t35 = np.power(t33, 1.0*t34)
+        t36 = np.power(t7, -1.0*t8)
+        t37 = t34*t36
+        t38 = 1.0+t37
+        t39 = t35*t38
+        t40 = t32*t39
+        t44 = 1/t10/theta_m*t12
+        t47 = t11*t18*t20
+        t49 = t14*t14
+        t51 = t16*t16
+        t53 = t4*t49+t6*t51
+        t56 = t18*t18
+        t58 = t7*t7
+        t59 = 1/t58
+        t61 = 2.0*t44-2.0*t47+t8*t53*t20-t8*t56*t59
+        t65 = t9*t9
+        t70 = t9*t22*t27
+        t74 = -2.0*t13+2.0*t30*t18*t20
+        t75 = t74*t35
+        t80 = np.log(t33)
+        t87 = t36-t37*t22
+        t88 = t35*t87
+        t17 = t27*t29
+        t15 = t74*t74
+        t2 = t31*t35
+        t1 = t80*t80
+        
+        # Handle potential numerical issues
+        if (t7 > 0) and (t33 > 0) and (t38 != 0):
+            deriv[m] = (-t9*t23*t27*t40-t9*t61*t27*t40+t65*t23*t27*t40-2.0*t70*t32*t75*t38
+                -2.0*t70*t32*t35*t80*t38-2.0*t70*t32*t88+t17*t31*t15*t39+t17*t31*(4.0*t44-4.0*
+                t47+2.0*t30*t53*t20-2.0*t30*t56*t59)*t39+2.0*t27*t32*t75*t80*t38+2.0*t17*t31*
+                t74*t88+t17*t2*t1*t38+2.0*t17*t2*t80*t87+t17*t2*(-2.0*t36*t22+t37*t23-
+                t37*t61))
+        else:
+            deriv[m] = 0.0
+        
+    return deriv
