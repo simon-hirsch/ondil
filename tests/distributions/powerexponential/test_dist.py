@@ -1,6 +1,6 @@
 import numpy as np
 import rpy2.robjects as robjects
-from ondil import DistributionPowerExponential
+from ondil.distributions import DistributionPowerExponential
 
 
 def test_powerexponential_distribution():

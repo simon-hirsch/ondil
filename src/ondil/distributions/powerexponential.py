@@ -3,7 +3,8 @@ from typing import Tuple
 from scipy.special import gammaln, digamma, polygamma, gamma
 from scipy.stats import gamma as gamma_dist
 from ..base import Distribution, LinkFunction
-from ..links import IdentityLink, LogLink
+from ..links import Identity, Log
+from ..types import ParameterShapes
 
 
 class DistributionPowerExponential(Distribution):
@@ -24,12 +25,17 @@ class DistributionPowerExponential(Distribution):
         2: (np.nextafter(0, 1), np.inf),
     }
     distribution_support = (-np.inf, np.inf)
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+        2: ParameterShapes.SCALAR,
+    }
 
     def __init__(
         self,
-        loc_link: LinkFunction = IdentityLink(),
-        scale_link: LinkFunction = LogLink(),
-        shape_link: LinkFunction = LogLink(),
+        loc_link: LinkFunction = Identity(),
+        scale_link: LinkFunction = Log(),
+        shape_link: LinkFunction = Log(),
     ) -> None:
         super().__init__(links={0: loc_link, 1: scale_link, 2: shape_link})
 

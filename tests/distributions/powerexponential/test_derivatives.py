@@ -1,6 +1,7 @@
 import numpy as np
 import rpy2.robjects as robjects
-from ondil import DistributionPowerExponential
+from ondil.distributions import DistributionPowerExponential
+
 
 def test_powerexponential_distribution():
     dist = DistributionPowerExponential()
@@ -30,11 +31,13 @@ def test_powerexponential_distribution():
 
     # We take the data from R
     y = np.array(R_list.rx2("y"))
-    theta = np.array([
-        R_list.rx2("mu"),
-        R_list.rx2("sigma"),
-        R_list.rx2("nu"),
-    ])
+    theta = np.array(
+        [
+            R_list.rx2("mu"),
+            R_list.rx2("sigma"),
+            R_list.rx2("nu"),
+        ]
+    )
     theta = theta.T
 
     dl1_dp1_0 = dist.dl1_dp1(y, theta=theta, param=0)

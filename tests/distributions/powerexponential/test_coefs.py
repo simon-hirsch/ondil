@@ -1,7 +1,8 @@
 # %%
 import numpy as np
 import rpy2.robjects as robjects
-from ondil import OnlineGamlss, DistributionPowerExponential
+from ondil.estimators import OnlineDistributionalRegression
+from ondil.distributions import DistributionPowerExponential
 
 file = "tests/data/mtcars.csv"
 mtcars = np.genfromtxt(file, delimiter=",", skip_header=1)[:, 1:]
@@ -10,6 +11,7 @@ y = mtcars[:, 0]
 X = mtcars[:, 1:]
 
 X_design = np.column_stack((np.ones(X.shape[0]), X))
+
 
 def test_powerexponential_distribution():
     dist = DistributionPowerExponential()
@@ -38,12 +40,12 @@ def test_powerexponential_distribution():
     coef_R_sg = np.array(R_list.rx2("sigma"))
     coef_R_nu = np.array(R_list.rx2("nu"))
 
-    estimator = OnlineGamlss(
+    estimator = OnlineDistributionalRegression(
         distribution=dist,
         equation={
             0: np.array([1, 3]),  # mu ~ cyl + hp
             1: np.array([1, 3]),  # sigma ~ cyl + hp
-            2: "intercept",       # nu ~ intercept
+            2: "intercept",  # nu ~ intercept
         },
         method="ols",
         scale_inputs=False,
