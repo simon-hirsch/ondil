@@ -1,8 +1,9 @@
 # %%
 import numpy as np
 import rpy2.robjects as robjects
-from ondil.estimators import OnlineDistributionalRegression
+
 from ondil.distributions import DistributionPowerExponential
+from ondil.estimators import OnlineDistributionalRegression
 
 file = "tests/data/mtcars.csv"
 mtcars = np.genfromtxt(file, delimiter=",", skip_header=1)[:, 1:]
@@ -50,17 +51,16 @@ def test_powerexponential_distribution():
         method="ols",
         scale_inputs=False,
         fit_intercept=True,
-        rss_tol_inner=10,
     )
 
     estimator.fit(X=X_design, y=y)
 
-    assert np.allclose(estimator.beta[0], coef_R_mu, atol=0.012), (
-        "Location coefficients don't match"
-    )
-    assert np.allclose(estimator.beta[1], coef_R_sg, atol=0.01), (
-        "Scale coefficients don't match"
-    )
-    assert np.allclose(estimator.beta[2], coef_R_nu, atol=0.01), (
-        "Shape (nu) coefficients don't match"
-    )
+    assert np.allclose(
+        estimator.beta[0], coef_R_mu, atol=0.012
+    ), "Location coefficients don't match"
+    assert np.allclose(
+        estimator.beta[1], coef_R_sg, atol=0.01
+    ), "Scale coefficients don't match"
+    assert np.allclose(
+        estimator.beta[2], coef_R_nu, atol=0.01
+    ), "Shape (nu) coefficients don't match"
