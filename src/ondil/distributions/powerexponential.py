@@ -173,7 +173,7 @@ class DistributionPowerExponential(Distribution):
 
     def dl2_dpp(self, y, theta, params):
         self._validate_dl2_dpp_inputs(y, theta, params)
-        if set(params) == {0, 1}:
+        if (set(params) == {0, 1}) or (set(params) == {0, 2}):
             return np.zeros_like(y)
         return -self.dl1_dp1(y, theta, params[0]) * self.dl1_dp1(y, theta, params[1])
 
