@@ -1,7 +1,8 @@
 import numpy as np
 import rpy2.robjects as robjects
-from ondil.estimators import OnlineDistributionalRegression
+
 from ondil.distributions import BetaInflatedZero
+from ondil.estimators import OnlineDistributionalRegression
 
 
 def test_beta_inflated_zero_distribution():

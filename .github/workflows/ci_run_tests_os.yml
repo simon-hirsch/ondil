@@ -1,5 +1,9 @@
 name: Automated Tests for OS
 on:
+  workflow_run:
+    workflows: ["Lint and Commit"]
+    types:
+      - completed
   push:
     branches:    
       - main            # only run on pushes to main
@@ -14,6 +18,8 @@ jobs:
   build:
     # runs-on: ubuntu-latest
     runs-on: ${{ matrix.os }}
+    # Only run if ruff workflow succeeded or if triggered directly (not via workflow_run)
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       matrix:

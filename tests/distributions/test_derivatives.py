@@ -29,16 +29,14 @@ def test_distribution_derivatives(distribution):
     robjects.globalenv["y"] = robjects.FloatVector(y)
 
     # Generate random parameters within support bounds
-    theta = np.array(
-        [
-            np.random.uniform(
-                np.clip(distribution.parameter_support[i][0], *CLIP_BOUNDS),
-                np.clip(distribution.parameter_support[i][1], *CLIP_BOUNDS),
-                N,
-            )
-            for i in range(distribution.n_params)
-        ]
-    ).T
+    theta = np.array([
+        np.random.uniform(
+            np.clip(distribution.parameter_support[i][0], *CLIP_BOUNDS),
+            np.clip(distribution.parameter_support[i][1], *CLIP_BOUNDS),
+            N,
+        )
+        for i in range(distribution.n_params)
+    ]).T
 
     # Assign R variables programmatically
     for i, param_name in distribution.parameter_names.items():
