@@ -181,7 +181,11 @@ class DistributionPowerExponential(Distribution):
         self._validate_dl2_dpp_inputs(y, theta, params)
         if (set(params) == {0, 1}) or (set(params) == {0, 2}):
             return np.zeros_like(y)
-        return -self.dl1_dp1(y, theta, params[0]) * self.dl1_dp1(y, theta, params[1])
+        
+        _, sigma, nu = self.theta_to_params(theta)
+        return (1 / (2 * sigma)) * (
+            (3 / nu) * (digamma(1 / nu) - digamma(3 / nu)) + 2 + (2 / nu)
+        )
 
     def initial_values(self, y: np.ndarray) -> np.ndarray:
         mu_init = np.full_like(y, np.mean(y))
