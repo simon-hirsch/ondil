@@ -1,14 +1,8 @@
 name: Lint and Commit
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+  - push
+  - pull_request
 
 jobs:
   lint:
