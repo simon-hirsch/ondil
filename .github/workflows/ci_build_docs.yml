@@ -6,9 +6,6 @@ on:
       - completed
     branches:
       - main
-  push:
-    branches:
-      - main
 permissions:
   contents: write
 jobs:

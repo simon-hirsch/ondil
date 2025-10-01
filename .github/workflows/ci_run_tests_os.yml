@@ -4,14 +4,9 @@ on:
     workflows: ["Lint and Commit"]
     types:
       - completed
-  push:
-    branches:    
-      - main            # only run on pushes to main
-      - '!gh-pages'     # excludes gh-pages
-  pull_request:
-    branches:    
-    - '**'              # matches every branch
-    - '!gh-pages'       # excludes gh-pages
+    branches:
+      - main
+      - develop
 permissions:
   contents: read
 jobs:
