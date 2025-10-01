@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 
 
 class PITHistogramDisplay(DiagnosticDisplay):
-
     def __init__(self, X, y, unif):
         self.X_ = X
         self.y_ = y
@@ -55,7 +54,6 @@ class PITHistogramDisplay(DiagnosticDisplay):
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "PITHistogramDisplay":
-
         check_matplotlib(HAS_MPL)
         import matplotlib.pyplot as plt  # noqa: F401
 
@@ -137,7 +135,6 @@ class QQDisplay(DiagnosticDisplay):
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "QQDisplay":
-
         check_matplotlib(HAS_MPL)
         import matplotlib.pyplot as plt  # noqa: F401
 
@@ -222,7 +219,6 @@ class WormPlotDisplay(DiagnosticDisplay):
         figsize: Tuple[float, float] = (10, 5),
         **kwargs,
     ) -> "WormPlotDisplay":
-
         check_matplotlib(HAS_MPL)
         import matplotlib.pyplot as plt  # noqa: F401
 

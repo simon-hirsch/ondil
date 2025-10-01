@@ -3,7 +3,6 @@ from typing import Tuple
 
 
 class DiagnosticDisplay(ABC):
-
     @classmethod
     @abstractmethod
     def from_estimator(
