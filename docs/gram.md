@@ -4,16 +4,16 @@ The Gramian
 
 ## API Reference
 
-::: ondil.init_forget_vector
+::: ondil.gram.init_forget_vector
 
-::: ondil.init_gram
+::: ondil.gram.init_gram
 
-::: ondil.init_y_gram
+::: ondil.gram.init_y_gram
 
-::: ondil.init_inverted_gram
+::: ondil.gram.init_inverted_gram
 
-::: ondil.update_gram
+::: ondil.gram.update_gram
 
-::: ondil.update_y_gram
+::: ondil.gram.update_y_gram
 
-::: ondil.update_inverted_gram
+::: ondil.gram.update_inverted_gram

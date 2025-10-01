@@ -4,10 +4,11 @@ import numpy as np
 import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
-from ..link import IdentityLink, LogLink
+from ..links import Identity, Log
+from ..types import ParameterShapes
 
 
-class DistributionJSU(ScipyMixin, Distribution):
+class JSU(ScipyMixin, Distribution):
     """
     Corresponds to GAMLSS JSUo() and scipy.stats.johnsonsu()
 
@@ -27,6 +28,12 @@ class DistributionJSU(ScipyMixin, Distribution):
         2: (-np.inf, np.inf),
         3: (np.nextafter(0, 1), np.inf),
     }
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+        2: ParameterShapes.SCALAR,
+        3: ParameterShapes.SCALAR,
+    }
     distribution_support = (-np.inf, np.inf)
 
     # Scipy equivalent and parameter mapping ondil -> scipy
@@ -35,10 +42,10 @@ class DistributionJSU(ScipyMixin, Distribution):
 
     def __init__(
         self,
-        loc_link: LinkFunction = IdentityLink(),
-        scale_link: LinkFunction = LogLink(),
-        skew_link: LinkFunction = IdentityLink(),
-        tail_link: LinkFunction = LogLink(),
+        loc_link: LinkFunction = Identity(),
+        scale_link: LinkFunction = Log(),
+        skew_link: LinkFunction = Identity(),
+        tail_link: LinkFunction = Log(),
         use_gamlss_init_values: bool = False,
     ) -> None:
         super().__init__(

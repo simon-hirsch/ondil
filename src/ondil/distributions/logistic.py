@@ -4,10 +4,11 @@ import numpy as np
 import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
-from ..link import IdentityLink, LogLink
+from ..links import Identity, Log
+from ..types import ParameterShapes
 
 
-class DistributionLogistic(ScipyMixin, Distribution):
+class Logistic(ScipyMixin, Distribution):
     """
     The Logistic distribution with location and scale parameterization.
 
@@ -21,15 +22,22 @@ class DistributionLogistic(ScipyMixin, Distribution):
 
     corresponding_gamlss: str = "LO"
     parameter_names = {0: "mu", 1: "sigma"}
-    parameter_support = {0: (-np.inf, np.inf), 1: (np.nextafter(0, 1), np.inf)}
+    parameter_support = {
+        0: (-np.inf, np.inf),
+        1: (np.nextafter(0, 1), np.inf),
+    }
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+    }
     distribution_support = (-np.inf, np.inf)
     scipy_dist = st.logistic
     scipy_names = {"mu": "loc", "sigma": "scale"}
 
     def __init__(
         self,
-        loc_link: LinkFunction = IdentityLink(),
-        scale_link: LinkFunction = LogLink(),
+        loc_link: LinkFunction = Identity(),
+        scale_link: LinkFunction = Log(),
     ) -> None:
         super().__init__(links={0: loc_link, 1: scale_link})
 

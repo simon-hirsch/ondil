@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 import scipy.stats as st
-from ondil import (
+from ondil.gram import (
     init_gram,
     init_inverted_gram,
     init_y_gram,
@@ -32,7 +32,9 @@ BATCH_SIZE = [10, 25]
 
 @pytest.mark.parametrize("N", N, ids=lambda x: f"N_{x}")
 @pytest.mark.parametrize("D", D, ids=lambda x: f"D_{x}")
-@pytest.mark.parametrize("random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}")
+@pytest.mark.parametrize(
+    "random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}"
+)
 @pytest.mark.parametrize("forget", FORGET, ids=lambda x: f"forget_{x}")
 def test_inverse_rank_deficit(N, D, random_weights, forget):
     X, _, w = make_x_y_w(N, D, random_weights=random_weights)
@@ -45,7 +47,9 @@ def test_inverse_rank_deficit(N, D, random_weights, forget):
 
 @pytest.mark.parametrize("N", N, ids=lambda x: f"N_{x}")
 @pytest.mark.parametrize("D", D, ids=lambda x: f"D_{x}")
-@pytest.mark.parametrize("random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}")
+@pytest.mark.parametrize(
+    "random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}"
+)
 @pytest.mark.parametrize("forget", FORGET, ids=lambda x: f"forget_{x}")
 def test_single_update_x_gram(N, D, random_weights, forget):
     X, _, w = make_x_y_w(N, D, random_weights=random_weights)
@@ -58,7 +62,9 @@ def test_single_update_x_gram(N, D, random_weights, forget):
 
 @pytest.mark.parametrize("N", N, ids=lambda x: f"N_{x}")
 @pytest.mark.parametrize("D", D, ids=lambda x: f"D_{x}")
-@pytest.mark.parametrize("random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}")
+@pytest.mark.parametrize(
+    "random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}"
+)
 @pytest.mark.parametrize("forget", FORGET, ids=lambda x: f"forget_{x}")
 @pytest.mark.parametrize("batchsize", BATCH_SIZE, ids=lambda x: f"batchsize_{x}")
 def test_batch_update_x_gram(N, D, random_weights, forget, batchsize):
@@ -74,7 +80,9 @@ def test_batch_update_x_gram(N, D, random_weights, forget, batchsize):
 # INVERTED GRAM
 @pytest.mark.parametrize("N", N, ids=lambda x: f"N_{x}")
 @pytest.mark.parametrize("D", D, ids=lambda x: f"D_{x}")
-@pytest.mark.parametrize("random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}")
+@pytest.mark.parametrize(
+    "random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}"
+)
 @pytest.mark.parametrize("forget", FORGET, ids=lambda x: f"forget_{x}")
 def test_single_update_inv_gram(N, D, random_weights, forget):
     X, _, w = make_x_y_w(N, D, random_weights=random_weights)
@@ -87,7 +95,9 @@ def test_single_update_inv_gram(N, D, random_weights, forget):
 
 @pytest.mark.parametrize("N", N, ids=lambda x: f"N_{x}")
 @pytest.mark.parametrize("D", D, ids=lambda x: f"D_{x}")
-@pytest.mark.parametrize("random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}")
+@pytest.mark.parametrize(
+    "random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}"
+)
 @pytest.mark.parametrize("forget", FORGET, ids=lambda x: f"forget_{x}")
 @pytest.mark.parametrize("batchsize", BATCH_SIZE, ids=lambda x: f"batchsize_{x}")
 def test_batch_update_inv_gram(N, D, random_weights, forget, batchsize):
@@ -105,7 +115,9 @@ def test_batch_update_inv_gram(N, D, random_weights, forget, batchsize):
 # Y-GRAM
 @pytest.mark.parametrize("N", N, ids=lambda x: f"N_{x}")
 @pytest.mark.parametrize("D", D, ids=lambda x: f"D_{x}")
-@pytest.mark.parametrize("random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}")
+@pytest.mark.parametrize(
+    "random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}"
+)
 @pytest.mark.parametrize("forget", FORGET, ids=lambda x: f"forget_{x}")
 def test_single_update_y_gram(N, D, random_weights, forget):
     X, y, w = make_x_y_w(N, D, random_weights=random_weights)
@@ -118,7 +130,9 @@ def test_single_update_y_gram(N, D, random_weights, forget):
 
 @pytest.mark.parametrize("N", N, ids=lambda x: f"N_{x}")
 @pytest.mark.parametrize("D", D, ids=lambda x: f"D_{x}")
-@pytest.mark.parametrize("random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}")
+@pytest.mark.parametrize(
+    "random_weights", RANDOM_WEIGHTS, ids=lambda x: f"random_weights_{x}"
+)
 @pytest.mark.parametrize("forget", FORGET, ids=lambda x: f"forget_{x}")
 @pytest.mark.parametrize("batchsize", BATCH_SIZE, ids=lambda x: f"batchsize_{x}")
 def test_batch_update_y_gram(N, D, random_weights, forget, batchsize):

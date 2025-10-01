@@ -7,7 +7,7 @@ from ..coordinate_descent import online_coordinate_descent_path
 from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
 
 
-class ElasticNetPathMethod(EstimationMethod):
+class ElasticNetPath(EstimationMethod):
     """
     Path-based elastic net estimation.
 
@@ -55,6 +55,7 @@ class ElasticNetPathMethod(EstimationMethod):
         Initializes the ElasticNet method with the specified parameters.
 
         Args:
+            alpha (float): Mixing parameter between the L1 and L2 loss. Alpha = 0 corresponds to the Rigde, Alpha = 1 corresponds to the LASSO.
             lambda_n (int): Number of lambda values to use in the path. Default is 100.
             lambda_eps (float): Minimum lambda value as a fraction of the maximum lambda. Default is 1e-4.
             early_stop (int): Early stopping criterion. Will stop if the number of non-zero parameters is reached. Default is 0 (no early stopping).

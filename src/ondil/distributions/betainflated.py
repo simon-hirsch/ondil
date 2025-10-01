@@ -1,15 +1,40 @@
-from typing import Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import scipy.special as spc
 import scipy.stats as st
 
-from ..base import Distribution, LinkFunction, ScipyMixin
-from ..link import LogitLink, LogLink
+from ..base import Distribution, LinkFunction
+from ..links import Log, Logit
+from ..types import ParameterShapes
 
 
-class DistributionBetaInflated(Distribution):
-    """The Beta inflated Distribution for GAMLSS."""
+class BetaInflated(Distribution):
+    """The Beta Inflated Distribution for GAMLSS.
+    
+    The distribution function is defined as in GAMLSS as:
+    $$
+    f_Y(y \\mid \\mu, \\sigma, \\nu, \\tau) = 
+    \\begin{cases}
+    p_0 & \\text{if } y = 0 \\
+    (1 - p_0 - p_1) \\dfrac{1}{B(\\alpha, \\beta)} y^{\\alpha - 1}(1 - y)^{\\beta - 1} & \\text{if } 0 < y < 1 \\
+    p_1 & \\text{if } y = 1
+    \\end{cases}
+    $$
+       
+    where $\\alpha = \\mu (1 - \\sigma^2) / \\sigma^2$, \\beta = (1 - \\mu) (1 - \\sigma^2)/ \\sigma^2; 
+    p_0 = \\nu (1 + \\nu + \\tau)^{-1} and p_1 =  \\tau (1 + \\nu + \\tau)^{-1}$, 
+
+    and $\\mu, \\sigma \\in (0,1)$ and $\\nu, \\tau > 0 $
+
+    The parameter tuple $\\theta$ in Python is defined as:
+
+    $\\theta = (\\theta_0, \\theta_1, \\theta_2, \\theta_3) = (\\mu, \\sigma, \\nu, \\tau)$ 
+    where $\\mu = \\theta_0$ is the location parameter, $\\sigma = \\theta_1$ is the scale parameter 
+    and $\\nu, \\tau = \\theta_2, \\theta_3$ are shape parameters which together define the inflation at 0 and 1
+
+    This distribution corresponds to the BEINF() distribution in GAMLSS.
+    """
 
     corresponding_gamlss: str = "BEINF"
 
@@ -21,13 +46,19 @@ class DistributionBetaInflated(Distribution):
         3: (np.nextafter(0, 1), np.inf),  ##
     }
     distribution_support = (0, 1)
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+        2: ParameterShapes.SCALAR,
+        3: ParameterShapes.SCALAR,
+    }
 
     def __init__(
         self,
-        loc_link: LinkFunction = LogitLink(),
-        scale_link: LinkFunction = LogitLink(),
-        skew_link: LinkFunction = LogLink(),  ##
-        tail_link: LinkFunction = LogLink(),  ##
+        loc_link: LinkFunction = Logit(),
+        scale_link: LinkFunction = Logit(),
+        skew_link: LinkFunction = Log(),  ##
+        tail_link: LinkFunction = Log(),  ##
     ) -> None:
         super().__init__(links={0: loc_link, 1: scale_link, 2: skew_link, 3: tail_link})
 
@@ -238,11 +269,11 @@ class DistributionBetaInflated(Distribution):
             np.where(y == 0, nu, np.where(y == 1, denom, 0)),
         )
 
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide="ignore"):
             log_result = np.log(raw_cdf / denom)
 
         log_result = np.where(y < 0, -np.inf, log_result)
-        log_result = np.where(y > 1, 0.0, log_result)  
+        log_result = np.where(y > 1, 0.0, log_result)
 
         return log_result
 

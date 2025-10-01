@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
+
+from ..types import ParameterShapes
 
 
 class LinkFunction(ABC):
@@ -12,6 +14,15 @@ class LinkFunction(ABC):
     def link_support(self) -> Tuple[float, float]:
         """The support of the distribution."""
         pass
+
+    @property
+    def valid_shapes(self) -> List:
+        return [
+            ParameterShapes.SCALAR,
+            ParameterShapes.MATRIX,
+            ParameterShapes.VECTOR,
+            ParameterShapes.SQUARE_MATRIX,
+        ]
 
     @abstractmethod
     def link(self, x: np.ndarray) -> np.ndarray:

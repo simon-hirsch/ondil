@@ -16,7 +16,7 @@ The [`LinkFunction`][ondil.base.LinkFunction] abstract base class enforces, that
 - The second derivative of the link: `SomeNewLink().link_second_derivative()`.
 - The derivative of the inverse: `SomeNewLink().inverse_derivative()`.
 
-Additionally, each link defines the `SomeNewLink().link_support` as `tuple` of `float` values. This is used to ensure at the initialization of a distribution that the link functions support is inside the support of the distribution parameter. We allow the link to shorten the possible outcome space of the parameter, but we don't allow to return impossible values. As an example, you can constrain the degrees of freedom $\nu$ of the $t$-distribution by taking a [`LogShiftTwoLink()`][ondil.link.LogShiftTwoLink], which ensures that $\nu > 2$ (and therefore the variance exists), but you cannot choose the [`IdentityLink()`][ondil.link.IdentityLink], since the degrees of freedom must be positive.
+Additionally, each link defines the `SomeNewLink().link_support` as `tuple` of `float` values. This is used to ensure at the initialization of a distribution that the link functions support is inside the support of the distribution parameter. We allow the link to shorten the possible outcome space of the parameter, but we don't allow to return impossible values. As an example, you can constrain the degrees of freedom $\nu$ of the $t$-distribution by taking a [`LogShiftTwo()`][ondil.links.LogShiftTwo], which ensures that $\nu > 2$ (and therefore the variance exists), but you cannot choose the [`Identity()`][ondil.links.Identity], since the degrees of freedom must be positive.
 
 There are two ways to implement the support of the link function:
 
@@ -62,7 +62,7 @@ The [`Distribution`][ondil.base.Distribution] class is a very general class. How
 Let's consider the `Normal` distribution as an example. The `Normal` distribution is implemented in `scipy.stats` as `scipy.stats.norm`. Hence, we can use the [`ScipyMixin`][ondil.base.ScipyMixin] together with [`Distribution`][ondil.base.Distribution] to implement the `Normal` distribution. The `Normal` distribution is implemented as follows:
 
 ```python
-class DistributionNormal(Distribution, ScipyMixin):
+class Normal(Distribution, ScipyMixin):
     """Corresponds to GAMLSS NO() and scipy.stats.norm()"""
 
  corresponding_gamlss: str = "NO"
@@ -94,8 +94,8 @@ Then, we add an initialization method:
 ```python
 def __init__(
  self,
- loc_link: LinkFunction = IdentityLink(),
- scale_link: LinkFunction = LogLink(),
+ loc_link: LinkFunction = Identity(),
+ scale_link: LinkFunction = Log(),
 ) -> None:
     super().__init__(
         links={
@@ -125,7 +125,7 @@ Thats it! We implemented the `Normal` distribution.
 
 #### Special Cases
 
-Some distributions may be special. For example, our implementation of the Gamma distribution [`DistributionGamma`][ondil.distributions.DistributionGamma] uses a different parameterization than `scipy.stats.gamma`. In consequence, we cannot use `theta_to_scipy_params()` from [`ScipyMixin`][ondil.base.ScipyMixin] to map the parameters to `scipy`. In this case, we must implement the `theta_to_scipy_params()` method ourselves. This is done in the `DistributionGamma` class:
+Some distributions may be special. For example, our implementation of the Gamma distribution [`Gamma`][ondil.distributions.Gamma] uses a different parameterization than `scipy.stats.gamma`. In consequence, we cannot use `theta_to_scipy_params()` from [`ScipyMixin`][ondil.base.ScipyMixin] to map the parameters to `scipy`. In this case, we must implement the `theta_to_scipy_params()` method ourselves. This is done in the `Gamma` class:
 
 ```python
 def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
@@ -148,8 +148,8 @@ By providing a method called `theta_to_scipy_params` in the distribution class, 
 
 ## Summary
 
-Implementing your own distribution is fairly straightforward, especially if there is already a `scipy.stats` implementation. A good starting point is to look at the [`DistributionNormal`][ondil.distributions.DistributionNormal] function.
+Implementing your own distribution is fairly straightforward, especially if there is already a `scipy.stats` implementation. A good starting point is to look at the [`Normal`][ondil.distributions.Normal] function.
 
-If things need to be adjusted, then [`DistributionGamma`][ondil.distributions.DistributionGamma] demonstrates how to do this.
+If things need to be adjusted, then [`Gamma`][ondil.distributions.Gamma] demonstrates how to do this.
 
 If you want to implement a distribution that is not available in `scipy.stats`, then you need to implement some methods, including `cdf`, `pdf`, and `rvs` yourself. In that case, your new class will inherit only from [`Distribution`][ondil.base.Distribution]. You can inspect [`ScipyMixin`][ondil.base.ScipyMixin] to see which other methods need to be implemented.

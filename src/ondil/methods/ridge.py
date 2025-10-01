@@ -7,7 +7,7 @@ from ..coordinate_descent import online_coordinate_descent
 from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
 
 
-class RidgeMethod(EstimationMethod):
+class Ridge(EstimationMethod):
     """Single-lambda Ridge Estimation.
 
     The ridge method runs coordinate descent for a single lambda.

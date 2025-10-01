@@ -6,7 +6,7 @@ from ..base import EstimationMethod
 from ..gram import init_inverted_gram, init_y_gram, update_inverted_gram, update_y_gram
 
 
-class OrdinaryLeastSquaresMethod(EstimationMethod):
+class OrdinaryLeastSquares(EstimationMethod):
     """Simple ordinary least squares respectively recursive least squares. No fancy parameters possible."""
 
     def __init__(self) -> None:

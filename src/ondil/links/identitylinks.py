@@ -3,7 +3,7 @@ import numpy as np
 from ..base import LinkFunction
 
 
-class IdentityLink(LinkFunction):
+class Identity(LinkFunction):
     """
     The identity link function.
 

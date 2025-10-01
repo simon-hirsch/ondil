@@ -5,7 +5,8 @@ import numpy as np
 from ..base import LinkFunction
 from .robust_math import SMALL_NUMBER, robust_exp, robust_log
 
-class LogLink(LinkFunction):
+
+class Log(LinkFunction):
     """
     The log-link function.
 
@@ -33,7 +34,7 @@ class LogLink(LinkFunction):
         return -1 / x**2
 
 
-class LogShiftValueLink(LinkFunction):
+class LogShiftValue(LinkFunction):
     """
     The Log-Link function shifted to a value \(v\).
 
@@ -66,7 +67,7 @@ class LogShiftValueLink(LinkFunction):
         return -1 / (x - self.value + SMALL_NUMBER) ** 2
 
 
-class LogShiftTwoLink(LogShiftValueLink):
+class LogShiftTwo(LogShiftValue):
     """
     The Log-Link function shifted to 2.
 
@@ -81,7 +82,7 @@ class LogShiftTwoLink(LogShiftValueLink):
         pass
 
 
-class LogIdentLink(LinkFunction):
+class LogIdent(LinkFunction):
     """The Logident Link function.
 
     The LogIdent Link function has been introduced by [Narajewski & Ziel 2020](https://arxiv.org/pdf/2005.01365) and can be

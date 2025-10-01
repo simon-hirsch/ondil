@@ -1,28 +1,50 @@
-from .beta import DistributionBeta
-from .exponential import DistributionExponential
-from .betainflated import DistributionBetaInflated
-from .gamma import DistributionGamma
-from .inversegaussian import DistributionInverseGaussian
-from .johnsonsu import DistributionJSU
-from .logistic import DistributionLogistic
-from .lognormal import DistributionLogNormal
-from .lognormalmedian import DistributionLogNormalMedian
-from .normal import DistributionNormal, DistributionNormalMeanVariance
-from .studentt import DistributionT
+from .beta import Beta
+from .betainflated import BetaInflated
+from .betainflatedzero import BetaInflatedZero
+from .exponential import Exponential
+from .gamma import Gamma
+from .gumbel import Gumbel
+from .inversegamma import InverseGamma
+from .inversegaussian import InverseGaussian
+from .johnsonsu import JSU
+from .logistic import Logistic
+from .lognormal import LogNormal
+from .lognormalmedian import LogNormalMedian
+from .mv_normal_chol import MultivariateNormalInverseCholesky
+from .mv_normal_low_rank import MultivariateNormalInverseLowRank
+from .mv_normal_modchol import MultivariateNormalInverseModifiedCholesky
+from .mv_t_chol import MultivariateStudentTInverseCholesky
+from .mv_t_low_rank import MultivariateStudentTInverseLowRank
+from .mv_t_modchol import MultivariateStudentTInverseModifiedCholesky
+from .normal import Normal, NormalMeanVariance
+from .reversegumbel import ReverseGumbel
+from .studentt import StudentT
+from .zeroadjustedgamma import ZeroAdjustedGamma
 from .powerexponential import DistributionPowerExponential
 
 __all__ = [
-    "DistributionNormal",
-    "DistributionNormalMeanVariance",
-    "DistributionT",
-    "DistributionJSU",
-    "DistributionBetaInflated",
-    "DistributionGamma",
-    "DistributionBeta",
-    "DistributionLogNormal",
-    "DistributionLogNormalMedian",
-    "DistributionLogistic",
-    "DistributionExponential",
-    "DistributionInverseGaussian",
+    "Normal",
+    "NormalMeanVariance",
+    "StudentT",
+    "JSU",
+    "BetaInflated",
+    "Gamma",
+    "Beta",
+    "LogNormal",
+    "LogNormalMedian",
+    "Logistic",
+    "Exponential",
     "DistributionPowerExponential",
+    "Gumbel",
+    "InverseGaussian",
+    "ReverseGumbel",
+    "InverseGamma",
+    "MultivariateNormalInverseCholesky",
+    "MultivariateNormalInverseLowRank",
+    "MultivariateNormalInverseModifiedCholesky",
+    "MultivariateStudentTInverseCholesky",
+    "MultivariateStudentTInverseLowRank",
+    "MultivariateStudentTInverseModifiedCholesky",
+    "BetaInflatedZero",
+    "ZeroAdjustedGamma",
 ]

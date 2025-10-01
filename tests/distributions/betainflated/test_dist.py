@@ -1,9 +1,10 @@
-import numpy as np 
-import rpy2.robjects as robjects 
-from ondil import DistributionBetaInflated
+import numpy as np
+import rpy2.robjects as robjects
+from ondil.distributions import BetaInflated
 
-def test_betainflated_distribution(): 
-    dist = DistributionBetaInflated()
+
+def test_betainflated_distribution():
+    dist = BetaInflated()
 
     code = f"""
     library(gamlss.dist)
@@ -29,7 +30,7 @@ def test_betainflated_distribution():
     )
     """
 
-    #obtain info from R
+    # obtain info from R
 
     R_list = robjects.r(code)
 
@@ -38,8 +39,8 @@ def test_betainflated_distribution():
         [
             R_list.rx2("mu"),  # mu
             R_list.rx2("sigma"),  # sigma
-            R_list.rx2("nu"), #nu 
-            R_list.rx2("tau"), #tau
+            R_list.rx2("nu"),  # nu
+            R_list.rx2("tau"),  # tau
         ]
     )
 

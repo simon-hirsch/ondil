@@ -6,7 +6,7 @@ from ..base import LinkFunction
 from .robust_math import SMALL_NUMBER
 
 
-class SqrtLink(LinkFunction):
+class Sqrt(LinkFunction):
     """The square root Link function.
 
     The square root link function is defined as $$g(x) = \sqrt(x)$$.
@@ -33,7 +33,7 @@ class SqrtLink(LinkFunction):
         return -1 / (4 * x ** (3 / 2))
 
 
-class SqrtShiftValueLink(LinkFunction):
+class SqrtShiftValue(LinkFunction):
     """
     The Sqrt-Link function shifted to a value \(v\).
 
@@ -66,7 +66,7 @@ class SqrtShiftValueLink(LinkFunction):
         return -1 / (4 * (x - self.value + SMALL_NUMBER) ** (3 / 2))
 
 
-class SqrtShiftTwoLink(SqrtShiftValueLink):
+class SqrtShiftTwo(SqrtShiftValue):
     """
     The Sqrt-Link function shifted to 2.
 

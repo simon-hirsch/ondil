@@ -1,7 +1,6 @@
-from .distribution import Distribution
-from .distribution import ScipyMixin
+from .distribution import Distribution, MultivariateDistributionMixin, ScipyMixin
 from .estimation_method import EstimationMethod
-from .estimator import Estimator
+from .estimator import Estimator, OndilEstimatorMixin
 from .link import LinkFunction
 
 __all__ = [
@@ -10,4 +9,6 @@ __all__ = [
     "LinkFunction",
     "Estimator",
     "EstimationMethod",
+    "OndilEstimatorMixin",
+    "MultivariateDistributionMixin",
 ]

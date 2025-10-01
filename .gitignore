@@ -22,3 +22,4 @@ gist.githubusercontent*
 .venv/*
 .envrc
 default.nix
+*.vscode

@@ -5,10 +5,11 @@ import scipy.special as spc
 import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
-from ..link import LogitLink
+from ..links import Logit
+from ..types import ParameterShapes
 
 
-class DistributionBeta(ScipyMixin, Distribution):
+class Beta(ScipyMixin, Distribution):
     """The Beta Distribution for GAMLSS.
 
     The distribution function is defined as in GAMLSS as:
@@ -30,7 +31,7 @@ class DistributionBeta(ScipyMixin, Distribution):
 
         This parameterization is different to the `scipy.stats.beta(alpha, beta, loc, scale)` parameterization.
 
-        We can use `DistributionBeta().gamlss_to_scipy(mu, sigma)` to map the distribution parameters to scipy.
+        We can use `Beta().gamlss_to_scipy(mu, sigma)` to map the distribution parameters to scipy.
 
     The `scipy.stats.beta()` distribution is defined as:
     $$
@@ -59,6 +60,10 @@ class DistributionBeta(ScipyMixin, Distribution):
         0: (np.nextafter(0, 1), np.nextafter(1, 0)),
         1: (np.nextafter(0, 1), np.nextafter(1, 0)),
     }
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+    }
     distribution_support = (np.nextafter(0, 1), np.nextafter(1, 0))
     # Scipy equivalent and parameter mapping ondil -> scipy
     scipy_dist = st.beta
@@ -68,8 +73,8 @@ class DistributionBeta(ScipyMixin, Distribution):
 
     def __init__(
         self,
-        loc_link: LinkFunction = LogitLink(),
-        scale_link: LinkFunction = LogitLink(),
+        loc_link: LinkFunction = Logit(),
+        scale_link: LinkFunction = Logit(),
     ) -> None:
         super().__init__(links={0: loc_link, 1: scale_link})
 

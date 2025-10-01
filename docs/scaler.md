@@ -2,4 +2,4 @@
 
 ## API Reference
 
-::: ondil.OnlineScaler
+::: ondil.scaler.OnlineScaler

@@ -18,47 +18,87 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 
 ## List of Distributions
 
-| Distribution                                                              | Description                            | `scipy` Equivalent      |
-| ------------------------------------------------------------------------- | -------------------------------------- | ----------------------- |
-| [`DistributionNormal`](#ondil.DistributionNormal)                         | Gaussian (mean and standard deviation) | `scipy.stats.norm`      |
-| [`DistributionNormalMeanVariance`](#ondil.DistributionNormalMeanVariance) | Gaussian (mean and variance)           | `scipy.stats.norm`      |
-| [`DistributionT`](#ondil.DistributionT)                                   | Student's $t$ distribution             | `scipy.stats.t`         |
-| [`DistributionJSU`](#ondil.DistributionJSU)                               | Johnson's SU distribution              | `scipy.stats.johnsonsu` |
-| [`DistributionGamma`](#ondil.DistributionGamma)                           | Gamma distribution                     | `scipy.stats.gamma`     |
-| [`DistributionLogNormal`](#ondil.DistributionLogNormal)                   | Log-normal distribution                | `scipy.stats.lognorm`   |
-| [`DistributionLogNormalMedian`](#ondil.DistributionLogNormalMedian)       | Log-normal distribution (median)       | -                       |
-| [`DistributionLogistic`](#ondil.DistributionLogistic)                     | Logistic distribution                  | `scipy.stats.logistic`  |
-| [`DistributionExponential`](#ondil.DistributionExponential)               | Exponential distribution               | `scipy.stats.expon`     |
-| [`DistributionInverseGaussian`](#ondil.DistributionInverseGaussian)       | Inverse Gaussian distribution          | `scipy.stats.invgauss`  |
-| [`DistributionBeta`](#ondil.DistributionBeta)                             | Beta distribution                      | `scipy.stats.beta`      |
-| [`DistributionBetaInflated`](#ondil.DistributionBetaInflated)             | Beta Inflated distribution             | -                       |
-| [`DistributionPowerExponential`](#ondil.DistributionPowerExponential)     | Power Exponential distribution         | -                       |
+| Distribution                                                          | Description                            | `scipy` Base            |
+| --------------------------------------------------------------------- | -------------------------------------- | ----------------------- |
+| [`Normal`](#ondil.distributions.Normal)                               | Gaussian (mean and standard deviation) | `scipy.stats.norm`      |
+| [`NormalMeanVariance`](#ondil.distributions.NormalMeanVariance)       | Gaussian (mean and variance)           | `scipy.stats.norm`      |
+| [`StudentT`](#ondil.distributions.StudentT)                           | Student's $t$ distribution             | `scipy.stats.t`         |
+| [`JSU`](#ondil.distributions.JSU)                                     | Johnson's SU distribution              | `scipy.stats.johnsonsu` |
+| [`Gamma`](#ondil.distributions.Gamma)                                 | Gamma distribution                     | `scipy.stats.gamma`     |
+| [`LogNormal`](#ondil.distributions.LogNormal)                         | Log-normal distribution                | `scipy.stats.lognorm`   |
+| [`LogNormalMedian`](#ondil.distributions.LogNormalMedian)             | Log-normal distribution (median)       | -                       |
+| [`Logistic`](#ondil.distributions.Logistic)                           | Logistic distribution                  | `scipy.stats.logistic`  |
+| [`Exponential`](#ondil.distributions.Exponential)                     | Exponential distribution               | `scipy.stats.expon`     |
+| [`Beta`](#ondil.distributions.Beta)                                   | Beta distribution                      | `scipy.stats.beta`      |
+| [`Gumbel`](#ondil.distributions.Gumbel)                               | Gumbel distribution                    | `scipy.stats.gumbel_r`  |
+| [`InverseGaussian`](#ondil.distributions.InverseGaussian)             | Inverse Gaussian distribution          | `scipy.stats.invgauss`  |
+| [`BetaInflated`](#ondil.distributions.BetaInflated)                   | Beta Inflated distribution             | -                       |
+| [`ReverseGumbel`](#ondil.distributions.ReverseGumbel)                 | Reverse Gumbel distribution            | `scipy.stats.gumbel_r`  |
+| [`InverseGamma`](#ondil.distributions.InverseGamma)                   | Inverse Gamma distribution             | `scipy.stats.invgamma`  |
+| [`BetaInflatedZero`](#ondil.distributions.BetaInflatedZero)           | Zero Inflated Beta distribution        | -                       |
+| [`ZeroAdjustedGamma`](#ondil.distributions.ZeroAdjustedGamma)         | Zero Adjusted Gamma distribution       | -                       |
+| [`DistributionPowerExponential`](#ondil.DistributionPowerExponential) | Power Exponential distribution         | -                       |
+
+| Distribution                                                                                                      | Description                                              | Scale Matrix Parameterization           | Formula                                                                         |
+| ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------- |
+| [`MultivariateNormalInverseCholesky`](#ondil.distributions.MultivariateNormalInverseCholesky)                     | Multivariate normal (inverse Cholesky)                   | Inverse Cholesky factorization          | \$\\Sigma = (L L^{\\top})^{-1}\$, where \$L\$ is lower triangular               |
+| [`MultivariateNormalInverseModifiedCholesky`](#ondil.distributions.MultivariateNormalInverseModifiedCholesky)     | Multivariate normal (inverse modified Cholesky)          | Inverse modified Cholesky factorization | \$\\Sigma = (T D T^{\\top})^{-1}\$, \$T\$ unit lower triangular, \$D\$ diagonal |
+| [`MultivariateNormalInverseLowRank`](#ondil.distributions.MultivariateNormalInverseLowRank)                       | Multivariate normal (inverse low-rank)                   | Inverse low-rank factorization          | \$\\Sigma = (U U^{\\top} + D)^{-1}\$, \$U\$ low-rank, \$D\$ diagonal            |
+| [`MultivariateStudentTInverseCholesky`](#ondil.distributions.MultivariateStudentTInverseCholesky)                 | Multivariate Student's \$t\$ (inverse Cholesky)          | Inverse Cholesky factorization          | \$\\Sigma = (L L^{\\top})^{-1}\$, where \$L\$ is lower triangular               |
+| [`MultivariateStudentTInverseModifiedCholesky`](#ondil.distributions.MultivariateStudentTInverseModifiedCholesky) | Multivariate Student's \$t\$ (inverse modified Cholesky) | Inverse modified Cholesky factorization | \$\\Sigma = (T D T^{\\top})^{-1}\$, \$T\$ unit lower triangular, \$D\$ diagonal |
+| [`MultivariateStudentTInverseLowRank`](#ondil.distributions.MultivariateStudentTInverseLowRank)                   | Multivariate Student's \$t\$ (inverse low-rank)          | Inverse low-rank factorization          | \$\\Sigma = (U U^{\\top} + D)^{-1}\$, \$U\$ low-rank, \$D\$ diagonal            |
+
+
 
 ## API Reference
 
-::: ondil.DistributionNormal
+::: ondil.distributions.Normal
 
-::: ondil.DistributionNormalMeanVariance
+::: ondil.distributions.NormalMeanVariance
 
-::: ondil.DistributionT
+::: ondil.distributions.StudentT
 
-::: ondil.DistributionJSU
+::: ondil.distributions.JSU
 
-::: ondil.DistributionGamma
+::: ondil.distributions.Gamma
 
-::: ondil.DistributionLogNormal
+::: ondil.distributions.LogNormal
 
-::: ondil.DistributionLogNormalMedian
+::: ondil.distributions.LogNormalMedian
 
-::: ondil.DistributionLogistic
+::: ondil.distributions.Logistic
 
-::: ondil.DistributionExponential
+::: ondil.distributions.Exponential
 
-::: ondil.DistributionInverseGaussian
+::: ondil.distributions.InverseGaussian
 
-::: ondil.DistributionBeta
+::: ondil.distributions.Beta
 
-::: ondil.DistributionBetaInflated
+::: ondil.distributions.Gumbel
+
+::: ondil.distributions.BetaInflated
+
+::: ondil.distributions.ReverseGumbel
+
+::: ondil.distributions.InverseGamma
+
+::: ondil.distributions.ZeroAdjustedGamma
+
+::: ondil.distributions.BetaInflatedZero
+
+## Multivariate Distributions
+
+::: ondil.distributions.MultivariateNormalInverseCholesky
+
+::: ondil.distributions.MultivariateNormalInverseModifiedCholesky
+
+::: ondil.distributions.MultivariateNormalInverseLowRank
+
+::: ondil.distributions.MultivariateStudentTInverseCholesky
+
+::: ondil.distributions.MultivariateStudentTInverseModifiedCholesky
+
+::: ondil.distributions.MultivariateStudentTInverseLowRank
 
 ::: ondil.DistributionPowerExponential
 

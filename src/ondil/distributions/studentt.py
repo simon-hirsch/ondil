@@ -5,10 +5,11 @@ import scipy.special as sp
 import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
-from ..link import IdentityLink, LogLink, LogShiftTwoLink
+from ..links import Identity, Log, LogShiftTwo
+from ..types import ParameterShapes
 
 
-class DistributionT(ScipyMixin, Distribution):
+class StudentT(ScipyMixin, Distribution):
     """Corresponds to GAMLSS TF() and scipy.stats.t()"""
 
     corresponding_gamlss: str = "TF"
@@ -19,6 +20,11 @@ class DistributionT(ScipyMixin, Distribution):
         1: (np.nextafter(0, 1), np.inf),
         2: (np.nextafter(0, 1), np.inf),
     }
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+        2: ParameterShapes.SCALAR,
+    }
     distribution_support = (-np.inf, np.inf)
 
     # Scipy distribution and parameter mapping ondil -> scipy
@@ -27,9 +33,9 @@ class DistributionT(ScipyMixin, Distribution):
 
     def __init__(
         self,
-        loc_link: LinkFunction = IdentityLink(),
-        scale_link: LinkFunction = LogLink(),
-        tail_link: LinkFunction = LogShiftTwoLink(),
+        loc_link: LinkFunction = Identity(),
+        scale_link: LinkFunction = Log(),
+        tail_link: LinkFunction = LogShiftTwo(),
     ) -> None:
         super().__init__(
             links={

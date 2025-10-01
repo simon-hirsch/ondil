@@ -11,7 +11,7 @@ from .robust_math import (
 )
 
 
-class InverseSoftPlusLink(LinkFunction):
+class InverseSoftPlus(LinkFunction):
     """
     The softplus is defined as $$
         \operatorname{SoftPlus(x)} = \log(1 + \exp(x))
@@ -37,7 +37,7 @@ class InverseSoftPlusLink(LinkFunction):
         return robust_softplus(x)
 
     def link_derivative(self, x: np.ndarray):
-        return zero_safe_division(1, (robust_exp(x) - 1) + 1)
+        return zero_safe_division(1, (robust_exp(x) - 1)) + 1
 
     def link_second_derivative(self, x: np.ndarray):
         # return 1 / (2 - 2 * np.cosh(x)) # equivalent
@@ -48,7 +48,7 @@ class InverseSoftPlusLink(LinkFunction):
         return zero_safe_division(1, (robust_exp(-x) + 1))
 
 
-class InverseSoftPlusShiftValueLink(LinkFunction):
+class InverseSoftPlusShiftValue(LinkFunction):
     """
     The Inverse SoftPlus function shifted to a value \(v\).
     """
@@ -79,7 +79,7 @@ class InverseSoftPlusShiftValueLink(LinkFunction):
         return zero_safe_division(1, (2 - 2 * np.cosh(self.value - x)))
 
 
-class InverseSoftPlusShiftTwoLink(InverseSoftPlusShiftValueLink):
+class InverseSoftPlusShiftTwo(InverseSoftPlusShiftValue):
     """
     The Inverse SoftPlus function shifted to 2.
     """

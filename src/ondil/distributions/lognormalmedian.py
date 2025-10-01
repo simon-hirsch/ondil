@@ -4,10 +4,11 @@ import numpy as np
 import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
-from ..link import LogLink
+from ..links import Log
+from ..types import ParameterShapes
 
 
-class DistributionLogNormalMedian(ScipyMixin, Distribution):
+class LogNormalMedian(ScipyMixin, Distribution):
     """
     The Log-Normal distribution with median and standard deviation parameterization in the log-space.
 
@@ -28,14 +29,18 @@ class DistributionLogNormalMedian(ScipyMixin, Distribution):
         0: (np.nextafter(0, 1), np.inf),
         1: (np.nextafter(0, 1), np.inf),
     }
+    parameter_shape = {
+        0: ParameterShapes.SCALAR,
+        1: ParameterShapes.SCALAR,
+    }
     distribution_support = (0, np.inf)
     scipy_dist = st.lognorm
     scipy_names = {"mu": "scale", "sigma": "s"}
 
     def __init__(
         self,
-        loc_link: LinkFunction = LogLink(),
-        scale_link: LinkFunction = LogLink(),
+        loc_link: LinkFunction = Log(),
+        scale_link: LinkFunction = Log(),
     ) -> None:
         super().__init__(
             links={

@@ -1,12 +1,25 @@
-import numpy as np
+import numbers
 
-from .utils import (
-    calculate_asymptotic_training_length,
-    calculate_effective_training_length,
+import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
 )
 
+from .base.estimator import OndilEstimatorMixin
+from .gram import init_forget_vector
 
-class OnlineScaler:
+
+class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
+
+    _parameter_constraints = {
+        "forget": [Interval(numbers.Real, 0.0, 1.0, closed="left")],
+        "to_scale": [bool, np.ndarray],
+    }
+
     def __init__(
         self,
         forget: float = 0.0,
@@ -27,8 +40,6 @@ class OnlineScaler:
 
     def _prepare_estimator(self, X: np.ndarray):
         """Add derived attributes to estimator"""
-        # Slowly align with sklearn API of not saving more | less in the construction than user passed arguments
-        # Prepare the scaling
         if isinstance(self.to_scale, np.ndarray):
             self._selection = self.to_scale
             self._do_scale = True
@@ -41,62 +52,113 @@ class OnlineScaler:
                 self._do_scale = False
 
         # Variables
-        self.m = 0
-        self.M = 0
-        self.v = 0
-        self.n_observations = X.shape[0]
-        self.n_asymmptotic = calculate_asymptotic_training_length(self.forget)
+        self.mean_ = 0
+        self.var_ = 0
+        self._M = 0
+        self._cumulative_w = 0  # Track cumulative weights for exponential forgetting
 
-    def fit(self, X: np.ndarray) -> None:
+    @property
+    def std_(self) -> float | np.ndarray:
+        """Standard deviation of the scaled variables."""
+        check_is_fitted(self, ["mean_", "var_"])
+        if self._do_scale:
+            return np.sqrt(self.var_)
+        else:
+            return 1.0
+
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(
+        self,
+        X: np.ndarray,
+        y: None = None,
+        sample_weight: np.ndarray | None = None,
+    ) -> "OnlineScaler":
         """Fit the OnlineScaler() Object for the first time.
 
         Args:
             X (np.ndarray): Matrix of covariates X.
+            y (None, optional): Not used, present for compatibility with sklearn API. Defaults to None.
+            sample_weight (np.ndarray, optional): Weights for each sample. Defaults to None (uniform weights).
         """
+
+        X = validate_data(
+            self,
+            X=X,
+            y=None,
+            reset=True,
+            ensure_min_samples=2,
+            dtype=[np.float64, np.float32],
+        )
+        sample_weight = _check_sample_weight(X=X, sample_weight=sample_weight)
         self._prepare_estimator(X)
+        self.n_observations_ = sample_weight.sum()
+
         if self._do_scale:
-            # Calculate the mean of each column of x_init and assing it to self.m
-            self.m = np.mean(X[:, self._selection], axis=0)
-            # Calculate the variance of each column of x_init and assing it to self.v
-            self.v = np.var(X[:, self._selection], axis=0)
-            self.M = self.v * self.n_observations
-        else:
-            pass
+            forget_vector = init_forget_vector(self.forget, X.shape[0])
+            effective_weights = sample_weight * forget_vector
 
-    def update(self, X: np.ndarray) -> None:
-        """Wrapper for partial_fit to align API."""
-        self.partial_fit(X)
+            self._cumulative_w = np.sum(
+                effective_weights
+            )  # Initialize cumulative weight
+            self.mean_ = np.average(
+                X[:, self._selection], weights=effective_weights, axis=0
+            )
 
-    def partial_fit(self, X: np.ndarray) -> None:
+            # Calculate the variance of each column of x_init and assing it to self.var_
+            diff_sq = (X[:, self._selection] - self.mean_) ** 2
+            self.var_ = np.average(diff_sq, weights=effective_weights, axis=0)
+            self._M = self.var_ * self._cumulative_w
+
+        return self
+
+    @_fit_context(prefer_skip_nested_validation=True)
+    def update(self, X: np.ndarray, y=None, sample_weight: np.ndarray = None):
         """Update the `OnlineScaler()` for new rows of X.
 
         Args:
             X (np.ndarray): New data for X.
+            y (None, optional): Not used, present for compatibility with sklearn API. Defaults to None.
+            sample_weight (np.ndarray, optional): Weights for each sample. Defaults to None (uniform weights).
         """
+        check_is_fitted(self, ["mean_", "var_"])
+        X = validate_data(
+            self,
+            X=X,
+            y=None,
+            reset=False,
+            ensure_min_samples=1,
+            dtype=[np.float64, np.float32],
+        )
+        sample_weight = _check_sample_weight(X=X, sample_weight=sample_weight)
+        self.n_observations_ += sample_weight.sum()
+
         # Loop over all rows of new X
         if self._do_scale:
             for i in range(X.shape[0]):
-                self.n_observations += 1
-                n_seen = calculate_effective_training_length(
-                    self.forget, self.n_observations
+                # Effective weight for the old state
+                eff_old_w = self._cumulative_w * (1 - self.forget)
+                self._cumulative_w = eff_old_w + sample_weight[i]
+                diff_old = X[i, self._selection] - self.mean_
+
+                # Update mean
+                self.mean_ = (
+                    self.mean_ * eff_old_w + X[i, self._selection] * sample_weight[i]
+                ) / self._cumulative_w
+
+                diff_new = X[i, self._selection] - self.mean_
+
+                # Update M (sum of squared deviations)
+                self._M = (
+                    self._M * (1 - self.forget) + sample_weight[i] * diff_old * diff_new
                 )
 
-                forget_scaled = self.forget * np.maximum(
-                    self.n_asymmptotic / n_seen, 1.0
-                )
+                # Update variance
+                self.var_ = self._M / self._cumulative_w
 
-                diff = X[i, self._selection] - self.m
-                incr = forget_scaled * diff
-
-                if forget_scaled > 0:
-                    self.m += incr
-                    self.v = (1 - forget_scaled) * (self.v + forget_scaled * diff**2)
-                else:
-                    self.m += diff / self.n_observations
-                    self.M += diff * (X[i, self._selection] - self.m)
-                    self.v = self.M / self.n_observations
         else:
             pass
+
+        return self
 
     def transform(self, X: np.ndarray) -> np.ndarray:
         """Transform X to a mean-std scaled matrix.
@@ -107,9 +169,21 @@ class OnlineScaler:
         Returns:
             np.ndarray: Scaled X matrix.
         """
+        check_is_fitted(self, ["mean_", "var_"])
+        X = validate_data(
+            self,
+            X=X,
+            y=None,
+            reset=False,
+            ensure_min_samples=1,
+            dtype=[np.float64, np.float32],
+        )
+
         if self._do_scale:
             out = np.copy(X)
-            out[:, self._selection] = (X[:, self._selection] - self.m) / np.sqrt(self.v)
+            out[:, self._selection] = (X[:, self._selection] - self.mean_) / np.sqrt(
+                self.var_
+            )
             return out
         else:
             return X
@@ -123,9 +197,20 @@ class OnlineScaler:
         Returns:
             np.ndarray: Scaled back to the original scale.
         """
+        check_is_fitted(self, ["mean_", "var_"])
+        X = validate_data(
+            self,
+            X=X,
+            reset=False,
+            ensure_min_samples=1,
+            dtype=[np.float64, np.float32],
+        )
+
         if self._do_scale:
             out = np.copy(X)
-            out[:, self._selection] = X[:, self._selection] * np.sqrt(self.v) + self.m
+            out[:, self._selection] = (
+                X[:, self._selection] * np.sqrt(self.var_) + self.mean_
+            )
             return out
         else:
             return X

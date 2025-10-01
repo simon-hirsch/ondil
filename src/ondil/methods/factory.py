@@ -1,24 +1,23 @@
 import copy
 
 from ..base import EstimationMethod
-from .elasticnet import ElasticNetPathMethod
-from .lasso_path import LassoPathMethod
-from .recursive_least_squares import OrdinaryLeastSquaresMethod
+from .elasticnet import ElasticNetPath
+from .lasso_path import LassoPath
+from .recursive_least_squares import OrdinaryLeastSquares
 
 
 class EstimationMethodFactory:
-
     def __init__(self):
         pass
 
     @staticmethod
     def from_string(method: str):
         if method == "lasso":
-            return LassoPathMethod()
+            return LassoPath()
         elif method == "ols":
-            return OrdinaryLeastSquaresMethod()
+            return OrdinaryLeastSquares()
         elif method == "elasticnet":
-            return ElasticNetPathMethod(alpha=0.5)
+            return ElasticNetPath(alpha=0.5)
         else:
             raise ValueError(
                 "Did not recognize method. Please provide ['ols', 'lasso', 'elasticnet']."

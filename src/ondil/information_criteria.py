@@ -5,14 +5,15 @@ import numpy as np
 class InformationCriterion:
     """Calculate the information criteria.
 
-    +---------+------------------------------------+--------------------------+
-    | `ic`    | Information Criterion              | Formula                  |
-    +=========+====================================+==========================+
-    | `"aic"` | Akaike's Information Criterion     | $- 2l + 2\log(n)$        |
-    | `"bic"` | Bayesian Information Criterion     | $- 2l + 2p\log(n)$       |
-    | `"hqc"` | Hannan-Quinn Information Criterion | $- 2l + 2p\log(\log(n))$ |
-    | `"max"` | Select the largest model           |                          |
-    +---------+------------------------------------+--------------------------+
+    +---------+--------------------------------------+--------------------------+
+    | `ic`    | Information Criterion                | Formula                  |
+    +=========+======================================+==========================+
+    | `"aic"` | Akaike's Information Criterion       | $- 2l + 2p$              |
+    | `"aicc"`| Corr. Akaike's Information Criterion | $- 2l + 2pn/(n-p-1)$     |
+    | `"bic"` | Bayesian Information Criterion       | $- 2l + p\log(n)$        |
+    | `"hqc"` | Hannan-Quinn Information Criterion   | $- 2l + 2p\log(\log(n))$ |
+    | `"max"` | Select the largest model             |                          |
+    +---------+--------------------------------------+--------------------------+
 
     Methods:
     -------
@@ -81,14 +82,14 @@ class InformationCriterion:
         c = self.criterion
         n, p, ll = self.n_observations, self.n_parameters, log_likelihood
         if c == "aic":
-            return 2 * p - 2 * ll
+            return - 2 * ll + p * 2 
         elif c == "aicc":
             if n - p - 1 == 0:
                 raise ValueError("Invalid inputs: n - p - 1 must not be zero for AICC calculation.")
-            return 2 * p - 2 * ll + (2 * p**2 + 2 * p) / (n - p - 1)
+            return - 2 * ll + p * 2 * n / ( n - p - 1)
         elif c == "bic":
-            return p * np.log(n) - 2 * ll
+            return - 2 * ll + p * np.log(n) 
         elif c == "hqc":
-            return 2 * p * np.log(np.log(n)) - 2 * ll
+            return - 2 * ll + p * 2 * np.log(np.log(n))
         elif c == "max":
             return -ll

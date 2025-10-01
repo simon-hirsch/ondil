@@ -4,7 +4,7 @@ from ..base import LinkFunction
 from .robust_math import robust_exp, robust_log
 
 
-class LogitLink(LinkFunction):
+class Logit(LinkFunction):
     r"""The Logit Link function.
 
     The logit-link function is defined as \(g(x) = \log (x/ (1-x))\).

@@ -2,10 +2,10 @@ from typing import Literal
 
 import numpy as np
 
-from .elasticnet import ElasticNetPathMethod
+from .elasticnet import ElasticNetPath
 
 
-class LassoPathMethod(ElasticNetPathMethod):
+class LassoPath(ElasticNetPath):
     """
     Path-based lasso estimation.
 

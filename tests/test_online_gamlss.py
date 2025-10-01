@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
-from ondil.distributions import DistributionJSU
-from ondil.estimators import OnlineGamlss
 from sklearn.datasets import make_regression
+
+from ondil.distributions import JSU
+from ondil.estimators import OnlineDistributionalRegression
 
 FIT_INTERCEPT = [True, False]
 N_FEATURES = np.round(np.geomspace(11, 100, 5)).astype(int)
@@ -28,14 +29,14 @@ def test_get_J_from_equation(n_features, fit_intercept):
     }
 
     X, _ = make_regression(n_samples=100, n_features=n_features)
-    distribution = DistributionJSU()
+    distribution = JSU()
 
-    estimator = OnlineGamlss(
+    estimator = OnlineDistributionalRegression(
         distribution=distribution,
         equation=equation,
         fit_intercept=fit_intercept,
     )
-
+    estimator._prepare_estimator()
     J = estimator.get_J_from_equation(X)
     for param, expected_dict in EXPECTED.items():
         assert J[param] == expected_dict[fit_intercept], f"Wrong J for param == {param}"
@@ -53,15 +54,16 @@ def test_get_J_from_equation_warnings():
     }
 
     X, _ = make_regression(n_samples=100, n_features=n_features)
-    distribution = DistributionJSU()
+    distribution = JSU()
 
-    estimator = OnlineGamlss(
+    estimator = OnlineDistributionalRegression(
         distribution=distribution,
         equation=equation_fail_2,
         fit_intercept=fit_intercept,
     )
+    estimator._prepare_estimator()
     with pytest.raises(ValueError, match="Shape does not match for param 2."):
-        J = estimator.get_J_from_equation(X)
+        _ = estimator.get_J_from_equation(X)
 
     # Test for parameter three
     equation_fail_3 = {
@@ -72,15 +74,16 @@ def test_get_J_from_equation_warnings():
     }
 
     X, _ = make_regression(n_samples=100, n_features=10)
-    distribution = DistributionJSU()
-    estimator = OnlineGamlss(
+    distribution = JSU()
+    estimator = OnlineDistributionalRegression(
         distribution=distribution,
         equation=equation_fail_3,
         fit_intercept=fit_intercept,
     )
+    estimator._prepare_estimator()
 
     with pytest.raises(
         ValueError,
         match="Shape does not match for param 3.",
     ):
-        J = estimator.get_J_from_equation(X)
+        _ = estimator.get_J_from_equation(X)
