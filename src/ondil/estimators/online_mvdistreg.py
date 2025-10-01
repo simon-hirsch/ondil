@@ -1,8 +1,8 @@
 import copy
 import numbers
 import time
-import warnings
 from typing import Any, Dict, List, Literal, Optional, Tuple
+import warnings
 
 import numba as nb
 import numpy as np
@@ -122,13 +122,13 @@ def make_model_array(X, eq, fit_intercept):
 class MultivariateOnlineDistributionalRegressionPath(
     OndilEstimatorMixin, RegressorMixin, MultiOutputMixin, BaseEstimator
 ):
-
     _parameter_constraints = {
         "distribution": [callable],
         "equation": [dict, type(None)],
         "forget": [Interval(numbers.Real, 0.0, 1.0, closed="left"), dict],
         "learning_rate": [Interval(numbers.Real, 0.0, 1.0, closed="left")],
         "fit_intercept": [bool, dict],
+        "regularize_intercept": [bool, dict],
         "scale_inputs": [bool, np.ndarray],
         "verbose": [Interval(numbers.Integral, 0, None, closed="left")],
         "method": [StrOptions({"ols", "lasso"}), dict],
@@ -166,6 +166,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         forget: float | Dict = 0.0,
         learning_rate: float = 0.0,
         fit_intercept: bool = True,
+        regularize_intercept: bool = False,
         scale_inputs: bool = True,
         verbose: int = 1,
         method: Literal["ols", "lasso"] | Dict[int, Literal["ols", "lasso"]] = "ols",
@@ -200,6 +201,7 @@ class MultivariateOnlineDistributionalRegressionPath(
             forget (float | Dict, optional): Forgetting factor for online updates, can be a float or per-dimension dict. Defaults to 0.0.
             learning_rate (float, optional): Learning rate for online updates. Defaults to 0.0.
             fit_intercept (bool, optional): Whether to fit an intercept term. Defaults to True.
+            regularize_intercept (bool, optional): Whether to regularize the intercept term. Defaults to False.
             scale_inputs (bool, optional): Whether to scale input features. Defaults to True.
             verbose (int, optional): Verbosity level for logging. Defaults to 1.
             method (Literal["ols", "lasso"] | Dict[int, Literal["ols", "lasso"]], optional): Regression method(s) to use, either "ols", "lasso", or per-dimension dict. Defaults to "ols".
@@ -226,6 +228,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         self.distribution = distribution
         self.forget = forget
         self.fit_intercept = fit_intercept
+        self.regularize_intercept = regularize_intercept
         self.dampen_estimation = dampen_estimation
         self.weight_delta = weight_delta
 
@@ -294,25 +297,42 @@ class MultivariateOnlineDistributionalRegressionPath(
 
     def _prepare_estimator(self):
         self._scaler = OnlineScaler(
-            forget=self.learning_rate, to_scale=self.scale_inputs
+            forget=self.learning_rate,
+            to_scale=self.scale_inputs,
         )
         # For simplicity
-        self._forget = self._process_parameter(self.forget, default=0.0, name="forget")
+        self._forget = self._process_parameter(
+            self.forget,
+            default=0.0,
+            name="forget",
+        )
         self._fit_intercept = self._process_parameter(
-            self.fit_intercept, default=True, name="fit_intercept"
+            self.fit_intercept,
+            default=True,
+            name="fit_intercept",
+        )
+        self._regularize_intercept = self._process_parameter(
+            self.regularize_intercept,
+            default=False,
+            name="regularize_intercept",
         )
         self._dampen_estimation = self._process_parameter(
-            self.dampen_estimation, default=False, name="dampen_estimation"
+            self.dampen_estimation,
+            default=False,
+            name="dampen_estimation",
         )
         self._weight_delta = self._process_parameter(
-            self.weight_delta, default=1.0, name="weight_delta"
+            self.weight_delta,
+            default=1.0,
+            name="weight_delta",
         )
         self._overshoot_correction = self._process_parameter(
-            self.overshoot_correction, default=None, name="overshoot_correction"
+            self.overshoot_correction,
+            default=None,
+            name="overshoot_correction",
         )
 
     def _make_iteration_indices(self, param: int):
-
         if (
             self.distribution.parameter_shape
             in [
@@ -597,7 +617,8 @@ class MultivariateOnlineDistributionalRegressionPath(
         self._scaler.fit(X)
         X_scaled = self._scaler.transform(X=X)
 
-        # Some stuff
+        # Create the regularization mask
+        # For the "lower estimation" i.e. the CD path.
         self.is_regularized_ = {
             p: {
                 k: np.repeat(True, self.n_features_[p][k])
@@ -605,7 +626,13 @@ class MultivariateOnlineDistributionalRegressionPath(
             }
             for p in range(self.distribution.n_params)
         }
+        for p in range(self.distribution.n_params):
+            for k in range(self.n_dist_elements_[p]):
+                if not self._regularize_intercept[p]:
+                    if self._fit_intercept[p]:
+                        self.is_regularized_[p][k][0] = False
 
+        # Iteration index for the elements of each distribution parameter
         self._iter_index = {
             p: self._make_iteration_indices(p)
             for p in range(self.distribution.n_params)
@@ -615,21 +642,21 @@ class MultivariateOnlineDistributionalRegressionPath(
         theta = self._make_initial_theta(y)
 
         # Current information
-        self._current_likelihood = np.array(
-            [
-                np.sum(self.distribution.logpdf(y=y, theta=theta[a]))
-                for a in range(self.adr_steps_)
-            ]
-        )
+        self._current_likelihood = np.array([
+            np.sum(self.distribution.logpdf(y=y, theta=theta[a]))
+            for a in range(self.adr_steps_)
+        ])
         self._model_selection = {
             p: {a: {} for a in range(self.adr_steps_)}
             for p in range(self.distribution.n_params)
         }
         self._x_gram = {
             p: {
-                k: np.empty(
-                    (self.adr_steps_, self.n_features_[p][k], self.n_features_[p][k])
-                )
+                k: np.empty((
+                    self.adr_steps_,
+                    self.n_features_[p][k],
+                    self.n_features_[p][k],
+                ))
                 for k in range(self.n_dist_elements_[p])
             }
             for p in range(self.distribution.n_params)
@@ -643,9 +670,11 @@ class MultivariateOnlineDistributionalRegressionPath(
         }
         self.coef_path_ = {
             p: {
-                k: np.zeros(
-                    (self.adr_steps_, self._lambda_n[p], self.n_features_[p][k])
-                )
+                k: np.zeros((
+                    self.adr_steps_,
+                    self._lambda_n[p],
+                    self.n_features_[p][k],
+                ))
                 for k in range(self.n_dist_elements_[p])
             }
             for p in range(self.distribution.n_params)
@@ -663,14 +692,12 @@ class MultivariateOnlineDistributionalRegressionPath(
             (self.max_iterations_outer, self.distribution.n_params, self.adr_steps_),
             dtype=int,
         )
-        self.iteration_likelihood_ = np.zeros(
-            (
-                self.max_iterations_outer,
-                self.max_iterations_inner,
-                self.distribution.n_params,
-                self.adr_steps_,
-            )
-        )
+        self.iteration_likelihood_ = np.zeros((
+            self.max_iterations_outer,
+            self.max_iterations_inner,
+            self.distribution.n_params,
+            self.adr_steps_,
+        ))
         # Call the fit
         self._outer_fit(X=X_scaled, y=y, theta=theta)
         self._print_message(message="Finished fitting distribution parameters.")
@@ -678,7 +705,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         return self
 
     def _outer_fit(self, X, y, theta):
-
         adr_start = time.time()
 
         for a in range(self.adr_steps_):
@@ -769,12 +795,10 @@ class MultivariateOnlineDistributionalRegressionPath(
                 )
 
             elif self.early_stopping_criteria in ["aic", "bic", "hqc", "max"]:
-                self._early_stopping_n_params = np.array(
-                    [
-                        self.count_nonzero_coef(self.coef_, a)
-                        for a in range(self.adr_steps_)
-                    ]
-                )
+                self._early_stopping_n_params = np.array([
+                    self.count_nonzero_coef(self.coef_, a)
+                    for a in range(self.adr_steps_)
+                ])
                 self.early_stopping_ic_ = InformationCriterion(
                     n_observations=self.n_training_,
                     n_parameters=self._early_stopping_n_params,
@@ -799,7 +823,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 ) or (self.improvement_rel_[a - 1] < self.early_stopping_rel_tol):
                     message = (
                         f"Early stopping due to AD-r-regression. "
-                        f"Last increase in r lead to relative improvement: {self.improvement_rel_[a-1]}, scaled absolute improvement {self.improvement_abs_scaled_[a-1]}",
+                        f"Last increase in r lead to relative improvement: {self.improvement_rel_[a - 1]}, scaled absolute improvement {self.improvement_abs_scaled_[a - 1]}",
                     )
                     self._print_message(level=1, message=message)
 
@@ -903,7 +927,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         return out
 
     def _inner_fit(self, y, X, theta, outer_iteration, a, p):
-
         converged = False
         decreasing = False
         old_likelihood = self._current_likelihood[a]
@@ -914,7 +937,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         )
 
         for inner_iteration in range(self.max_iterations_inner):
-
             # If the likelihood is at some point decreasing, we're breaking
             # Hence we need to store previous iteration values:
             if (inner_iteration > 0) | (outer_iteration > 0):
@@ -937,9 +959,10 @@ class MultivariateOnlineDistributionalRegressionPath(
 
                 if self._is_element_adr_regularized(p=p, k=k, a=a):
                     self.coef_[p][k][a] = np.zeros(self.n_features_[p][k])
-                    self.coef_path_[p][k][a] = np.zeros(
-                        (self._lambda_n[p], self.n_features_[p][k])
-                    )
+                    self.coef_path_[p][k][a] = np.zeros((
+                        self._lambda_n[p],
+                        self.n_features_[p][k],
+                    ))
                 else:
                     eta = self.distribution.link_function(theta[a][p], p)
                     eta = self.distribution.cube_to_flat(eta, param=p)
@@ -1073,7 +1096,7 @@ class MultivariateOnlineDistributionalRegressionPath(
             message = (
                 f"Outer iteration: {outer_iteration}, inner iteration {inner_iteration}, parameter {p}, AD-R {a}:"
                 f"current likelihood: {self._current_likelihood[a]},"
-                f"previous iteration likelihood {self.iteration_likelihood_[outer_iteration, inner_iteration-1, p, a] if inner_iteration > 0 else self._current_likelihood[a]}"
+                f"previous iteration likelihood {self.iteration_likelihood_[outer_iteration, inner_iteration - 1, p, a] if inner_iteration > 0 else self._current_likelihood[a]}"
             )
             self._print_message(level=2, message=message)
 
@@ -1116,7 +1139,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         k: int,
         param: int,
     ):
-
         weights_forget = init_forget_vector(
             self.learning_rate,
             self.n_observations_,
@@ -1371,19 +1393,22 @@ class MultivariateOnlineDistributionalRegressionPath(
         out = {}
         for a in range(self.adr_steps_):
             out[a] = {}
-            for p in range(self.distribution.n_params):
-                array = np.zeros((N, self.n_dist_elements_[p]))
-                for k in range(self.n_dist_elements_[p]):
-                    array[:, k] = (
-                        make_model_array(
-                            X=X_scaled,
-                            eq=self._equation[p][k],
-                            fit_intercept=self._fit_intercept[p],
-                        )
-                        @ self.coef_[p][k][a, :]
-                    ).squeeze()
-                out[a][p] = self.distribution.flat_to_cube(array, p)
-                out[a][p] = self.distribution.link_inverse(out[a][p], p)
+            if a <= self.optimal_adr_:
+                for p in range(self.distribution.n_params):
+                    array = np.zeros((N, self.n_dist_elements_[p]))
+                    for k in range(self.n_dist_elements_[p]):
+                        array[:, k] = (
+                            make_model_array(
+                                X=X_scaled,
+                                eq=self._equation[p][k],
+                                fit_intercept=self._fit_intercept[p],
+                            )
+                            @ self.coef_[p][k][a, :]
+                        ).squeeze()
+                    out[a][p] = self.distribution.flat_to_cube(array, p)
+                    out[a][p] = self.distribution.link_inverse(out[a][p], p)
+            else:
+                out[a] = copy.deepcopy(out[self.optimal_adr_])
 
         return out
 
@@ -1466,22 +1491,19 @@ class MultivariateOnlineDistributionalRegressionPath(
         self._old_likelihood_discounted = (
             1 - self.learning_rate
         ) ** self.n_observations_step_ * self._old_likelihood
-        self._current_likelihood = self._old_likelihood_discounted + np.array(
-            [
-                np.sum(
-                    self.distribution.logpdf(y=y, theta=theta[a])
-                    * init_forget_vector(self.learning_rate, y.shape[0])
-                )
-                for a in range(self.adr_steps_)
-            ]
-        )
+        self._current_likelihood = self._old_likelihood_discounted + np.array([
+            np.sum(
+                self.distribution.logpdf(y=y, theta=theta[a])
+                * init_forget_vector(self.learning_rate, y.shape[0])
+            )
+            for a in range(self.adr_steps_)
+        ])
         self._outer_update(X=X_scaled, y=y, theta=theta)
 
         return self
 
     # Different UV - MV
     def _inner_update(self, X, y, theta, outer_iteration, a, p):
-
         converged = False
         decreasing = False
         old_likelihood = self._current_likelihood[a]
@@ -1490,7 +1512,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         )
 
         for inner_iteration in range(self.max_iterations_inner):
-
             # If the likelihood is at some point decreasing, we're breaking
             # Hence we need to store previous iteration values:
             if (inner_iteration > 0) | (outer_iteration > 0):
@@ -1505,9 +1526,10 @@ class MultivariateOnlineDistributionalRegressionPath(
                 # Handle AD-R Regularization
                 if self._is_element_adr_regularized(p=p, k=k, a=a):
                     self.coef_[p][k][a] = np.zeros(self.n_features_[p][k])
-                    self.coef_path_[p][k][a] = np.zeros(
-                        (self._lambda_n[p], self.n_features_[p][k])
-                    )
+                    self.coef_path_[p][k][a] = np.zeros((
+                        self._lambda_n[p],
+                        self.n_features_[p][k],
+                    ))
 
                 else:
                     eta = self.distribution.link_function(theta[a][p], p)
@@ -1651,7 +1673,6 @@ class MultivariateOnlineDistributionalRegressionPath(
 
     # Different UV - MV
     def _outer_update(self, X, y, theta):
-
         adr_start = time.time()
         for a in range(min(self.adr_steps_, self.last_fit_adr_max_ + 1)):
             adr_it_start = time.time()
@@ -1732,12 +1753,10 @@ class MultivariateOnlineDistributionalRegressionPath(
                 )
 
             elif self.early_stopping_criteria in ["aic", "bic", "hqc", "max"]:
-                self._early_stopping_n_params = np.array(
-                    [
-                        self.count_nonzero_coef(self.coef_, a)
-                        for a in range(self.adr_steps_)
-                    ]
-                )
+                self._early_stopping_n_params = np.array([
+                    self.count_nonzero_coef(self.coef_, a)
+                    for a in range(self.adr_steps_)
+                ])
                 self.early_stopping_ic_ = InformationCriterion(
                     n_observations=self.n_training_,
                     n_parameters=self._early_stopping_n_params,
@@ -1766,7 +1785,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 ) or (self.improvement_rel_[a - 1] < self.early_stopping_rel_tol):
                     message = (
                         f"Early stopping due to AD-r-regression. "
-                        f"Last increase in r lead to relative improvement: {self.improvement_rel_[a-1]}, scaled absolute improvement {self.improvement_abs_scaled_[a-1]}",
+                        f"Last increase in r lead to relative improvement: {self.improvement_rel_[a - 1]}, scaled absolute improvement {self.improvement_abs_scaled_[a - 1]}",
                     )
 
                     self._print_message(level=1, message=message)
