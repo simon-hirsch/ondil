@@ -3,7 +3,7 @@ from typing import Tuple
 from scipy.special import gammaln, digamma, polygamma, gamma
 from scipy.stats import gamma as gamma_dist
 from ..base import Distribution, LinkFunction
-from ..link import IdentityLink, LogLink
+from ..links import IdentityLink, LogLink
 
 
 class DistributionPowerExponential(Distribution):
