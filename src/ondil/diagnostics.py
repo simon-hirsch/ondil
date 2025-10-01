@@ -23,6 +23,19 @@ class PITHistogramDisplay(DiagnosticDisplay):
         self.unif_ = unif
 
     @classmethod
+    def from_predictions(
+        cls,
+        y,
+        theta,
+        distribution,
+        ax: plt.Axes = None,
+        figsize: Tuple[float, float] = (10, 5),
+        **kwargs,
+    ) -> "PITHistogramDisplay":
+        unif = distribution.cdf(y, theta)
+        return cls(None, y, unif).plot(ax=ax, figsize=figsize, **kwargs)
+
+    @classmethod
     def from_estimator(
         cls,
         estimator: BaseEstimator,
@@ -85,6 +98,25 @@ class QQDisplay(DiagnosticDisplay):
         self.empirical_ = empirical
 
     @classmethod
+    def from_predictions(
+        cls,
+        y,
+        theta,
+        distribution,
+        ax: plt.Axes = None,
+        figsize: Tuple[float, float] = (10, 5),
+        **kwargs,
+    ) -> "QQDisplay":
+        quantiles = distribution.cdf(y=y, theta=theta)
+        quantiles = np.clip(quantiles, SMALL_NUMBER, 1 - SMALL_NUMBER)
+        n = len(y)
+        theoretical = np.linspace(1 / (n + 1), n / (n + 1), n)
+        empirical = np.sort(quantiles)
+        return QQDisplay(None, y, theoretical, empirical).plot(
+            ax=ax, figsize=figsize, **kwargs
+        )
+
+    @classmethod
     def from_estimator(
         cls,
         estimator: BaseEstimator,
@@ -95,12 +127,9 @@ class QQDisplay(DiagnosticDisplay):
         **kwargs,
     ) -> "QQDisplay":
         pred = estimator.predict_distribution_parameters(X)
-        quantiles = estimator.distribution.cdf(y, pred)
-        quantiles = np.clip(quantiles, SMALL_NUMBER, 1 - SMALL_NUMBER)
-        n = len(y)
-        theoretical = np.linspace(1 / (n + 1), n / (n + 1), n)
-        empirical = np.sort(quantiles)
-        return cls(X, y, theoretical, empirical).plot(ax=ax, figsize=figsize, **kwargs)
+        return cls.from_predictions(
+            y, pred, estimator.distribution, ax, figsize, **kwargs
+        )
 
     def plot(
         self,
@@ -138,18 +167,19 @@ class WormPlotDisplay(DiagnosticDisplay):
         self.upper_bound_ = upper_bound
 
     @classmethod
-    def from_estimator(
+    def from_predictions(
         cls,
-        estimator: BaseEstimator,
-        X: np.ndarray,
-        y: np.ndarray,
+        y,
+        theta,
+        distribution,
         ax: plt.Axes = None,
         figsize: Tuple[float, float] = (10, 5),
         level: float = 0.95,
         **kwargs,
     ) -> "WormPlotDisplay":
-        pred = estimator.predict(X)
-        residuals = (y - pred) / np.std(y - pred)
+        quantiles = distribution.cdf(y=y, theta=theta)
+        quantiles = np.clip(quantiles, SMALL_NUMBER, 1 - SMALL_NUMBER)
+        residuals = stats.norm.ppf(quantiles)
 
         xx, yy = stats.probplot(residuals, fit=False)
         yy = yy - xx
@@ -160,8 +190,30 @@ class WormPlotDisplay(DiagnosticDisplay):
         lower_bound = se * stats.norm.ppf((1 - level) / 2)
         upper_bound = se * stats.norm.ppf((1 + level) / 2)
 
-        return cls(X, y, xx, yy, z, lower_bound, upper_bound).plot(
-            ax=ax, figsize=figsize, **kwargs
+        return cls(
+            X=None,
+            y=y,
+            xx=xx,
+            yy=yy,
+            z=z,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+        ).plot(ax=ax, figsize=figsize, **kwargs)
+
+    @classmethod
+    def from_estimator(
+        cls,
+        estimator: BaseEstimator,
+        X: np.ndarray,
+        y: np.ndarray,
+        ax: plt.Axes = None,
+        figsize: Tuple[float, float] = (10, 5),
+        level: float = 0.95,
+        **kwargs,
+    ) -> "WormPlotDisplay":
+        pred = estimator.predict_distribution_parameters(X)
+        return cls.from_predictions(
+            y, pred, estimator.distribution, ax, figsize, level, **kwargs
         )
 
     def plot(

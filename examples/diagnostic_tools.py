@@ -31,19 +31,20 @@ model.fit(X, y)
 # Now we can use the diagnostic tools
 # Each of them can be called from the estimator
 # and will return the display object
-
 WormPlotDisplay.from_estimator(
     estimator=model,
     X=X,
     y=y,
 )
 
+# %%
 PITHistogramDisplay.from_estimator(
     estimator=model,
     X=X,
     y=y,
 )
 
+# %%
 QQDisplay.from_estimator(
     estimator=model,
     X=X,
@@ -74,3 +75,5 @@ PITHistogramDisplay.from_estimator(
 )
 plt.tight_layout()
 plt.show(block=False)
+
+# %%
