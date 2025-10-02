@@ -123,9 +123,6 @@ class ZeroAdjustedGamma(Distribution):
 
     def pdf(self, y, theta):
         mu, sigma, nu = self.theta_to_params(theta)
-        shape = 1 / sigma**2
-        scale = mu * sigma**2
-        pdf_gamma = st.gamma(a=shape, loc=0, scale=scale).pdf(y)
 
         result = (
             (1 - nu)
