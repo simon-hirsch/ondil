@@ -46,7 +46,7 @@ def fetch_contributors():
 
     issues_data = []
     for label in labels:
-        issues_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues?state=closed&labels={label}&per_page=100"
+        issues_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues?state=closed&label={label}&per_page=100"
         issues_data += paginated_get(issues_url)
 
     issuers = {
