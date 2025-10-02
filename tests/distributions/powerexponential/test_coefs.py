@@ -2,7 +2,7 @@
 import numpy as np
 import rpy2.robjects as robjects
 
-from ondil.distributions import DistributionPowerExponential
+from ondil.distributions import PowerExponential
 from ondil.estimators import OnlineDistributionalRegression
 
 file = "tests/data/mtcars.csv"
@@ -15,7 +15,7 @@ X_design = np.column_stack((np.ones(X.shape[0]), X))
 
 
 def test_powerexponential_distribution():
-    dist = DistributionPowerExponential()
+    dist = PowerExponential()
 
     code = f"""
     library(gamlss)

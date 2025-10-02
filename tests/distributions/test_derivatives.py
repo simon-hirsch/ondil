@@ -8,7 +8,7 @@ from .utils import get_distributions_with_gamlss
 N = 100
 CLIP_BOUNDS = (-1e5, 1e5)
 
-SPECIAL_BOUNDS_DISTRIBUTIONS = {"DistributionPowerExponential": (-1e2, 1e2)}
+SPECIAL_BOUNDS_DISTRIBUTIONS = {"PowerExponential": (-1e2, 1e2)}
 
 
 @pytest.mark.parametrize(
