@@ -49,11 +49,7 @@ def fetch_contributors():
         issues_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues?state=closed&labels={label}&per_page=100"
         issues_data = paginated_get(issues_url)
         issuers = issuers.union(
-            {
-                issue.get("user", {}).get("login")
-                for issue in issues_data
-                if "pull_request" not in issue and issue.get("user")
-            }
+            {issue.get("user", {}).get("login") for issue in issues_data}
         )
 
     # Merged Pull Requests
