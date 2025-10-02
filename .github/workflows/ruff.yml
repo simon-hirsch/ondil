@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-        ref: ${{ github.head_ref || github.ref_name }}
+        ref: ${{ github.event.pull_request.head.repo.fork && (github.event.pull_request.head.sha || github.sha) || (github.head_ref || github.ref_name) }}
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
     - name: Configure git
@@ -29,15 +29,15 @@ jobs:
           src: "./src"
     
     - name: Format (fix issues automatically)
-      if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == false
+      if: github.event.pull_request.head.repo.fork == false
       run: ruff check --fix .
     
     - name: Format code style
-      if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == false
+      if: github.event.pull_request.head.repo.fork == false
       run: ruff format
     
     - name: Commit changes
-      if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == false
+      if: github.event.pull_request.head.repo.fork == false
       uses: stefanzweifel/git-auto-commit-action@v6
       with:
         commit_message: '[AUTOMATED] Style fixes by ruff'
