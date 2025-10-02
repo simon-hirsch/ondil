@@ -42,7 +42,7 @@ def fetch_contributors():
     committers = {user.get("login") for user in commit_data if user.get("login")}
 
     # Closed Issues
-    labels = ["bug", "enhancement", "discussion", "feature"]
+    labels = ["bug", "enhancement", "discussion"]
 
     issues_data = []
     for label in labels:
