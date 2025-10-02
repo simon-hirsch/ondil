@@ -37,7 +37,7 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 | [`InverseGamma`](#ondil.distributions.InverseGamma)                   | Inverse Gamma distribution             | `scipy.stats.invgamma`  |
 | [`BetaInflatedZero`](#ondil.distributions.BetaInflatedZero)           | Zero Inflated Beta distribution        | -                       |
 | [`ZeroAdjustedGamma`](#ondil.distributions.ZeroAdjustedGamma)         | Zero Adjusted Gamma distribution       | -                       |
-| [`DistributionPowerExponential`](#ondil.DistributionPowerExponential) | Power Exponential distribution         | -                       |
+| [`DistributionPowerExponential`](#ondil.distributions.PowerExponential) | Power Exponential distribution         | -                       |
 
 | Distribution                                                                                                      | Description                                              | Scale Matrix Parameterization           | Formula                                                                         |
 | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------- |
@@ -69,6 +69,8 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 ::: ondil.distributions.Logistic
 
 ::: ondil.distributions.Exponential
+
+::: ondil.distribtuions.PowerExponential
 
 ::: ondil.distributions.InverseGaussian
 
