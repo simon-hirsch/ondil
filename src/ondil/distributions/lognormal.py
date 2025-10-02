@@ -5,7 +5,7 @@ import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Identity, Log
-from ..links.robust_math import robust_exp
+from ..robust_math import robust_exp
 from ..types import ParameterShapes
 
 
