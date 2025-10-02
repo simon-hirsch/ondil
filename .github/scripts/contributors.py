@@ -42,7 +42,7 @@ def fetch_contributors():
     committers = {user.get("login") for user in commit_data if user.get("login")}
 
     # Closed Issues
-    labels = "improvement,bug,discussion"
+    labels = "enhancement,bug,discussion"
     issues_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues?state=closed&labels={labels}&per_page=100"
     issues_data = paginated_get(issues_url)
     issuers = {
