@@ -46,8 +46,8 @@ jobs:
       with:
         commit_message: '[AUTOMATED] Style fixes by ruff'
         file_pattern: '*.py'
-        skip_fetch: false
-        skip_checkout: false
+        skip_fetch: true
+        skip_checkout: true
 
     - name: Lint (fail if formatting is wrong)
       run: ruff check .
