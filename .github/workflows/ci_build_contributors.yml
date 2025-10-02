@@ -1,0 +1,36 @@
+name: Update Contributors
+
+on:
+    push: {}
+    workflow_dispatch: # still allows manual trigger
+
+jobs:
+    update-contributors:
+        runs-on: ubuntu-latest
+        permissions:
+          contents: write
+        steps:
+        - uses: actions/checkout@v4
+        
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: "3.13"
+        - name: Configure git
+          run: |
+            git config --global user.name 'github-actions[bot]'
+            git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        - name: Generate CONTRIBUTORS.md
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            pip install requests
+            python .github/scripts/contributors.py
+
+        - name: Commit and push changes
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          uses: stefanzweifel/git-auto-commit-action@v6
+          with:
+            commit_message: '[AUTOMATED] update contributors list [skip ci]" || echo "No changes'
+            file_pattern: 'README.md'
