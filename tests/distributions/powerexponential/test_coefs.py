@@ -1,8 +1,9 @@
 # %%
 import numpy as np
 import rpy2.robjects as robjects
-from ondil.estimators import OnlineDistributionalRegression
+
 from ondil.distributions import DistributionPowerExponential
+from ondil.estimators import OnlineDistributionalRegression
 
 file = "tests/data/mtcars.csv"
 mtcars = np.genfromtxt(file, delimiter=",", skip_header=1)[:, 1:]
