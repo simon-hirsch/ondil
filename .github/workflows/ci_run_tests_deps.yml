@@ -1,9 +1,6 @@
 name: Automated Tests for dependencies
 on:
-  workflow_run:
-    workflows: ["Lint and Commit"]
-    types:
-      - completed
+  workflow_call:
 permissions:
   contents: read
 jobs:
