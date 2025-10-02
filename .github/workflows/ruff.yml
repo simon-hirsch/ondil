@@ -3,12 +3,8 @@ name: Lint and Commit
 on:
   push:
     branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+      - '**'
+      - '!gh-pages'
 
 jobs:
   lint:
@@ -18,6 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
+        ref: ${{ github.head_ref || github.ref_name }}
         fetch-depth: 0
     - name: Configure git
       run: |
@@ -31,14 +28,32 @@ jobs:
       with:
           args: "--version"
           src: "./src"
-    - run: ruff check --fix
-    - run: ruff format
+    
+    - name: Format (fix issues automatically)
+      run: ruff check --fix .
+    
+    - name: Format code style
+      run: ruff format
+    
     - name: Commit changes
       uses: stefanzweifel/git-auto-commit-action@v6
       with:
         commit_message: '[AUTOMATED] Style fixes by ruff'
         file_pattern: '*.py'
-        skip_fetch: false
-        skip_checkout: false
+        skip_fetch: true
+        skip_checkout: true
 
+    - name: Lint (fail if formatting is wrong)
+      run: ruff check .
 
+  run-tests-deps:
+    needs: lint
+    uses: ./.github/workflows/ci_run_tests_deps.yml
+    permissions:
+      contents: read
+
+  run-tests-os:
+    needs: lint
+    uses: ./.github/workflows/ci_run_tests_os.yml
+    permissions:
+      contents: read
