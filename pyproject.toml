@@ -44,9 +44,10 @@ dependencies=[
 ]
 
 [project.optional-dependencies]
-pandas = ["pandas >= 1.26"]
+pandas = ["pandas >= 1.20"]
 polars = ["polars"]
-all = ["ondil[pandas, polars]"]
+mpl = ["matplotlib >= 3.7"]
+all = ["ondil[pandas, polars, mpl]"]
 
 [dependency-groups]
 dev = ["ruff==0.12.4"]

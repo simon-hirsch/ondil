@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..base import LinkFunction
-from .robust_math import robust_exp, robust_log
+from ..robust_math import robust_exp, robust_log
 
 
 class Logit(LinkFunction):
