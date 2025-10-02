@@ -33,12 +33,15 @@ jobs:
           src: "./src"
     
     - name: Format (fix issues automatically)
+      if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == false
       run: ruff check --fix .
     
     - name: Format code style
+      if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == false
       run: ruff format
     
     - name: Commit changes
+      if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == false
       uses: stefanzweifel/git-auto-commit-action@v6
       with:
         commit_message: '[AUTOMATED] Style fixes by ruff'
