@@ -42,17 +42,20 @@ def fetch_contributors():
     committers = {user.get("login") for user in commit_data if user.get("login")}
 
     # Closed Issues
-    labels = ["bug", "enhancement", "discussion", "feature"]
+    labels = ["bug", "enhancement", "discussion"]
 
-    issuers = set()
+    issues_data = []
     for label in labels:
-        issues_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues?state=closed&labels={label}&per_page=100"
-        issues_data = paginated_get(issues_url)
-        issuers = issuers.union({
-            issue.get("user", {}).get("login")
-            for issue in issues_data
-            if "pull_request" not in issue and issue.get("user")
-        })
+        issues_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues?labels={label}&state=closed&per_page=1000"
+        issues_data += paginated_get(issues_url)
+
+    print(len(issues_data))
+
+    issuers = {
+        issue.get("user", {}).get("login")
+        for issue in issues_data
+        if "pull_request" not in issue and issue.get("user")
+    }
 
     # Merged Pull Requests
     prs_url = (
@@ -77,10 +80,18 @@ def fetch_contributors():
                     reviewers.add(user["login"])
 
     # Remove None values if any
-    committers = sorted(x for x in committers if x is not None)
-    issuers = sorted(x for x in issuers if x is not None)
-    pr_authors = sorted(x for x in pr_authors if x is not None)
-    reviewers = sorted(x for x in reviewers if x is not None)
+    committers = sorted(committers)
+    issuers = sorted(issuers)
+    pr_authors = sorted(pr_authors)
+    reviewers = sorted(reviewers)
+
+    print(
+        f"Found {len(committers)} committers, {len(issuers)} issuers, {len(pr_authors)} PR authors, {len(reviewers)} reviewers."
+    )
+    print("Committers:", committers)
+    print("Issuers:", issuers)
+    print("PR Authors:", pr_authors)
+    print("Reviewers:", reviewers)
 
     return committers, issuers, pr_authors, reviewers
 
@@ -126,5 +137,7 @@ def append_to_readme(committers, issuers, pr_authors, reviewers):
 
 
 if __name__ == "__main__":
+    print("Owner:", OWNER)
+    print("Repo:", REPO)
     c, i, p, r = fetch_contributors()
     append_to_readme(c, i, p, r)
