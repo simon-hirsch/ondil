@@ -42,14 +42,19 @@ def fetch_contributors():
     committers = {user.get("login") for user in commit_data if user.get("login")}
 
     # Closed Issues
-    labels = "enhancement,bug,discussion"
-    issues_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues?state=closed&labels={labels}&per_page=100"
-    issues_data = paginated_get(issues_url)
-    issuers = {
-        issue.get("user", {}).get("login")
-        for issue in issues_data
-        if "pull_request" not in issue and issue.get("user")
-    }
+    labels = ["bug", "enhancement", "discussion", "feature"]
+
+    issuers = set()
+    for label in labels:
+        issues_url = f"https://api.github.com/repos/{OWNER}/{REPO}/issues?state=closed&labels={label}&per_page=100"
+        issues_data = paginated_get(issues_url)
+        issuers = issuers.union(
+            {
+                issue.get("user", {}).get("login")
+                for issue in issues_data
+                if "pull_request" not in issue and issue.get("user")
+            }
+        )
 
     # Merged Pull Requests
     prs_url = (
