@@ -5,10 +5,6 @@ on:
     branches:
       - '**'
       - '!gh-pages'
-  pull_request:
-    branches:
-      - '**'
-      - '!gh-pages'
 
 jobs:
   lint:
