@@ -30,12 +30,12 @@ jobs:
           pip install requests
           python -u .github/scripts/contributors.py
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          commit-message: '[AUTOMATED] update contributors list [skip ci]'
-          title: 'Update contributors list'
-          body: 'This PR updates the contributors list automatically.'
-          branch: 'auto/update-contributors'
-          add-paths: |
-            README.md
+      # - name: Create Pull Request
+      #   uses: peter-evans/create-pull-request@v5
+      #   with:
+      #     commit-message: '[AUTOMATED] update contributors list [skip ci]'
+      #     title: 'Update contributors list'
+      #     body: 'This PR updates the contributors list automatically.'
+      #     branch: 'auto/update-contributors'
+      #     add-paths: |
+      #       README.md
