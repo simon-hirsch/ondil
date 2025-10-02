@@ -46,17 +46,19 @@ jobs:
         skip_fetch: true
         skip_checkout: true
 
-    - name: Lint (fail if formatting is wrong)
-      run: ruff check .
+    - name: Lint (check for remaining issues)
+      run: ruff check --output-format=github .
 
   run-tests-deps:
     needs: lint
+    if: always()
     uses: ./.github/workflows/ci_run_tests_deps.yml
     permissions:
       contents: read
 
   run-tests-os:
     needs: lint
+    if: always()
     uses: ./.github/workflows/ci_run_tests_os.yml
     permissions:
       contents: read
