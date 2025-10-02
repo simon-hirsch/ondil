@@ -75,10 +75,10 @@ def fetch_contributors():
                     reviewers.add(user["login"])
 
     # Remove None values if any
-    committers = sorted(x for x in committers if x is not None)
-    issuers = sorted(x for x in issuers if x is not None)
-    pr_authors = sorted(x for x in pr_authors if x is not None)
-    reviewers = sorted(x for x in reviewers if x is not None)
+    committers = sorted(committers)
+    issuers = sorted(issuers)
+    pr_authors = sorted(pr_authors)
+    reviewers = sorted(reviewers)
 
     print(
         f"Found {len(committers)} committers, {len(issuers)} issuers, {len(pr_authors)} PR authors, {len(reviewers)} reviewers."
