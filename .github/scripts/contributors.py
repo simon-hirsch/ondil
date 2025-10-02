@@ -84,6 +84,14 @@ def fetch_contributors():
     pr_authors = sorted(x for x in pr_authors if x is not None)
     reviewers = sorted(x for x in reviewers if x is not None)
 
+    print(
+        f"Found {len(committers)} committers, {len(issuers)} issuers, {len(pr_authors)} PR authors, {len(reviewers)} reviewers."
+    )
+    print("Committers:", committers)
+    print("Issuers:", issuers)
+    print("PR Authors:", pr_authors)
+    print("Reviewers:", reviewers)
+
     return committers, issuers, pr_authors, reviewers
 
 
