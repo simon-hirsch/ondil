@@ -13,10 +13,15 @@ class PowerExponential(Distribution):
     """
     Power Exponential distribution (GAMLSS: PE).
 
-    Parameters:
-        mu: location
-        sigma: scale (>0)
-        nu: shape (>0)
+    The PDF is defined as:
+
+    \\(f(y \\mid \\mu, \\sigma, \\nu) = \\left(\\frac{\\nu}{2 \\sigma c(\\nu)}\\right) \\exp\\left(-0.5 \\left|\\frac{y - \\mu}{\\sigma c(\\nu)}\\right|^{\\nu}\\right)\\)
+
+    where \\(c(\\nu) = \\sqrt{2} \\left(\\frac{\\Gamma(1/\\nu)}{\\Gamma(3/\\nu)}\\right)^{1/2}\\) and \\(\\Gamma(\\cdot)\\) is the gamma function.
+
+    The parameters are: $\\mu$ (location), $\\sigma$ (scale), and $\\nu$ (shape).
+
+
     """
 
     corresponding_gamlss = "PE"
