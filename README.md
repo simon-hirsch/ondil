@@ -111,7 +111,7 @@ We're grateful for contributions below (sorted alphabetically by GitHub username
 | Contribution | GitHub Users |
 |-------------------|--------------|
 | Code | [@BerriJ](https://github.com/BerriJ), [@Jaiminoza229984](https://github.com/Jaiminoza229984), [@flziel](https://github.com/flziel), [@joza26](https://github.com/joza26), [@murthy-econometrics-5819](https://github.com/murthy-econometrics-5819), [@simon-hirsch](https://github.com/simon-hirsch) |
-| Reported (closed) Issues | [@BerriJ](https://github.com/BerriJ), [@fkiraly](https://github.com/fkiraly), [@joshdunnlime](https://github.com/joshdunnlime), [@murthy-econometrics-5819](https://github.com/murthy-econometrics-5819), [@simon-hirsch](https://github.com/simon-hirsch) |
+| Reported (closed) Issues |  |
 | Merged PRs | [@BerriJ](https://github.com/BerriJ), [@Jaiminoza229984](https://github.com/Jaiminoza229984), [@flziel](https://github.com/flziel), [@murthy-econometrics-5819](https://github.com/murthy-econometrics-5819), [@simon-hirsch](https://github.com/simon-hirsch) |
 | PR Reviews | [@BerriJ](https://github.com/BerriJ), [@copilot-pull-request-reviewer[bot]](https://github.com/copilot-pull-request-reviewer[bot]), [@fkiraly](https://github.com/fkiraly), [@simon-hirsch](https://github.com/simon-hirsch) |
 
