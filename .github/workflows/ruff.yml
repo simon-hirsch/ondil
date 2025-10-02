@@ -1,16 +1,11 @@
 name: Lint and Commit
 
 on:
-  push:
-    branches:
-      - '**'
-      - '!gh-pages'
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
   lint:
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == true
     runs-on: ubuntu-latest 
     permissions:
       contents: write
