@@ -3,12 +3,12 @@ name: Lint and Commit
 on:
   push:
     branches:
-      - main
-      - develop
+      - '**'
+      - '!gh-pages'
   pull_request:
     branches:
-      - main
-      - develop
+      - '**'
+      - '!gh-pages'
 
 jobs:
   lint:
