@@ -36,16 +36,14 @@ def test_distribution_derivatives(distribution):
     robjects.globalenv["y"] = robjects.FloatVector(y)
 
     # Generate random parameters within support bounds
-    theta = np.array(
-        [
-            np.random.uniform(
-                np.clip(distribution.parameter_support[i][0], *clip_bounds),
-                np.clip(distribution.parameter_support[i][1], *clip_bounds),
-                N,
-            )
-            for i in range(distribution.n_params)
-        ]
-    ).T
+    theta = np.array([
+        np.random.uniform(
+            np.clip(distribution.parameter_support[i][0], *clip_bounds),
+            np.clip(distribution.parameter_support[i][1], *clip_bounds),
+            N,
+        )
+        for i in range(distribution.n_params)
+    ]).T
 
     # Assign R variables programmatically
     for i, param_name in distribution.parameter_names.items():
@@ -103,6 +101,6 @@ def test_distribution_derivatives(distribution):
     available_derivatives = R_list.names
     for key in available_derivatives:
         if key in derivative_mapping:
-            assert np.allclose(
-                derivative_mapping[key](), R_list.rx2(key)
-            ), f"Derivative {key} doesn't match for {distribution.__class__.__name__}"
+            assert np.allclose(derivative_mapping[key](), R_list.rx2(key)), (
+                f"Derivative {key} doesn't match for {distribution.__class__.__name__}"
+            )
