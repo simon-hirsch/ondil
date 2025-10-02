@@ -132,5 +132,7 @@ def append_to_readme(committers, issuers, pr_authors, reviewers):
 
 
 if __name__ == "__main__":
+    print("Owner:", OWNER)
+    print("Repo:", REPO)
     c, i, p, r = fetch_contributors()
     append_to_readme(c, i, p, r)
