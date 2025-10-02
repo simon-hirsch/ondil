@@ -31,14 +31,23 @@ jobs:
       with:
           args: "--version"
           src: "./src"
-    - run: ruff check --fix
-    - run: ruff format
+    
+    - name: Format (fix issues automatically)
+      if: github.event.pull_request.head.repo.full_name == github.repository
+      run: ruff check --fix .
+    
+    - name: Format code style
+      if: github.event.pull_request.head.repo.full_name == github.repository
+      run: ruff format
+    
     - name: Commit changes
+      if: github.event.pull_request.head.repo.full_name == github.repository
       uses: stefanzweifel/git-auto-commit-action@v6
       with:
         commit_message: '[AUTOMATED] Style fixes by ruff'
         file_pattern: '*.py'
-        skip_fetch: false
-        skip_checkout: false
+        skip_fetch: true
+        skip_checkout: true
 
-
+    - name: Lint (fail if formatting is wrong)
+      run: ruff check .
