@@ -17,7 +17,7 @@ from .mv_t_chol import MultivariateStudentTInverseCholesky
 from .mv_t_low_rank import MultivariateStudentTInverseLowRank
 from .mv_t_modchol import MultivariateStudentTInverseModifiedCholesky
 from .normal import Normal, NormalMeanVariance
-from .powerexponential import DistributionPowerExponential
+from .powerexponential import PowerExponential
 from .reversegumbel import ReverseGumbel
 from .studentt import StudentT
 from .zeroadjustedgamma import ZeroAdjustedGamma
@@ -34,7 +34,7 @@ __all__ = [
     "LogNormalMedian",
     "Logistic",
     "Exponential",
-    "DistributionPowerExponential",
+    "PowerExponential",
     "Gumbel",
     "InverseGaussian",
     "ReverseGumbel",

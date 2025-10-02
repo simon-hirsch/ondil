@@ -9,7 +9,7 @@ from ..links import Identity, Log
 from ..types import ParameterShapes
 
 
-class DistributionPowerExponential(Distribution):
+class PowerExponential(Distribution):
     """
     Power Exponential distribution (GAMLSS: PE).
 
