@@ -321,11 +321,11 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         qnorm_v = st.norm.ppf(v)
 
         for m in range(M):
-            denom = np.sqrt(1.0 - np.square(theta[0][m]))
-            x = (qnorm_u[m] - theta[0][m] * qnorm_v[m]) / denom
+            denom = np.sqrt(1.0 - np.square(theta[m]))
+            x = (qnorm_u[m] - theta[m] * qnorm_v[m]) / denom
             if np.isfinite(x):
                 h[m] = st.norm.cdf(x)
-            elif (qnorm_u[m] - theta[0][m] * qnorm_v[m]) < 0:
+            elif (qnorm_u[m] - theta[m] * qnorm_v[m]) < 0:
                 h[m] = 0
             else:
                 h[m] = 1

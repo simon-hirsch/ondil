@@ -449,7 +449,7 @@ class CopulaMixin(ABC):
         self.links = links
         self.param_links = param_links
         self.rotation = rotation
-        self._validate_links()
+        #self._validate_links()
 
     def __call__(self, *args, **kwds):
         raise NotImplementedError("Not implemented but necessary for sklearn.")

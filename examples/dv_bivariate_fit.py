@@ -4,6 +4,8 @@ import sys
 import os
 import importlib
 
+from ondil.src.ondil.links.loglinks import LogShiftTwo, LogShiftValue
+
 #  Add your local package to the path
 ondil_path = r"C:\Users\OEK-admin\OneDrive\Arbeit_Uni\Uni_Due\ProjectII\ondil"
 if ondil_path not in sys.path:
@@ -19,10 +21,11 @@ for name in list(sys.modules):
 importlib.invalidate_caches()
 
 #  Import ondil classes
+from ondil.src.ondil.distributions.bicop_studentt import BivariateCopulaStudentT
 from ondil.src.ondil.links.copulalinks import KendallsTauToParameterClayton
 from src.ondil.estimators import MultivariateOnlineDistributionalRegressionPath
 from src.ondil.links import Log, GumbelLink, KendallsTauToParameter, FisherZLink, KendallsTauToParameterGumbel
-from src.ondil.distributions import BivariateCopulaNormal, BivariateCopulaGumbel, BivariateCopulaClayton, MarginalCopula, Normal
+from src.ondil.distributions import BivariateCopulaNormal, BivariateCopulaGumbel, BivariateCopulaClayton, BivariateCopulaStudentT, MarginalCopula, Normal
 
 #  Other imports
 import numpy as np
@@ -49,7 +52,10 @@ equation = {
     0: {
         h: np.arange(X_numpy.shape[1])
         for h in range(H)
-    }
+    },  
+
+   
+
 }
 
 # Flag the last 1/5 as test and the first 4/5 as train in an extra column
@@ -73,16 +79,24 @@ N = X_numpy.shape[0]
 #    param_link=KendallsTauToParameterGumbel()
 #)
 
-distribution = BivariateCopulaClayton(
-    link= Log(),
-    param_link=KendallsTauToParameterClayton(),
-    rotation = 1,
-)
+#distribution = BivariateCopulaClayton(
+#    link= Log(),
+#    param_link=KendallsTauToParameterClayton(),
+#    rotation = 0,
+#)
 
 #distribution = BivariateCopulaNormal(
 #    link= FisherZLink(),
 #   param_link=KendallsTauToParameter()
 #)
+
+distribution = BivariateCopulaStudentT(
+    link_1= FisherZLink(),
+    param_link_1=KendallsTauToParameter(),
+    link_2= LogShiftValue(value=2),
+    param_link_2=KendallsTauToParameter(),
+    rotation = 0,
+)
 
 estimator = MultivariateOnlineDistributionalRegressionPath(
     distribution=distribution,
@@ -92,8 +106,8 @@ estimator = MultivariateOnlineDistributionalRegressionPath(
     early_stopping_criteria="bic",
     iteration_along_diagonal=False,
     verbose=3,
-    max_iterations_inner =  5,
-    max_iterations_outer =  20,
+    max_iterations_inner =  1,
+    max_iterations_outer =  2,
     scale_inputs =False,
 )
 
