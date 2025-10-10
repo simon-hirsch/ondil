@@ -1047,7 +1047,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                         dl2dp2 = self.distribution.element_dl2_dp2(
                             y, theta=theta[a], param=p, k=k
                         )
-                        
 
                         #if p == 0:
                         if isinstance(self.distribution, BivariateCopulaNormal):
@@ -1112,6 +1111,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                             theta[a] = self.distribution.set_initial_guess(theta[a], p)
                             
                         eta  = self.distribution.link_function(theta[a], p,k)
+
                         eta  = self.distribution.cube_to_flat(eta, param=p).squeeze()
                             # Derivatives wrt to the parameter
                         dl1dp1 = self.distribution.element_dl1_dp1(
@@ -1290,9 +1290,9 @@ class MultivariateOnlineDistributionalRegressionPath(
                             self.distribution.flat_to_cube(tau[a][p], param=p), param=p
                         )*(1 - 1e-5)
 
-
-
-                            #theta[a][p] = tau[a][p]
+                        
+                        
+                                                    #theta[a][p] = tau[a][p]
 
                         #else:
                         #    tau[a][p] = (1-1e-5)*self.distribution.link_inverse(
@@ -1308,7 +1308,7 @@ class MultivariateOnlineDistributionalRegressionPath(
 
                     elif issubclass(self.distribution.__class__, MarginalCopulaMixin) and p <= 1:
                      
-                        theta[a][p][:, k] = self.get_dampened_prediction(
+                        eta[a][p][:, k] = self.get_dampened_prediction(
                             prediction=np.squeeze(x @ self.coef_[p][k][a]),
                             eta=eta,
                             inner_iteration=inner_iteration,
@@ -1372,7 +1372,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                 converged, decreasing = self._check_inner_convergence(
                     old_value=old_likelihood, new_value=self._current_likelihood[a]
                 )
-                print(converged,decreasing)
 
                 if converged:
                     break
@@ -1588,8 +1587,13 @@ class MultivariateOnlineDistributionalRegressionPath(
                 @ self.coef_[0][k][self.optimal_adr_, :]
             ).squeeze()
         out = self.distribution.flat_to_cube(array, 0)
-        out = self.distribution.link_inverse(out, 0)
+        #out = self.distribution.link_inverse(out, 0)
+        out = np.clip(np.tanh(out / 2), -1+1e-5, 1-1e-5)
+        if issubclass(self.distribution.__class__, CopulaMixin):
+            out = self.distribution.param_link_inverse(out, param=0)*(1 - 1e-5)
         return out
+
+                  
 
     # Different UV - MV
     def predict_distribution_parameters(

@@ -240,8 +240,8 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
         u = np.clip(u, UMIN, UMAX)
         v = np.clip(v, UMIN, UMAX)
 
-        # Swap u and v if un == 2
-        if un == 2:
+        # Swap u and v if un == 1
+        if un == 1:
             u, v = v, u
 
         h = np.empty(M)
@@ -256,21 +256,26 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
                 u_rot = 1 - u[m]
                 v_rot = 1 - v[m]
             elif rotation == 2:  # 90° rotation
-                v_rot = 1 - v[m]
+                u_rot = 1 - u[m]
                 th = -th
             elif rotation == 3:  # 270° rotation
                 # u_rot stays the same
-                v_rot = 1 - v[m]
+                u_rot = 1 - u[m]
+                th = -th
 
 
             # Conditional distribution function for Clayton copula
             # h(v|u) = ∂C(u,v)/∂v = (u^{-θ-1}) * (u^{-θ} + v^{-θ} - 1)^{-1/θ - 1}
             t1 = v_rot ** (-th - 1)
-            t2 = v_rot ** (-th) + u_rot ** (-th) - 1
+            t2 = u_rot ** (-th) + v_rot ** (-th) - 1
             t2 = np.maximum(t2, UMIN)
-            t3 = -1.0 / th - 1.0
+            t3 = - 1.0 - 1.0 / th
             h[m] = t1 * (t2 ** t3)
-        h = np.clip(h, UMIN, UMAX)
+
+        if rotation == 3:  # 270° rotation
+            h = 1 - np.clip(h, UMIN, UMAX)
+        else:    
+            h = np.clip(h, UMIN, UMAX)
         return h
     
     def get_regularization_size(self, dim: int) -> int:
@@ -352,6 +357,7 @@ def _clayton_logpdf(y, theta, family_code=None):
         elif rotation == 3:  # 270° rotation
             # u_rot stays the same
             v_rot = 1 - v_valid[m]
+            theta_valid = -theta_valid
 
         if theta_valid == 0:
             f[m] = 0
@@ -374,7 +380,6 @@ def _clayton_logpdf(y, theta, family_code=None):
             DBL_MIN = 2.2e-308
             f[m] = np.where(f[m] > XINFMAX, XINFMAX, f[m])
             f[m] = np.where(f[m] < np.log(DBL_MIN), np.log(DBL_MIN), f[m])
-            
 
     return f  # Always 1D
 
@@ -393,28 +398,33 @@ def _clayton_derivative_1st(y, theta, family_code):
     """
     M = y.shape[0]
     deriv = np.empty((M,), dtype=np.float64)
+    rotation = np.empty((M,), dtype=np.float64)
     u = np.clip(y[:, 0], 1e-12, 1 - 1e-12)
     v = np.clip(y[:, 1], 1e-12, 1 - 1e-12)
 
     for m in range(M):
         th = theta[m] if hasattr(theta, "__len__") else theta
 
-        rotation = get_effective_rotation(th, family_code)
+        rotation[m] = get_effective_rotation(th, family_code)
+
 
         # Handle rotations
-        if rotation == 0:  # Standard Clayton
+        if rotation[m] == 0:  # Standard Clayton
             uu, vv = u[m], v[m]
+            th = th
             sign = 1
-        elif rotation == 1:  # 180° rotated Clayton (survival)
-            uu, vv, tth = 1 - u[m], 1 - v[m], abs(th)
-            sign = 1.0 if th >= 0 else -1.0
-        elif rotation == 2:  # 90° rotated Clayton
-            uu, vv = 1 - u[m], v[m]
+        elif rotation[m] == 1:  # 180° rotated Clayton (survival)
+            uu, vv,  = 1 - u[m], 1 - v[m]
+            sign = 1
+
+        elif rotation[m] == 2:  # 90° rotated Clayton
+            uu, vv = 1-u[m], v[m]
             th = -th
             sign = -1.0 
-        elif rotation == 3:  # 270° rotated Clayton
-            uu, vv, tth = u[m], 1 - u[m], abs(th)
-            sign = -1.0 if th >= 0 else 1.0
+        elif rotation[m] == 3:  # 270° rotated Clayton
+            uu, vv = u[m], 1 - v[m]
+            th = -th
+            sign = -1.0 
         else:
             raise NotImplementedError("Copula family not implemented.")
 
@@ -427,7 +437,7 @@ def _clayton_derivative_1st(y, theta, family_code):
         t14 = np.log(uu)
         t16 = np.log(vv)
         result = 1.0 / (1.0 + th) - t4 + t8 / t9 + (1.0 / th + 2.0) * (t5 * t14 + t6 * t16) / t7
-        deriv[m] = sign*result
+        deriv[m] = sign * result
 
     return deriv
 
@@ -474,14 +484,14 @@ def _clayton_derivative_2nd(y, theta, family_code):
             uu, vv = u[i], v[i]
             th = theta_i
         elif rotation == 1:  # 180° rotated Clayton (survival)
-            uu, vv, tth = 1 - u[m], 1 - v[m], abs(th)
-            sign = 1.0 if th >= 0 else -1.0
+            uu, vv = 1 - u[i], 1 - v[i]
+            th = theta_i
         elif rotation == 2:  # 90° rotated Clayton
             uu, vv = u[i], 1 - v[i]
             th = -theta_i
         elif rotation == 3:  # 270° rotated Clayton
-            uu, vv, tth = u[m], 1 - u[m], abs(th)
-            sign = -1.0 if th >= 0 else 1.0
+            uu, vv = u[i], 1 - v[i]
+            th = -theta_i
         else:
             raise NotImplementedError("Copula family not implemented.")
         
