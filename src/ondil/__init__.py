@@ -25,11 +25,6 @@ from . import (
     warnings,
 )
 
-try:
-    from importlib.metadata import version
-    __version__ = version("ondil")
-except Exception:
-    __version__ = "dev"
     
 __all__ = [
     "base",

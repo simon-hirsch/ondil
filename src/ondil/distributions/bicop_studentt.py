@@ -413,7 +413,6 @@ def _log_likelihood_t(y, rho, nu):
         # f = StableGammaDivision((nu+2)/2, nu/2) / (nu*pi*sqrt(1-rho^2)*dt(t1,nu)*dt(t2,nu)) 
         #     * (1 + (t1^2 + t2^2 - 2*rho*t1*t2)/(nu*(1-rho^2)))^(-(nu+2)/2)
         
-        
         # Calculate the gamma ratio using stable division
         gamma_ratio = stable_gamma_division((nu_m + 2.0) / 2.0, nu_m / 2.0)
         

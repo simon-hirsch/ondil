@@ -53,13 +53,8 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
         return theta
 
     def theta_to_params(self, theta):
-        if isinstance(theta, dict):
-            theta = theta[0]
-        theta_array = np.asarray(theta)
-        sign = np.sign(theta_array)
-        abs_theta = np.abs(theta_array)
-        abs_theta_clipped = np.clip(abs_theta, 1e-6, 200)  # Match R bounds
-        return sign * abs_theta_clipped
+        chol = theta[0]
+        return chol
 
     def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
         return {"theta": theta}
@@ -73,7 +68,7 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
         # y is expected to be (M, 2)
         tau = st.kendalltau(y[:, 0], y[:, 1]).correlation
         chol = np.full((M, 1), tau)
-        return chol.reshape(-1)
+        return chol
 
     def cube_to_flat(self, x: np.ndarray, param: int):
         return x
@@ -92,9 +87,8 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
         return {"theta": theta}
 
     def logpdf(self, y, theta):
-        theta = self.theta_to_params(theta)
-        result = _clayton_logpdf(y, theta, self.family_code)
-        #return np.asarray(result).reshape(-1)  # Always 1D
+        theta_logpdf = self.theta_to_params(theta)
+        result = _log_likelihood(y, theta_logpdf, self.family_code)
         return result
     
     def pdf(self, y, theta):
@@ -102,16 +96,15 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
 
     def dl1_dp1(self, y, theta, param=0):
         theta = self.theta_to_params(theta)
-        return _clayton_derivative_1st(y, theta, self.family_code)
+        return _derivative_1st(y, theta, self.family_code)
 
     def dl2_dp2(self, y, theta, param=0, clip=False):
         """
         Second derivative with proper chain rule matching gamBiCopFit.R
         """
         theta = self.theta_to_params(theta)
-        return _clayton_derivative_2nd(y, theta, self.family_code)
+        return _derivative_2nd(y, theta, self.family_code)
         
-
     def element_score(self, y, theta, param=0, k=0):
         return self.element_dl1_dp1(y, theta, param, k)
 
@@ -121,20 +114,13 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
     def element_dl1_dp1(self, y, theta, param=0, k=0, clip=False):
     # Apply proper chain rule like dl1_dp1
         theta_params = self.theta_to_params(theta)
-        raw_d1 = _clayton_derivative_1st(y, theta = theta_params, family_code=self.family_code)
-        
-        # Apply link derivative
-        # eta = self.links[param].link(theta_params)
-        # dpar_deta = self.links[param].link_derivative(eta)
-        
-        return raw_d1 
+        deriv = _derivative_1st(y, chol = theta_params, family_code=self.family_code)
+        return deriv 
 
     def element_dl2_dp2(self, y, theta, param=0, k=0, clip=False):
-        # Apply proper chain rule like dl2_dp2
         theta_params = self.theta_to_params(theta)
-
-        raw_d2 = _clayton_derivative_2nd(y, theta_params, self.family_code)
-        return raw_d2
+        deriv = _derivative_2nd(y, theta = theta_params, family_code=self.family_code)
+        return deriv
 
     def dl2_dpp(self, y, theta, param=0):
         raise NotImplementedError("Not implemented for Clayton copula.")
@@ -191,142 +177,324 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
     def pmf(self, y, theta):
         raise NotImplementedError("Not implemented for Clayton copula.")
 
-    def get_effective_rotation(theta_value, family_code):
+    def get_regularization_size(self, dim: int) -> int:
+        return dim
+
+    def get_effective_rotation(theta_values: np.ndarray, family_code: int) -> np.ndarray:
         """
-        Get the effective rotation based on family code and parameter sign.
-        This mimics the gamCopula logic from getFams() and bicoppd1d2().
+        Vectorized version of get_effective_rotation().
+        Accepts an array of theta_values and returns corresponding rotations.
         
         Args:
-            theta_value: The copula parameter value
-            
+            theta_values (np.ndarray): Copula parameter values (any shape)
+            family_code (int): Family code (301–304)
+        
         Returns:
-            int: The effective rotation (0, 1, 2, 3)
+            np.ndarray: Effective rotations (same shape as theta_values)
         """
-        # Map gamCopula family codes to VineCopula rotations
-        # Based on getFams() function from utilsFamilies.R
+        theta_values = np.asarray(theta_values)
+        rot = np.empty_like(theta_values, dtype=int)
+
         if family_code == 301:
-            # Double Clayton type I (standard and rotated 90 degrees)
-            if theta_value > 0:
-                return 0  # Standard Clayton (3)
-            else:
-                return 2  # 90° rotation (23)
+            rot[:] = np.where(theta_values > 0, 0, 2)
         elif family_code == 302:
-            # Double Clayton type II (standard and rotated 270 degrees)
-            if theta_value > 0:
-                return 0  # Standard Clayton (3)
-            else:
-                return 3  # 270° rotation (33)
+            rot[:] = np.where(theta_values > 0, 0, 3)
         elif family_code == 303:
-            # Double Clayton type III (survival and rotated 90 degrees)
-            if theta_value > 0:
-                return 1  # 180° rotation (13) - survival
-            else:
-                return 2  # 90° rotation (23)
+            rot[:] = np.where(theta_values > 0, 1, 2)
         elif family_code == 304:
-            # Double Clayton type IV (survival and rotated 270 degrees)
-            if theta_value > 0:
-                return 1  # 180° rotation (13) - survival
-            else:
-                return 3  # 270° rotation (33)
+            rot[:] = np.where(theta_values > 0, 1, 3)
         else:
-            # Default to 301 behavior if invalid family code
-            raise ValueError(f"Unsupported family code: {family_code}. Supported codes are 301, 302, 303, 304.")
+            raise ValueError(f"Unsupported family code: {family_code}. Supported codes: 301, 302, 303, 304.")
+
+        return rot
 
     def hfunc(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code: int) -> np.ndarray:
-        M = u.shape[0]
+        
         UMIN = 1e-12
         UMAX = 1 - 1e-12
 
-        u = np.clip(u, UMIN, UMAX)
-        v = np.clip(v, UMIN, UMAX)
+        theta = np.asarray(theta).copy()      # <- prevents in-place mutation of caller's array
+
+
+        u = np.clip(u, UMIN, UMAX).reshape(-1, 1)
+        v = np.clip(v, UMIN, UMAX).reshape(-1, 1)
 
         # Swap u and v if un == 1
         if un == 1:
             u, v = v, u
-
-        h = np.empty(M)
-        for m in range(M):
-            th = theta[m] if hasattr(theta, "__len__") else theta
-
-            rotation = get_effective_rotation(th, family_code)
-
-            # Apply rotation transformations to data
-            u_rot, v_rot = u[m], v[m]
-            if rotation == 1:  # 180° rotation (survival)
-                u_rot = 1 - u[m]
-                v_rot = 1 - v[m]
-            elif rotation == 2:  # 90° rotation
-                u_rot = 1 - u[m]
-                th = -th
-            elif rotation == 3:  # 270° rotation
-                # u_rot stays the same
-                u_rot = 1 - u[m]
-                th = -th
-
-
-            # Conditional distribution function for Clayton copula
-            # h(v|u) = ∂C(u,v)/∂v = (u^{-θ-1}) * (u^{-θ} + v^{-θ} - 1)^{-1/θ - 1}
-            t1 = v_rot ** (-th - 1)
-            t2 = u_rot ** (-th) + v_rot ** (-th) - 1
-            t2 = np.maximum(t2, UMIN)
-            t3 = - 1.0 - 1.0 / th
-            h[m] = t1 * (t2 ** t3)
-
-        if rotation == 3:  # 270° rotation
-            h = 1 - np.clip(h, UMIN, UMAX)
-        else:    
-            h = np.clip(h, UMIN, UMAX)
-        return h
-    
-    def get_regularization_size(self, dim: int) -> int:
-        return dim
-    
-def get_effective_rotation(theta_value, family_code):
-    """
-    Get the effective rotation based on family code and parameter sign.
-    This mimics the gamCopula logic from getFams() and bicoppd1d2().
-    
-    Args:
-        theta_value: The copula parameter value
         
-    Returns:
-        int: The effective rotation (0, 1, 2, 3)
-    """
-    # Map gamCopula family codes to VineCopula rotations
-    # Based on getFams() function from utilsFamilies.R
-    if family_code == 301:
-        # Double Clayton type I (standard and rotated 90 degrees)
-        if theta_value > 0:
-            return 0  # Standard Clayton (3)
-        else:
-            return 2  # 90° rotation (23)
-    elif family_code == 302:
-        # Double Clayton type II (standard and rotated 270 degrees)
-        if theta_value > 0:
-            return 0  # Standard Clayton (3)
-        else:
-            return 3  # 270° rotation (33)
-    elif family_code == 303:
-        # Double Clayton type III (survival and rotated 90 degrees)
-        if theta_value > 0:
-            return 1  # 180° rotation (13) - survival
-        else:
-            return 2  # 90° rotation (23)
-    elif family_code == 304:
-        # Double Clayton type IV (survival and rotated 270 degrees)
-        if theta_value > 0:
-            return 1  # 180° rotation (13) - survival
-        else:
-            return 3  # 270° rotation (33)
-    else:
-        # Default to 301 behavior if invalid family code
-        raise ValueError(f"Unsupported family code: {family_code}. Supported codes are 301, 302, 303, 304.")
+        # Get rotations for all samples
+        rotation = get_effective_rotation(theta, family_code)
+        
+        # Apply rotation transformations vectorized
+        u_rot, v_rot = u.copy(), v.copy()
+        
+        # 180° rotation (survival)
+        mask_1 = (rotation == 1)
+        u_rot[mask_1] = 1 - u[mask_1]
+        v_rot[mask_1] = 1 - v[mask_1]
+        
+        # 90° rotation
+        mask_2 = (rotation == 2)
+        v_rot[mask_2] = 1 - v[mask_2]
+        theta[mask_2] = -theta[mask_2]
+        
+        # 270° rotation
+        mask_3 = (rotation == 3)
+        v_rot[mask_3] = 1 - v[mask_3]
+        theta[mask_3] = -theta[mask_3]
+
+       
+        
+        # Vectorized conditional distribution computation
+        t1 = v_rot ** (-theta - 1)
+        t2 = u_rot ** (-theta) + v_rot ** (-theta) - 1
+        t2 = np.maximum(t2, UMIN)
+        t3 = -1.0 - 1.0 / theta
+        h = t1 * (t2 ** t3)
+
+        mask_4 = (theta < 1e-4)
+        h[mask_4] = u[mask_4]
+
+        # Apply rotation-specific transformations
+        h[mask_3] = 1 - h[mask_3]  # 270° rotation
+        h = np.clip(h, UMIN, UMAX)
+        return h.squeeze()
+
 
 ##########################################################
 # Helper functions for the log-likelihood and derivatives #
 ##########################################################
 
-def _clayton_logpdf(y, theta, family_code=None):
+def get_effective_rotation(theta_values: np.ndarray, family_code: int) -> np.ndarray:
+    """
+    Vectorized version of get_effective_rotation().
+    Accepts an array of theta_values and returns corresponding rotations.
+    
+    Args:
+        theta_values (np.ndarray): Copula parameter values (any shape)
+        family_code (int): Family code (301–304)
+    
+    Returns:
+        np.ndarray: Effective rotations (same shape as theta_values)
+    """
+    theta_values = np.asarray(theta_values)
+    rot = np.empty_like(theta_values, dtype=int)
+
+    if family_code == 301:
+        rot[:] = np.where(theta_values > 0, 0, 2)
+    elif family_code == 302:
+        rot[:] = np.where(theta_values > 0, 0, 3)
+    elif family_code == 303:
+        rot[:] = np.where(theta_values > 0, 1, 2)
+    elif family_code == 304:
+        rot[:] = np.where(theta_values > 0, 1, 3)
+    else:
+        raise ValueError(f"Unsupported family code: {family_code}. Supported codes: 301, 302, 303, 304.")
+
+    return rot
+  
+
+def _log_likelihood(y, theta, family_code=None):
+
+    theta = np.asarray(theta).copy()      # <- prevents in-place mutation of caller's array
+
+    u = y[:, 0].reshape(-1, 1)
+    v = y[:, 1].reshape(-1, 1)
+    
+    rotation = get_effective_rotation(theta, family_code)
+
+    # Apply rotation transformations to data vectorized
+    u_rot, v_rot = u.copy(), v.copy()
+    
+    # 180° rotation (survival)
+    mask_1 = (rotation == 1)
+    u_rot[mask_1] = 1 - u[mask_1]
+    v_rot[mask_1] = 1 - v[mask_1]
+    
+    # 90° rotation
+    mask_2 = (rotation == 2)
+    u_rot[mask_2] = 1 - u[mask_2]
+    theta[mask_2] = -theta[mask_2]
+    
+    # 270° rotation
+    mask_3 = (rotation == 3)
+    v_rot[mask_3] = 1 - v[mask_3]
+    theta[mask_3] = -theta[mask_3]
+    
+    # Vectorized computation for all samples at once
+    valid_mask = (theta != 0) & (theta >= 1e-10)
+
+    t5 = u_rot ** (-theta)
+    t6 = v_rot ** (-theta)
+    t7 = np.maximum(t5 + t6 - 1.0, 1e-12)
+    
+    f = np.where(valid_mask,
+                 np.log1p(theta)
+                 - (1.0 + theta) * np.log(np.maximum(u_rot * v_rot, 1e-12))
+                 - (2.0 + 1.0 / theta) * np.log(t7),
+                 0)
+    
+    # Apply bounds
+    XINFMAX = 700
+    DBL_MIN = 2.2e-308
+    f = np.clip(f, np.log(DBL_MIN), XINFMAX)
+    return f.squeeze()  # Always 1D
+
+
+def _derivative_1st(y, chol, family_code):
+    """
+    Computes the first derivative of the bivariate Clayton copula log-likelihood
+    with respect to theta, supporting rotations via copula_code.
+
+    Args:
+        y (np.ndarray): Input data of shape (M, 2)
+        theta (np.ndarray or float): Copula parameter(s), shape (M,) or scalar
+        copula_code (int): Copula family code (3=Clayton, 13/23/33=rotated)
+
+    Returns:
+        np.ndarray: First derivative, shape (M,)
+    """
+    chol = np.asarray(chol).copy()      # <- prevents in-place mutation of caller's array
+    sign = np.ones_like(chol)
+
+    y = y.copy()
+
+    u = np.clip(y[:, 0], 1e-12, 1 - 1e-12).reshape(-1, 1)
+    v = np.clip(y[:, 1], 1e-12, 1 - 1e-12).reshape(-1, 1)
+
+    rotation = get_effective_rotation(chol, family_code)
+
+    u_rot, v_rot = u.copy(), v.copy()
+    
+    # 180° rotation (survival)
+    mask_1 = (rotation == 1)
+    u_rot[mask_1] = 1 - u_rot[mask_1]
+    v_rot[mask_1] = 1 - v_rot[mask_1]
+    sign[mask_1] = 1.0
+
+    mask_2 = (rotation == 2)
+    u_rot[mask_2] = 1 - u_rot[mask_2]
+    chol[mask_2] = -chol[mask_2]
+    sign[mask_2] = -1.0
+
+    mask_3 = (rotation == 3)
+    v_rot[mask_3] = 1 - v_rot[mask_3]
+    chol[mask_3] = -chol[mask_3]
+    sign[mask_3] = -1.0
+
+
+    t4 = np.log(u_rot * v_rot)
+    t5 = u_rot ** (-chol)
+    t6 = v_rot ** (-chol)
+    t7 = t5 + t6 - 1.0
+    t8 = np.log(t7)
+    t9 = chol ** 2
+    t14 = np.log(u_rot)
+    t16 = np.log(v_rot)
+    result = 1.0 / (1.0 + chol) - t4 + t8 / t9 + (1.0 / chol + 2.0) * (t5 * t14 + t6 * t16) / t7
+    deriv = sign * result
+
+    return deriv.squeeze()
+
+def _derivative_2nd(y, theta, family_code):
+    """
+    Second derivative of Clayton copula PDF w.r.t. parameter theta.
+    Based on diff2PDF_mod from VineCopula C code.
+    
+    Args:
+        y: array of shape (n, 2) - copula data [u, v]
+        theta: array of shape (n,) or scalar - copula parameters
+        copula: array of shape (n,) or scalar - copula family codes
+    
+    Returns:
+        np.ndarray: second derivative values for each observation
+    """
+    
+    # Constants for numerical stability
+    UMIN = 1e-12
+    UMAX = 1 - 1e-12
+    theta = np.asarray(theta).copy()      # <- prevents in-place mutation of caller's array
+
+    # Extract u and v from the y matrix
+    u = np.clip(y[:, 0], UMIN, UMAX).reshape(-1, 1)
+    v = np.clip(y[:, 1], UMIN, UMAX).reshape(-1, 1)
+    
+    rotation = get_effective_rotation(theta, family_code)
+
+    u_rot, v_rot = u.copy(), v.copy()
+    
+    # 180° rotation (survival)
+    mask_1 = (rotation == 1)
+    u_rot[mask_1] = 1 - u[mask_1]
+    v_rot[mask_1] = 1 - v[mask_1]
+
+    mask_2 = (rotation == 2)
+    v_rot[mask_2] = 1 - v[mask_2]
+    theta[mask_2] = -theta[mask_2]
+
+
+    mask_3 = (rotation == 3)
+    v_rot[mask_3] = 1 - v[mask_3]
+    theta[mask_3] = -theta[mask_3]
+        
+     
+    # Basic terms (matching C variable names)
+    t1 = u_rot * v_rot
+    t2 = -theta - 1.0
+    t3 = np.power(t1, t2)
+    t4 = np.log(t1)
+
+    t6 = np.power(u_rot, -theta)
+    t7 = np.power(v_rot, -theta)
+    t8 = t6 + t7 - 1.0
+
+    t10 = -2.0 - 1.0/theta
+    t11 = np.power(t8, t10)
+    
+    # Higher order terms
+    t15 = theta * theta
+    t16 = 1.0 / t15
+    t17 = np.log(t8)
+
+    t19 = np.log(u_rot)
+    t21 = np.log(v_rot)
+
+    t24 = -t6 * t19 - t7 * t21
+    
+    t26 = 1.0 / t8
+    t27 = t16 * t17 + t10 * t24 * t26
+    
+    t30 = -t2 * t3
+    t32 = t4 * t4
+    t14 = t27 * t27
+    t13 = t19 * t19
+    t12 = t21 * t21
+    t9 = t24 * t24
+    t5 = t8 * t8
+    
+    # The complete second derivative expression from C code
+    term1 = -2.0 * t3 * t4 * t11
+    term2 = 2.0 * t3 * t11 * t27
+    term3 = t30 * t32 * t11
+    term4 = -2.0 * t30 * t4 * t11 * t27
+    term5 = t30 * t11 * t14
+    
+    # Additional correction terms
+    t67 = 2.0 / (t15 * theta)  # Triple derivative term
+    t70 = t6 * t13 + t7 * t12  # Second log derivative terms
+    t74 = t9 / t5  # Ratio correction
+    
+    correction = t30 * t11 * (-t67 * t17 + 2.0 * t16 * t24 * t26 + 
+                                t10 * t70 * t26 - t10 * t74)
+
+    deriv =  (term1 + term2 + term3 + term4 + term5 + correction)
+
+    return deriv.squeeze()
+
+
+  
+def _log_likelihood_old(y, theta, family_code=None):
     M = y.shape[0]
     f = np.empty(M)
     u = y[:, 0]
@@ -383,65 +551,8 @@ def _clayton_logpdf(y, theta, family_code=None):
 
     return f  # Always 1D
 
-def _clayton_derivative_1st(y, theta, family_code):
-    """
-    Computes the first derivative of the bivariate Clayton copula log-likelihood
-    with respect to theta, supporting rotations via copula_code.
 
-    Args:
-        y (np.ndarray): Input data of shape (M, 2)
-        theta (np.ndarray or float): Copula parameter(s), shape (M,) or scalar
-        copula_code (int): Copula family code (3=Clayton, 13/23/33=rotated)
-
-    Returns:
-        np.ndarray: First derivative, shape (M,)
-    """
-    M = y.shape[0]
-    deriv = np.empty((M,), dtype=np.float64)
-    rotation = np.empty((M,), dtype=np.float64)
-    u = np.clip(y[:, 0], 1e-12, 1 - 1e-12)
-    v = np.clip(y[:, 1], 1e-12, 1 - 1e-12)
-
-    for m in range(M):
-        th = theta[m] if hasattr(theta, "__len__") else theta
-
-        rotation[m] = get_effective_rotation(th, family_code)
-
-
-        # Handle rotations
-        if rotation[m] == 0:  # Standard Clayton
-            uu, vv = u[m], v[m]
-            th = th
-            sign = 1
-        elif rotation[m] == 1:  # 180° rotated Clayton (survival)
-            uu, vv,  = 1 - u[m], 1 - v[m]
-            sign = 1
-
-        elif rotation[m] == 2:  # 90° rotated Clayton
-            uu, vv = 1-u[m], v[m]
-            th = -th
-            sign = -1.0 
-        elif rotation[m] == 3:  # 270° rotated Clayton
-            uu, vv = u[m], 1 - v[m]
-            th = -th
-            sign = -1.0 
-        else:
-            raise NotImplementedError("Copula family not implemented.")
-
-        t4 = np.log(uu * vv)
-        t5 = uu ** (-th)
-        t6 = vv ** (-th)
-        t7 = t5 + t6 - 1.0
-        t8 = np.log(t7)
-        t9 = th ** 2
-        t14 = np.log(uu)
-        t16 = np.log(vv)
-        result = 1.0 / (1.0 + th) - t4 + t8 / t9 + (1.0 / th + 2.0) * (t5 * t14 + t6 * t16) / t7
-        deriv[m] = sign * result
-
-    return deriv
-
-def _clayton_derivative_2nd(y, theta, family_code):
+def _derivative_2nd_old(y, theta, family_code):
     """
     Second derivative of Clayton copula PDF w.r.t. parameter theta.
     Based on diff2PDF_mod from VineCopula C code.
@@ -550,3 +661,109 @@ def _clayton_derivative_2nd(y, theta, family_code):
 
     
     return out
+
+def _derivative_1st_old(y, theta, family_code):
+    """
+    Computes the first derivative of the bivariate Clayton copula log-likelihood
+    with respect to theta, supporting rotations via copula_code.
+
+    Args:
+        y (np.ndarray): Input data of shape (M, 2)
+        theta (np.ndarray or float): Copula parameter(s), shape (M,) or scalar
+        copula_code (int): Copula family code (3=Clayton, 13/23/33=rotated)
+
+    Returns:
+        np.ndarray: First derivative, shape (M,)
+    """
+    M = y.shape[0]
+    deriv = np.empty((M,), dtype=np.float64)
+    rotation = np.empty((M,), dtype=np.float64)
+    u = np.clip(y[:, 0], 1e-12, 1 - 1e-12)
+    v = np.clip(y[:, 1], 1e-12, 1 - 1e-12)
+
+    for m in range(M):
+        th = theta[m] if hasattr(theta, "__len__") else theta
+
+        rotation[m] = get_effective_rotation(th, family_code)
+
+
+        # Handle rotations
+        if rotation[m] == 0:  # Standard Clayton
+            uu, vv = u[m], v[m]
+            th = th
+            sign = 1
+        elif rotation[m] == 1:  # 180° rotated Clayton (survival)
+            uu, vv,  = 1 - u[m], 1 - v[m]
+            sign = 1
+
+        elif rotation[m] == 2:  # 90° rotated Clayton
+            uu, vv = 1-u[m], v[m]
+            th = -th
+            sign = -1.0 
+        elif rotation[m] == 3:  # 270° rotated Clayton
+            uu, vv = u[m], 1 - v[m]
+            th = -th
+            sign = -1.0 
+        else:
+            raise NotImplementedError("Copula family not implemented.")
+
+        t4 = np.log(uu * vv)
+        t5 = uu ** (-th)
+        t6 = vv ** (-th)
+        t7 = t5 + t6 - 1.0
+        t8 = np.log(t7)
+        t9 = th ** 2
+        t14 = np.log(uu)
+        t16 = np.log(vv)
+        result = 1.0 / (1.0 + th) - t4 + t8 / t9 + (1.0 / th + 2.0) * (t5 * t14 + t6 * t16) / t7
+        deriv[m] = sign * result
+
+    return deriv
+
+
+
+def hfunc_old(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code: int) -> np.ndarray:
+    M = u.shape[0]
+    UMIN = 1e-12
+    UMAX = 1 - 1e-12
+
+    u = np.clip(u, UMIN, UMAX)
+    v = np.clip(v, UMIN, UMAX)
+
+    # Swap u and v if un == 1
+    if un == 1:
+        u, v = v, u
+
+    h = np.empty(M)
+    for m in range(M):
+        th = theta[m] if hasattr(theta, "__len__") else theta
+
+        rotation = get_effective_rotation(th, family_code)
+
+        # Apply rotation transformations to data
+        u_rot, v_rot = u[m], v[m]
+        if rotation == 1:  # 180° rotation (survival)
+            u_rot = 1 - u[m]
+            v_rot = 1 - v[m]
+        elif rotation == 2:  # 90° rotation
+            u_rot = 1 - u[m]
+            th = -th
+        elif rotation == 3:  # 270° rotation
+            # u_rot stays the same
+            u_rot = 1 - u[m]
+            th = -th
+
+
+        # Conditional distribution function for Clayton copula
+        # h(v|u) = ∂C(u,v)/∂v = (u^{-θ-1}) * (u^{-θ} + v^{-θ} - 1)^{-1/θ - 1}
+        t1 = v_rot ** (-th - 1)
+        t2 = u_rot ** (-th) + v_rot ** (-th) - 1
+        t2 = np.maximum(t2, UMIN)
+        t3 = - 1.0 - 1.0 / th
+        h[m] = t1 * (t2 ** t3)
+
+    if rotation == 3:  # 270° rotation
+        h = 1 - np.clip(h, UMIN, UMAX)
+    else:    
+        h = np.clip(h, UMIN, UMAX)
+    return h
