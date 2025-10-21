@@ -11,6 +11,7 @@ CLIP_BOUNDS = (-1e5, 1e5)
 # Distributions that need higher tolerance
 SPECIAL_TOLERANCE_DISTRIBUTIONS = {
     "InverseGaussian": 1e-3,
+    "SkewT": 1e-5,
 }
 
 SPECIAL_BOUNDS_DISTRIBUTIONS = {"PowerExponential": (-1e4, 1e4)}
@@ -44,14 +45,16 @@ def test_distribution_functions(distribution):
     robjects.globalenv["p"] = robjects.FloatVector(prob_grid)
 
     # Generate random parameters within support bounds
-    theta = np.array([
-        np.random.uniform(
-            np.clip(distribution.parameter_support[i][0], *clip_bounds),
-            np.clip(distribution.parameter_support[i][1], *clip_bounds),
-            N,
-        )
-        for i in range(distribution.n_params)
-    ]).T
+    theta = np.array(
+        [
+            np.random.uniform(
+                np.clip(distribution.parameter_support[i][0], *clip_bounds),
+                np.clip(distribution.parameter_support[i][1], *clip_bounds),
+                N,
+            )
+            for i in range(distribution.n_params)
+        ]
+    ).T
 
     # Assign R variables programmatically
     for i, param_name in distribution.parameter_names.items():
@@ -87,6 +90,6 @@ def test_distribution_functions(distribution):
 
     for key in available_functions:
         if key in function_mapping:
-            assert np.allclose(function_mapping[key](), R_list.rx2(key), atol=atol), (
-                f"Function {key} doesn't match for {distribution.__class__.__name__}"
-            )
+            assert np.allclose(
+                function_mapping[key](), R_list.rx2(key), atol=atol
+            ), f"Function {key} doesn't match for {distribution.__class__.__name__}"

@@ -19,6 +19,7 @@ from .mv_t_modchol import MultivariateStudentTInverseModifiedCholesky
 from .normal import Normal, NormalMeanVariance
 from .powerexponential import PowerExponential
 from .reversegumbel import ReverseGumbel
+from .skew_t import SkewT, SkewTMeanStd
 from .studentt import StudentT
 from .zeroadjustedgamma import ZeroAdjustedGamma
 
@@ -26,6 +27,8 @@ __all__ = [
     "Normal",
     "NormalMeanVariance",
     "StudentT",
+    "SkewT",
+    "SkewTMeanStd",
     "JSU",
     "BetaInflated",
     "Gamma",
