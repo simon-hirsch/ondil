@@ -113,7 +113,6 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
             derivative: The 2nd derivatives.
         """
         fitted_loc = self.theta_to_params(theta)
-
         deriv = _derivative_2nd(y=y, fitted_loc=fitted_loc)
         return deriv
 
@@ -141,36 +140,6 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
 
     def dl2_dpp(self, y: np.ndarray, theta: Dict, param: int = 0):
         raise NotImplementedError("Not implemented.")
-
-    def element_link_function(
-        self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-    ) -> np.ndarray:
-
-        return self.links[param].element_link(y)
-
-    def element_link_function_derivative(
-        self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-    ) -> np.ndarray:
-
-        return self.links[param].element_derivative(y)
-
-    def element_link_function_second_derivative(
-        self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-    ) -> np.ndarray:
-
-        return self.links[param].element_link_second_derivative(y)
-
-    def element_link_inverse(
-        self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-    ) -> np.ndarray:
-
-        return self.links[param].inverse(y)
-
-    def element_link_inverse_derivative(
-        self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-    ) -> np.ndarray:
-
-        return self.links[param].element_inverse_derivative(y)
 
     def initial_values(self, y, param=0):
         M = y.shape[0]

@@ -116,31 +116,6 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
     def dl2_dpp(self, y, theta, param=0):
         raise NotImplementedError("Not implemented for Clayton copula.")
 
-    def element_link_function(
-        self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-    ) -> np.ndarray:
-        return self.links[param].element_link(y)
-
-    def element_link_function_derivative(
-        self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-    ) -> np.ndarray:
-        return self.links[param].element_derivative(y)
-
-    def element_link_function_second_derivative(
-        self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-    ) -> np.ndarray:
-        return self.links[param].element_link_second_derivative(y)
-
-    def element_link_inverse(
-        self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-    ) -> np.ndarray:
-        return self.links[param].inverse(y)
-
-    def element_link_inverse_derivative(
-        self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-    ) -> np.ndarray:
-        return self.links[param].element_inverse_derivative(y)
-
     def calculate_conditional_initial_values(self, y: np.ndarray, theta: dict) -> dict:
         raise NotImplementedError("Not implemented for Clayton copula.")
 
