@@ -41,7 +41,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
 
     @staticmethod
     def fitted_elements(dim: int):
-        return {0: int(dim * (dim - 1) // 2), 1: 1}
+        return {0: 1, 1: 1}
 
     @staticmethod
     def set_theta_element(theta: Dict, value: np.ndarray, param: int, k: int) -> Dict:
@@ -67,20 +67,6 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
             return theta[0], theta[1]  # rho, nu
         else:
             return theta[0], 4.0  # default nu = 4
-
-    def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
-        """Map GAMLSS Parameters to scipy parameters.
-
-        Args:
-            theta (np.ndarray): parameters
-
-        Returns:
-            dict: Dict of parameters for scipy.stats.t
-        """
-        rho = theta[:, 0]
-        nu = theta[:, 1] if theta.shape[1] > 1 else np.full_like(rho, 4.0)
-        params = {"rho": rho, "df": nu}
-        return params
 
     def set_initial_guess(self, theta, param):
         return theta

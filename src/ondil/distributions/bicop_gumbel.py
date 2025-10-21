@@ -91,21 +91,7 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
         return theta
 
     def theta_to_params(self, theta):
-        chol = theta[0].copy()
-        return chol
-
-    def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
-        """Map GAMLSS Parameters to scipy parameters.
-
-        Args:
-            theta (np.ndarray): parameters
-
-        Returns:
-            dict: Dict of parameters for Gumbel copula
-        """
-        theta_param = theta[:, 0]
-        params = {"theta": theta_param}
-        return params
+        return theta[0]
 
     def set_initial_guess(self, theta, param):
         return theta

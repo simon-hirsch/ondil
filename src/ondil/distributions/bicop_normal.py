@@ -37,7 +37,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
 
     @staticmethod
     def fitted_elements(dim: int):
-        return {0: int(dim * (dim - 1) / 2)}
+        return {0: 1}
 
     @staticmethod
     def set_theta_element(theta: Dict, value: np.ndarray, param: int, k: int) -> Dict:
@@ -58,23 +58,8 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         theta[param] = value
         return theta
 
-    def theta_to_params(self, theta):
-        chol = theta[0]
-        return chol
-
-    def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
-        """Map GAMLSS Parameters to scipy parameters.
-
-        Args:
-            theta (np.ndarray): parameters
-
-        Returns:
-            dict: Dict of (loc, scale) for scipy.stats.norm(loc, scale)
-        """
-        mu = theta[:, 0]
-        sigma = theta[:, 1]
-        params = {"loc": mu, "scale": sigma**0.5}
-        return params
+    def theta_to_params(self, theta) -> np.ndarray:
+        return theta[0]
 
     def set_initial_guess(self, theta, param):
         return theta
@@ -90,8 +75,8 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         Returns:
             derivative: The 1st derivatives.
         """
-        chol = self.theta_to_params(theta)
-        deriv = _derivative_1st(y=y, chol=chol)
+        rho = self.theta_to_params(theta)
+        deriv = _derivative_1st(y=y, rho=rho)
         return deriv
 
     def dl2_dp2(self, y: np.ndarray, theta: Dict, param: int = 0, clip=False):
@@ -118,16 +103,14 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
     def element_dl1_dp1(
         self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False
     ):
-        chol = self.theta_to_params(theta)
-
-        deriv = _derivative_1st(y, chol)
+        rho = self.theta_to_params(theta)
+        deriv = _derivative_1st(y, rho)
         return deriv
 
     def element_dl2_dp2(
         self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False
     ):
         fitted_loc = self.theta_to_params(theta)
-
         deriv = _derivative_2nd(y, fitted_loc)
         return deriv
 
@@ -139,8 +122,8 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         # Compute the empirical Pearson correlation for each sample
         # y is expected to be (M, 2)
         tau = st.kendalltau(y[:, 0], y[:, 1]).correlation
-        chol = np.full((M, 1), tau)
-        return chol
+        rho = np.full((M, 1), tau)
+        return rho
 
     def param_conditional_likelihood(
         self, y: np.ndarray, theta: Dict, eta: np.ndarray, param: int
@@ -304,7 +287,7 @@ def _log_likelihood(y, theta):
     return f.squeeze()
 
 
-def _log_likelihood_old(y, mod_chol):
+def _log_likelihood_old(y, mod_rho):
     M = y.shape[0]
     f = np.empty(M)
     # Ensure y values are strictly between 0 and 1 for numerical stability
@@ -316,9 +299,9 @@ def _log_likelihood_old(y, mod_chol):
 
     for m in range(M):
         if M == 1:
-            rho = mod_chol
+            rho = mod_rho
         else:
-            rho = mod_chol[m]
+            rho = mod_rho[m]
         t1 = u[m]
         t2 = v[m]
         f[m] = float(
@@ -341,7 +324,7 @@ def _derivative_1st(y, theta):
 
     Args:
         y (np.ndarray): Input data of shape (M, 2)
-        chol (np.ndarray): Correlation parameter, shape (M,) or (1, M)
+        rho (np.ndarray): Correlation parameter, shape (M,) or (1, M)
 
     Returns:
         np.ndarray: First derivative, shape (M,)
@@ -364,14 +347,14 @@ def _derivative_1st(y, theta):
     return deriv.squeeze()
 
 
-def _derivative_1st_old(y, chol):
+def _derivative_1st_old(y, rho):
     """
     Implements the first derivative of the bivariate Gaussian copula log-likelihood
     with respect to the correlation parameter, following the C++ code logic.
 
     Args:
         y (np.ndarray): Input data of shape (M, 2)
-        chol (np.ndarray): Correlation parameter, shape (M,) or (1, M)
+        rho (np.ndarray): Correlation parameter, shape (M,) or (1, M)
 
     Returns:
         np.ndarray: First derivative, shape (M,)
@@ -384,9 +367,9 @@ def _derivative_1st_old(y, chol):
     v = st.norm().ppf(y[:, 1])
     for m in range(M):
         if M == 1:
-            theta = chol
+            theta = rho
         else:
-            theta = chol[m]
+            theta = rho[m]
         t3 = theta * theta
         t4 = 1.0 - t3
         t5 = u[m] * u[m]
