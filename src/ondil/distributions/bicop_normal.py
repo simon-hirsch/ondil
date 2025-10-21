@@ -398,9 +398,6 @@ def _derivative_1st(y, theta):
         np.ndarray: First derivative, shape (M,)
     """
 
-
-    M = y.shape[0]
-    deriv = np.empty((M, 1))
     UMIN = 1e-12
     UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)

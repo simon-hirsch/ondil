@@ -156,7 +156,7 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
         theta_param = self.theta_to_params(theta)
         
         deriv = _derivative_1st(
-                    y, theta_param
+                    y, theta_param,  self.family_code,
                 )
         return deriv
 
@@ -164,7 +164,7 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
         theta_param = self.theta_to_params(theta)
               
         deriv = _derivative_2nd(
-                    y, theta_param
+                    y, theta_param, self.family_code,
                 )
         return deriv
 
