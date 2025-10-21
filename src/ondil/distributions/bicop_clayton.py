@@ -128,38 +128,6 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
     def get_regularization_size(self, dim: int) -> int:
         return dim
 
-    def get_effective_rotation(
-        theta_values: np.ndarray, family_code: int
-    ) -> np.ndarray:
-        """
-        Vectorized version of get_effective_rotation().
-        Accepts an array of theta_values and returns corresponding rotations.
-
-        Args:
-            theta_values (np.ndarray): Copula parameter values (any shape)
-            family_code (int): Family code (301–304)
-
-        Returns:
-            np.ndarray: Effective rotations (same shape as theta_values)
-        """
-        theta_values = np.asarray(theta_values)
-        rot = np.empty_like(theta_values, dtype=int)
-
-        if family_code == 301:
-            rot[:] = np.where(theta_values > 0, 0, 2)
-        elif family_code == 302:
-            rot[:] = np.where(theta_values > 0, 0, 3)
-        elif family_code == 303:
-            rot[:] = np.where(theta_values > 0, 1, 2)
-        elif family_code == 304:
-            rot[:] = np.where(theta_values > 0, 1, 3)
-        else:
-            raise ValueError(
-                f"Unsupported family code: {family_code}. Supported codes: 301, 302, 303, 304."
-            )
-
-        return rot
-
     def hfunc(
         self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code: int
     ) -> np.ndarray:
