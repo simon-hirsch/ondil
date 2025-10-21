@@ -5,9 +5,8 @@ from typing import Dict
 import numpy as np
 import scipy.stats as st
 
-
-from ..base import Distribution, LinkFunction, CopulaMixin
-from ..links import  FisherZLink, KendallsTauToParameter
+from ..base import CopulaMixin, Distribution, LinkFunction
+from ..links import FisherZLink, KendallsTauToParameter
 from ..types import ParameterShapes
 
 
@@ -16,14 +15,15 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
     corresponding_gamlss: str = None
     parameter_names = {0: "rho"}
     parameter_support = {0: (-1, 1)}
-    distribution_support = (-1, 1) 
+    distribution_support = (-1, 1)
     n_params = len(parameter_names)
     parameter_shape = {
         0: ParameterShapes.SCALAR,
     }
+
     def __init__(
-        self, 
-        link: LinkFunction = FisherZLink(), 
+        self,
+        link: LinkFunction = FisherZLink(),
         param_link: LinkFunction = KendallsTauToParameter(),
         rotation: int = 0,
     ):
@@ -31,7 +31,6 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
             links={0: link},
             param_links={0: param_link},
             rotation=rotation,
-
         )
         self.is_multivariate = True
         self._adr_lower_diag = {0: False}
@@ -39,15 +38,13 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         self._regularization = ""  # or adr
         self._scoring = "fisher"
 
-
     @staticmethod
     def fitted_elements(dim: int):
-        return {0: int(dim * (dim - 1) / 2)} 
-    
+        return {0: int(dim * (dim - 1) / 2)}
+
     @property
     def param_structure(self):
         return self._param_structure
-
 
     @staticmethod
     def set_theta_element(theta: Dict, value: np.ndarray, param: int, k: int) -> Dict:
@@ -67,11 +64,11 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         """
         theta[param] = value
         return theta
-    
+
     def theta_to_params(self, theta):
         chol = theta[0]
         return chol
-    
+
     def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
         """Map GAMLSS Parameters to scipy parameters.
 
@@ -101,11 +98,7 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
             derivative: The 1st derivatives.
         """
         chol = self.theta_to_params(theta)
-
-        deriv = _derivative_1st(
-            y=y, chol=chol
-            )
-
+        deriv = _derivative_1st(y=y, chol=chol)
         return deriv
 
     def dl2_dp2(self, y: np.ndarray, theta: Dict, param: int = 0, clip=False):
@@ -121,9 +114,7 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         """
         fitted_loc = self.theta_to_params(theta)
 
-        deriv = _derivative_2nd(
-                y=y, fitted_loc=fitted_loc
-        )
+        deriv = _derivative_2nd(y=y, fitted_loc=fitted_loc)
         return deriv
 
     def element_score(self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0):
@@ -132,54 +123,53 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
     def element_hessian(self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0):
         return self.element_dl2_dp2(y=y, theta=theta, param=param, k=k)
 
-    def element_dl1_dp1(self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False):
+    def element_dl1_dp1(
+        self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False
+    ):
         chol = self.theta_to_params(theta)
-        
-        deriv = _derivative_1st(
-                    y, chol
-                )
+
+        deriv = _derivative_1st(y, chol)
         return deriv
 
-    def element_dl2_dp2(self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False):
+    def element_dl2_dp2(
+        self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False
+    ):
         fitted_loc = self.theta_to_params(theta)
-              
-        deriv = _derivative_2nd(
-                    y, fitted_loc
-                )
+
+        deriv = _derivative_2nd(y, fitted_loc)
         return deriv
 
     def dl2_dpp(self, y: np.ndarray, theta: Dict, param: int = 0):
         raise NotImplementedError("Not implemented.")
 
-
     def element_link_function(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
     ) -> np.ndarray:
-        
+
         return self.links[param].element_link(y)
 
     def element_link_function_derivative(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
     ) -> np.ndarray:
-        
+
         return self.links[param].element_derivative(y)
 
     def element_link_function_second_derivative(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
     ) -> np.ndarray:
-      
+
         return self.links[param].element_link_second_derivative(y)
 
     def element_link_inverse(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
     ) -> np.ndarray:
-     
+
         return self.links[param].inverse(y)
 
     def element_link_inverse_derivative(
         self, y: np.ndarray, param: int = 0, k: int = 0, d: int = 0
-        ) -> np.ndarray:
-      
+    ) -> np.ndarray:
+
         return self.links[param].element_inverse_derivative(y)
 
     def initial_values(self, y, param=0):
@@ -189,7 +179,7 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         tau = st.kendalltau(y[:, 0], y[:, 1]).correlation
         chol = np.full((M, 1), tau)
         return chol
-    
+
     def cube_to_flat(self, x: np.ndarray, param: int):
         return x
 
@@ -222,7 +212,6 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         }
         return out
 
-
     def cdf(self, y, theta):
         raise NotImplementedError("Not implemented")
 
@@ -245,13 +234,12 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         z1 = np.random.normal(size=size)
         z2 = np.random.normal(size=size)
         x = z1
-        y = theta * z1 + np.sqrt(1 - theta ** 2) * z2
+        y = theta * z1 + np.sqrt(1 - theta**2) * z2
 
         # Transform to uniform marginals using the normal CDF
         u = st.norm.cdf(x)
         v = st.norm.cdf(y)
         return np.column_stack((u, v))
-
 
     def pdf(self, y, theta):
         return np.exp(self.logpdf(y, theta))
@@ -276,9 +264,10 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
 
     def get_regularization_size(self, dim: int) -> int:
         return dim
-    
 
-    def hfunc(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
+    def hfunc(
+        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int
+    ) -> np.ndarray:
         """
         Conditional distribution function h(u|v) for the bivariate normal copula.
 
@@ -297,7 +286,6 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         u = np.clip(u, UMIN, UMAX)
         v = np.clip(v, UMIN, UMAX)
 
-
         # Swap u and v if un == 1
         if un == 1:
             u, v = v, u
@@ -307,20 +295,22 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         h = np.where(v == 1, u, h)
 
         qnorm_u = st.norm.ppf(u).reshape(-1, 1)
-        qnorm_v = st.norm.ppf(v).reshape(-1, 1) 
+        qnorm_v = st.norm.ppf(v).reshape(-1, 1)
 
         print(qnorm_u.shape, qnorm_v.shape, theta.shape)
         denom = np.sqrt(1.0 - np.square(theta))
         x = (qnorm_u - theta * qnorm_v) / denom
         print(x.shape)
-        h = np.where(np.isfinite(x), st.norm.cdf(x), 
-                np.where((qnorm_u - theta * qnorm_v) < 0, 0, 1))
+        h = np.where(
+            np.isfinite(x),
+            st.norm.cdf(x),
+            np.where((qnorm_u - theta * qnorm_v) < 0, 0, 1),
+        )
 
         # Clip output for numerical stability
         h = np.clip(h, UMIN, UMAX)
 
         return h.squeeze()
-
 
 
 ##########################################################
@@ -345,7 +335,8 @@ def _log_likelihood(y, theta):
     t1 = u
     t2 = v
     f = (
-        1.0 / np.sqrt(1.0 - theta**2)
+        1.0
+        / np.sqrt(1.0 - theta**2)
         * np.exp(
             (t1**2 + t2**2) / 2.0
             + (2.0 * theta * t1 * t2 - t1**2 - t2**2) / (2.0 * (1.0 - theta**2))
@@ -355,6 +346,7 @@ def _log_likelihood(y, theta):
     f[f == 0] = 1e-16
 
     return f.squeeze()
+
 
 def _log_likelihood_old(y, mod_chol):
     M = y.shape[0]
@@ -369,12 +361,13 @@ def _log_likelihood_old(y, mod_chol):
     for m in range(M):
         if M == 1:
             rho = mod_chol
-        else: 
+        else:
             rho = mod_chol[m]
         t1 = u[m]
         t2 = v[m]
         f[m] = float(
-            1.0 / np.sqrt(1.0 - rho**2)
+            1.0
+            / np.sqrt(1.0 - rho**2)
             * np.exp(
                 (t1**2 + t2**2) / 2.0
                 + (2.0 * rho * t1 * t2 - t1**2 - t2**2) / (2.0 * (1.0 - rho**2))
@@ -398,7 +391,6 @@ def _derivative_1st(y, theta):
         np.ndarray: First derivative, shape (M,)
     """
 
-
     M = y.shape[0]
     deriv = np.empty((M, 1))
     UMIN = 1e-12
@@ -407,13 +399,14 @@ def _derivative_1st(y, theta):
     u = st.norm().ppf(y_clipped[:, 0]).reshape(-1, 1)
     v = st.norm().ppf(y_clipped[:, 1]).reshape(-1, 1)
 
-    t3 = theta*theta
-    t4 = 1.0-t3
-    t5 =  u*u
-    t6 = v*v
-    t7 = t4*t4
-    deriv =  (theta*t4-theta*(t5+t6)+(1.0+t3)*u*v)/t7
+    t3 = theta * theta
+    t4 = 1.0 - t3
+    t5 = u * u
+    t6 = v * v
+    t7 = t4 * t4
+    deriv = (theta * t4 - theta * (t5 + t6) + (1.0 + t3) * u * v) / t7
     return deriv.squeeze()
+
 
 def _derivative_1st_old(y, chol):
     """
@@ -435,20 +428,21 @@ def _derivative_1st_old(y, chol):
     v = st.norm().ppf(y[:, 1])
     for m in range(M):
         if M == 1:
-            theta  = chol
+            theta = chol
         else:
             theta = chol[m]
-        t3 = theta*theta
-        t4 = 1.0-t3
-        t5 =  u[m]*u[m]
-        t6 = v[m]*v[m]
-        t7 = t4*t4
-        deriv[m] =  (theta*t4-theta*(t5+t6)+(1.0+t3)*u[m]*v[m])/t7
+        t3 = theta * theta
+        t4 = 1.0 - t3
+        t5 = u[m] * u[m]
+        t6 = v[m] * v[m]
+        t7 = t4 * t4
+        deriv[m] = (theta * t4 - theta * (t5 + t6) + (1.0 + t3) * u[m] * v[m]) / t7
 
     return deriv.squeeze()
 
-def _derivative_2nd(y, theta): 
-    
+
+def _derivative_2nd(y, theta):
+
     M = y.shape[0]
     deriv = np.empty((M, 1), dtype=np.float64)
 
@@ -458,7 +452,6 @@ def _derivative_2nd(y, theta):
     y_clipped = np.clip(y, UMIN, UMAX)
     u = st.norm().ppf(y_clipped[:, 0]).reshape(-1, 1)
     v = st.norm().ppf(y_clipped[:, 1]).reshape(-1, 1)
-
 
     t6 = u
     t7 = v
@@ -488,7 +481,8 @@ def _derivative_2nd(y, theta):
     )
     return deriv.squeeze()
 
-def _derivative_2nd_old(y, fitted_loc): 
+
+def _derivative_2nd_old(y, fitted_loc):
     M = y.shape[0]
     deriv = np.empty((M, 1), dtype=np.float64)
 
@@ -501,7 +495,7 @@ def _derivative_2nd_old(y, fitted_loc):
 
     for m in range(M):
         if M == 1:
-            theta  = fitted_loc
+            theta = fitted_loc
         else:
             theta = fitted_loc[m]
 
@@ -535,46 +529,47 @@ def _derivative_2nd_old(y, fitted_loc):
     return deriv.squeeze()
 
 
-
 def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
-        """
-        Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
+    """
+    Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
 
-        Args:
-            u (np.ndarray): Array of shape (n,) with values in (0, 1).
-            v (np.ndarray): Array of shape (n,) with values in (0, 1).
-            theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
-            un (int): Determines which conditional to compute.
+    Args:
+        u (np.ndarray): Array of shape (n,) with values in (0, 1).
+        v (np.ndarray): Array of shape (n,) with values in (0, 1).
+        theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
+        un (int): Determines which conditional to compute.
 
-        Returns:
-            np.ndarray: Array of shape (n,) with inverse conditional probabilities.
-        """
-        M = u.shape[0]
-        UMIN = 1e-12
-        UMAX = 1 - 1e-12
+    Returns:
+        np.ndarray: Array of shape (n,) with inverse conditional probabilities.
+    """
+    M = u.shape[0]
+    UMIN = 1e-12
+    UMAX = 1 - 1e-12
 
-        u = np.clip(u, UMIN, UMAX)
-        v = np.clip(v, UMIN, UMAX)
+    u = np.clip(u, UMIN, UMAX)
+    v = np.clip(v, UMIN, UMAX)
 
-        # Swap u and v if un == 1
-        if un == 1:
-            u, v = v, u
+    # Swap u and v if un == 1
+    if un == 1:
+        u, v = v, u
 
-        hinv = np.empty(M)
-        qnorm_u = st.norm.ppf(u)
-        qnorm_v = st.norm.ppf(v)
+    hinv = np.empty(M)
+    qnorm_u = st.norm.ppf(u)
+    qnorm_v = st.norm.ppf(v)
 
-        for m in range(M):
-            theta_m = theta[0][m] if hasattr(theta[0], '__len__') else theta[0]
-            x = qnorm_u[m] * np.sqrt(1.0 - theta_m**2) + theta_m * qnorm_v[m]
-            hinv[m] = st.norm.cdf(x)
+    for m in range(M):
+        theta_m = theta[0][m] if hasattr(theta[0], "__len__") else theta[0]
+        x = qnorm_u[m] * np.sqrt(1.0 - theta_m**2) + theta_m * qnorm_v[m]
+        hinv[m] = st.norm.cdf(x)
 
-        # Clip output for numerical stability
-        hinv = np.clip(hinv, UMIN, UMAX)
-        return hinv
-	
+    # Clip output for numerical stability
+    hinv = np.clip(hinv, UMIN, UMAX)
+    return hinv
 
-def hfunc_old(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
+
+def hfunc_old(
+    self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int
+) -> np.ndarray:
     """
     Conditional distribution function h(u|v) for the bivariate normal copula.
 
