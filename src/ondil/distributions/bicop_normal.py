@@ -125,32 +125,6 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         rho = np.full((M, 1), tau)
         return rho
 
-    def param_conditional_likelihood(
-        self, y: np.ndarray, theta: Dict, eta: np.ndarray, param: int
-    ) -> np.ndarray:
-        """Calulate the log-likelihood for (flat) eta for parameter (param)
-        and theta for all other parameters.
-
-        Args:
-            y (np.ndarray): True values
-            theta (Dict): Fitted theta.
-            eta (np.ndarray): Fitted eta.
-            param (int): Param for which we take eta.
-
-        Returns:
-            np.ndarray: Log-likelihood.
-        """
-        fitted = self.flat_to_cube(eta, param=param)
-        fitted = self.link_inverse(fitted, param=param)
-        # fitted_theta = {**theta, param: fitted_eta}
-        return self.log_likelihood(y, theta={**theta, param: fitted})
-
-    def theta_to_scipy(self, theta: Dict[int, np.ndarray]):
-        out = {
-            "cor": theta,
-        }
-        return out
-
     def cdf(self, y, theta):
         raise NotImplementedError("Not implemented")
 

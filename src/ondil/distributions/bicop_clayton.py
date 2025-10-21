@@ -56,15 +56,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         # Compute the empirical Pearson correlation for each sample
         # y is expected to be (M, 2)
         tau = st.kendalltau(y[:, 0], y[:, 1]).correlation
-        chol = np.full((M, 1), tau)
-        return chol
-
-    def param_conditional_likelihood(
-        self, y: np.ndarray, theta: dict, eta: np.ndarray, param: int
-    ) -> np.ndarray:
-        fitted = self.flat_to_cube(eta, param=param)
-        fitted = self.link_inverse(fitted, param=param)
-        return self.log_likelihood(y, theta={**theta, param: fitted})
+        return np.full((M, 1), tau)
 
     def theta_to_scipy(self, theta: dict):
         return {"theta": theta}
