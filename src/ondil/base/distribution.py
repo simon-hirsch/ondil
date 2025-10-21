@@ -154,21 +154,6 @@ class Distribution(ABC):
     ) -> np.ndarray:
         """Calculate the initial values for the GAMLSS fit."""
 
-    def quantile(self, q: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """
-        Compute the quantile function for the given data.
-
-        This is a alias for the `ppf` method.
-
-        Args:
-            q (np.ndarray): The quantiles to compute.
-            theta (np.ndarray): The parameters of the distribution.
-
-        Returns:
-            np.ndarray: The quantiles corresponding to the given probabilities.
-        """
-        return self.ppf(q, theta)
-
     @abstractmethod
     def calculate_conditional_initial_values(
         self,
@@ -445,11 +430,13 @@ class ScipyMixin(ABC):
 
 
 class CopulaMixin(ABC):
-    def __init__(self, links, param_links: dict[int, LinkFunction], rotation: int) -> None:
+    def __init__(
+        self, links, param_links: dict[int, LinkFunction], rotation: int
+    ) -> None:
         self.links = links
         self.param_links = param_links
         self.rotation = rotation
-        #self._validate_links()
+        # self._validate_links()
 
     def __call__(self, *args, **kwds):
         raise NotImplementedError("Not implemented but necessary for sklearn.")
@@ -600,7 +587,6 @@ class CopulaMixin(ABC):
     def param_link_inverse_derivative(self, y, param=0):
         return self.param_links[param].inverse_derivative(y)
 
-
     @abstractmethod
     def initial_values(
         self, y: np.ndarray, param: int = 0, axis: Optional[int | None] = None
@@ -720,10 +706,11 @@ class CopulaMixin(ABC):
             np.ndarray: An array of log CDF values corresponding to the data points in `y`.
         """
 
+
 class MarginalCopulaMixin(ABC):
     def __init__(self, distributions) -> None:
         self.distributions = distributions
-        #self._validate_links()
+        # self._validate_links()
 
     def __call__(self, *args, **kwds):
         raise NotImplementedError("Not implemented but necessary for sklearn.")
@@ -814,7 +801,6 @@ class MarginalCopulaMixin(ABC):
         if params[0] == params[1]:
             raise ValueError("Cross derivatives must use different parameters.")
 
-
     def param_link_function(self, y, param=0):
         return self.distributions[param].param_links[0].link(y)
 
@@ -829,7 +815,6 @@ class MarginalCopulaMixin(ABC):
 
     def param_link_inverse_derivative(self, y, param=0):
         return self.distributions[param].param_links[0].inverse_derivative(y)
-
 
     def link_function(
         self,
