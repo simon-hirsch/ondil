@@ -6,14 +6,8 @@ import numpy as np
 import scipy.stats as st
 from scipy.optimize import brentq
 
-from ..base import CopulaMixin, Distribution, LinkFunction
-from ..links import (
-    GumbelLink,
-    Identity,
-    KendallsTauToParameterGumbel,
-    Log,
-    LogShiftValue,
-)
+from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
+from ..links import KendallsTauToParameterGumbel, Log
 from ..types import ParameterShapes
 
 
@@ -212,14 +206,6 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
         tau = st.kendalltau(y[:, 0], y[:, 1]).correlation
         chol = np.full((M, 1), tau)
         return chol
-
-    def cube_to_flat(self, x: np.ndarray, param: int):
-        out = x
-        return out
-
-    def flat_to_cube(self, x: np.ndarray, param: int):
-        out = x
-        return out
 
     def param_conditional_likelihood(
         self, y: np.ndarray, theta: Dict, eta: np.ndarray, param: int

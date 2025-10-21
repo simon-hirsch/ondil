@@ -5,12 +5,12 @@ from typing import Dict
 import numpy as np
 import scipy.stats as st
 
-from ..base import CopulaMixin, Distribution, LinkFunction
+from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
 from ..links import KendallsTauToParameterClayton, Log
 from ..types import ParameterShapes
 
 
-class BivariateCopulaClayton(CopulaMixin, Distribution):
+class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
     """
     Bivariate Clayton copula distribution class.
     """
@@ -66,12 +66,6 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
         tau = st.kendalltau(y[:, 0], y[:, 1]).correlation
         chol = np.full((M, 1), tau)
         return chol
-
-    def cube_to_flat(self, x: np.ndarray, param: int):
-        return x
-
-    def flat_to_cube(self, x: np.ndarray, param: int):
-        return x
 
     def param_conditional_likelihood(
         self, y: np.ndarray, theta: dict, eta: np.ndarray, param: int

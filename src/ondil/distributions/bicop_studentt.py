@@ -6,12 +6,12 @@ import numpy as np
 import scipy.special as sp
 import scipy.stats as st
 
-from ..base import CopulaMixin, Distribution, LinkFunction
+from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
 from ..links import FisherZLink, KendallsTauToParameter, LogShiftTwo
 from ..types import ParameterShapes
 
 
-class BivariateCopulaStudentT(CopulaMixin, Distribution):
+class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
 
     corresponding_gamlss: str = None
     parameter_names = {0: "rho", 1: "nu"}
@@ -201,14 +201,6 @@ class BivariateCopulaStudentT(CopulaMixin, Distribution):
         else:  # nu
             nu = np.full((M, 1), 10)  # default degrees of freedom
             return nu
-
-    def cube_to_flat(self, x: np.ndarray, param: int):
-        out = x
-        return out
-
-    def flat_to_cube(self, x: np.ndarray, param: int):
-        out = x
-        return out
 
     def param_conditional_likelihood(
         self, y: np.ndarray, theta: Dict, eta: np.ndarray, param: int

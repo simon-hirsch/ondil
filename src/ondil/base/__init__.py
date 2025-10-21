@@ -1,4 +1,11 @@
-from .distribution import Distribution, MultivariateDistributionMixin, ScipyMixin, CopulaMixin, MarginalCopulaMixin
+from .distribution import (
+    BivariateCopulaMixin,
+    CopulaMixin,
+    Distribution,
+    MarginalCopulaMixin,
+    MultivariateDistributionMixin,
+    ScipyMixin,
+)
 from .estimation_method import EstimationMethod
 from .estimator import Estimator, OndilEstimatorMixin
 from .link import LinkFunction
@@ -13,4 +20,5 @@ __all__ = [
     "MultivariateDistributionMixin",
     "CopulaMixin",
     "MarginalCopulaMixin",
+    "BivariateCopulaMixin",
 ]
