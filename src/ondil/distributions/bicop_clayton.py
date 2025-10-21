@@ -28,10 +28,23 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         param_link: LinkFunction = KendallsTauToParameterClayton(),
         family_code: int = 301,
     ):
-        super().__init__(links={0: link}, param_links={0: param_link}, rotation=0)
+        super().__init__(
+            links={0: link},
+            param_links={0: param_link},
+        )
         self.family_code = family_code
         self.is_multivariate = True
         self._regularization_allowed = {0: False}
+
+    @property
+    def rotation(self):
+        """Return the effective rotation based on family code in degrees."""
+        return {
+            301: 0,
+            302: 90,
+            303: 180,
+            304: 270,
+        }[self.family_code]
 
     @staticmethod
     def fitted_elements(dim: int):

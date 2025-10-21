@@ -25,12 +25,10 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         self,
         link: LinkFunction = FisherZLink(),
         param_link: LinkFunction = KendallsTauToParameter(),
-        rotation: int = 0,
     ):
         super().__init__(
             links={0: link},
             param_links={0: param_link},
-            rotation=rotation,
         )
         self.is_multivariate = True
         self._regularization_allowed = {0: False}

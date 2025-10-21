@@ -29,12 +29,10 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         link_2: LinkFunction = LogShiftTwo(),
         param_link_1: LinkFunction = KendallsTauToParameter(),
         param_link_2: LinkFunction = KendallsTauToParameter(),
-        rotation: int = 0,
     ):
         super().__init__(
             links={0: link_1, 1: link_2},
             param_links={0: param_link_1, 1: param_link_2},
-            rotation=rotation,
         )
         self.is_multivariate = True
         self._regularization_allowed = {0: False, 1: False}
