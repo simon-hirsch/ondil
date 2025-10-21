@@ -10,7 +10,6 @@ from ..types import ParameterShapes
 
 
 class SkewT(Distribution):
-
     corresponding_gamlss: str = "ST3"
     parameter_names = {0: "mu", 1: "sigma", 2: "nu", 3: "tau"}
     parameter_support = {
@@ -136,7 +135,7 @@ class SkewT(Distribution):
 
     def dl2_dp2(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
-        deriv = -self.dl1_dp1(y, theta, param) ** 2
+        deriv = -(self.dl1_dp1(y, theta, param) ** 2)
         return np.clip(deriv, -np.inf, -1e-15)
 
     def dl2_dpp(
@@ -172,7 +171,6 @@ class SkewT(Distribution):
 
 
 class SkewTMeanStd(ScipyMixin, Distribution):
-
     corresponding_gamlss: str = "SST"
     parameter_names = {0: "mu", 1: "sigma", 2: "nu", 3: "tau"}
     parameter_support = {
@@ -349,7 +347,7 @@ class SkewTMeanStd(ScipyMixin, Distribution):
 
     def dl2_dp2(self, y, theta, param):
         self._validate_dln_dpn_inputs(y, theta, param)
-        deriv = -self.dl1_dp1(y, theta, param) ** 2
+        deriv = -(self.dl1_dp1(y, theta, param) ** 2)
         return np.clip(deriv, -np.inf, -1e-15)
 
     def dl2_dpp(self, y, theta, params):
