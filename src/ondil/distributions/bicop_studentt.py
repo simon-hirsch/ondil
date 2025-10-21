@@ -43,25 +43,6 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
     def fitted_elements(dim: int):
         return {0: 1, 1: 1}
 
-    @staticmethod
-    def set_theta_element(theta: Dict, value: np.ndarray, param: int, k: int) -> Dict:
-        """Sets an element of theta for parameter param and place k.
-
-        !!! Note
-            This will mutate `theta`!
-
-        Args:
-            theta (Dict): Current fitted $\theta$
-            value (np.ndarray): Value to set
-            param (int): Distribution parameter
-            k (int): Flat element index $k$
-
-        Returns:
-            Dict: Theta where element (param, k) is set to value.
-        """
-        theta[param] = value
-        return theta
-
     def theta_to_params(self, theta):
         if len(theta) > 1:
             return theta[0], theta[1]  # rho, nu

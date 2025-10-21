@@ -37,11 +37,6 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
     def fitted_elements(dim: int):
         return {0: 1}
 
-    @staticmethod
-    def set_theta_element(theta: dict, value: np.ndarray, param: int, k: int) -> dict:
-        theta[param] = value
-        return theta
-
     def theta_to_params(self, theta):
         return theta[0]
 
