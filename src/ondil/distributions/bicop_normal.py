@@ -287,36 +287,6 @@ def _log_likelihood(y, theta):
     return f.squeeze()
 
 
-def _log_likelihood_old(y, mod_rho):
-    M = y.shape[0]
-    f = np.empty(M)
-    # Ensure y values are strictly between 0 and 1 for numerical stability
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
-    y_clipped = np.clip(y, UMIN, UMAX)
-    u = st.norm().ppf(y_clipped[:, 0]).reshape(-1, 1)
-    v = st.norm().ppf(y_clipped[:, 1]).reshape(-1, 1)
-
-    for m in range(M):
-        if M == 1:
-            rho = mod_rho
-        else:
-            rho = mod_rho[m]
-        t1 = u[m]
-        t2 = v[m]
-        f[m] = float(
-            1.0
-            / np.sqrt(1.0 - rho**2)
-            * np.exp(
-                (t1**2 + t2**2) / 2.0
-                + (2.0 * rho * t1 * t2 - t1**2 - t2**2) / (2.0 * (1.0 - rho**2))
-            )
-        )
-    # Replace any zeros in f with 1e-16 for numerical stability
-    f[f == 0] = 1e-16
-    return f.squeeze()
-
-
 def _derivative_1st(y, theta):
     """
     Implements the first derivative of the bivariate Gaussian copula log-likelihood
@@ -344,39 +314,6 @@ def _derivative_1st(y, theta):
     t6 = v * v
     t7 = t4 * t4
     deriv = (theta * t4 - theta * (t5 + t6) + (1.0 + t3) * u * v) / t7
-    return deriv.squeeze()
-
-
-def _derivative_1st_old(y, rho):
-    """
-    Implements the first derivative of the bivariate Gaussian copula log-likelihood
-    with respect to the correlation parameter, following the C++ code logic.
-
-    Args:
-        y (np.ndarray): Input data of shape (M, 2)
-        rho (np.ndarray): Correlation parameter, shape (M,) or (1, M)
-
-    Returns:
-        np.ndarray: First derivative, shape (M,)
-    """
-    M = y.shape[0]
-    deriv = np.empty((M, 1), dtype=np.float64)
-    eps = np.finfo(float).eps
-    y = np.clip(y, eps, 1 - eps)
-    u = st.norm().ppf(y[:, 0])
-    v = st.norm().ppf(y[:, 1])
-    for m in range(M):
-        if M == 1:
-            theta = rho
-        else:
-            theta = rho[m]
-        t3 = theta * theta
-        t4 = 1.0 - t3
-        t5 = u[m] * u[m]
-        t6 = v[m] * v[m]
-        t7 = t4 * t4
-        deriv[m] = (theta * t4 - theta * (t5 + t6) + (1.0 + t3) * u[m] * v[m]) / t7
-
     return deriv.squeeze()
 
 
@@ -421,53 +358,6 @@ def _derivative_2nd(y, theta):
     return deriv.squeeze()
 
 
-def _derivative_2nd_old(y, fitted_loc):
-    M = y.shape[0]
-    deriv = np.empty((M, 1), dtype=np.float64)
-
-    # Ensure y values are strictly between 0 and 1 for numerical stability
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
-    y_clipped = np.clip(y, UMIN, UMAX)
-    u = st.norm().ppf(y_clipped[:, 0])
-    v = st.norm().ppf(y_clipped[:, 1])
-
-    for m in range(M):
-        if M == 1:
-            theta = fitted_loc
-        else:
-            theta = fitted_loc[m]
-
-        t6 = u[m]
-        t7 = v[m]
-        t1 = t6 * t7
-        t2 = theta * theta
-        t3 = 1.0 - t2
-        t4 = 4.0 * t3 * t3
-        t5 = 1.0 / t4
-        t12 = t6 * t6
-        t13 = t7 * t7
-        t14 = 2.0 * theta * t6 * t7 - t12 - t13
-        t21 = t14 * t5
-        t26 = 1.0 / t3 / 2.0
-        t29 = np.exp(t12 / 2.0 + t13 / 2.0 + t14 * t26)
-        t31 = np.sqrt(t3)
-        t32 = 1.0 / t31
-        t38 = 2.0 * t1 * t26 + 4.0 * t21 * theta
-        t39 = t38 * t38
-        t44 = 1.0 / t31 / t3
-        t48 = t3 * t3
-        deriv[m] = (
-            (16.0 * t1 * t5 * theta + 16.0 * t14 / t4 / t3 * t2 + 4.0 * t21) * t29 * t32
-            + t39 * t29 * t32
-            + 2.0 * t38 * t29 * t44 * theta
-            + 3.0 * t29 / t31 / t48 * t2
-            + t29 * t44
-        )
-
-    return deriv.squeeze()
-
-
 def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
     """
     Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
@@ -504,50 +394,3 @@ def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.n
     # Clip output for numerical stability
     hinv = np.clip(hinv, UMIN, UMAX)
     return hinv
-
-
-def hfunc_old(
-    self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int
-) -> np.ndarray:
-    """
-    Conditional distribution function h(u|v) for the bivariate normal copula.
-
-    Args:
-        u (np.ndarray): Array of shape (n,) with values in (0, 1).
-        v (np.ndarray): Array of shape (n,) with values in (0, 1).
-        theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
-        un (int): Determines which conditional to compute (0 for h(u|v), 1 for h(v|u)).
-
-    Returns:
-        np.ndarray: Array of shape (n,) with conditional probabilities.
-    """
-    M = u.shape[0]
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
-
-    u = np.clip(u, UMIN, UMAX)
-    v = np.clip(v, UMIN, UMAX)
-
-    # Swap u and v if un == 1
-    if un == 1:
-        u, v = v, u
-
-    # Handle edge cases
-    h = np.where((v == 0) | (u == 0), 0, np.nan)
-    h = np.where(v == 1, u, h)
-    qnorm_u = st.norm.ppf(u)
-    qnorm_v = st.norm.ppf(v)
-
-    for m in range(M):
-        denom = np.sqrt(1.0 - np.square(theta[m]))
-        x = (qnorm_u[m] - theta[m] * qnorm_v[m]) / denom
-        if np.isfinite(x):
-            h[m] = st.norm.cdf(x)
-        elif (qnorm_u[m] - theta[m] * qnorm_v[m]) < 0:
-            h[m] = 0
-        else:
-            h[m] = 1
-
-    # Clip output for numerical stability
-    h = np.clip(h, UMIN, UMAX)
-    return h
