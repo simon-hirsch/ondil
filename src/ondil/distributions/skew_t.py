@@ -204,6 +204,7 @@ class SkewTMeanStd(ScipyMixin, Distribution):
                 3: shape_link,
             }
         )
+        self._self._st3dist = SkewT()
 
     def _map(self, theta):
         mu, sigma, nu, tau = self.theta_to_params(theta)
@@ -287,24 +288,23 @@ class SkewTMeanStd(ScipyMixin, Distribution):
 
     def dl1_dp1(self, y, theta, param):
         self._validate_dln_dpn_inputs(y, theta, param)
-        mu, sigma, nu, tau = self.theta_to_params(theta)
+        _, sigma, nu, tau = self.theta_to_params(theta)
         m1, m2, s1, mu1, sigma1 = self._get_terms_deriv(theta)
 
-        st3dist = SkewT()
         st3theta = np.column_stack((mu1, sigma1, nu, tau))
 
         match param:
             case 0:
-                deriv = st3dist.dl1_dp1(y, st3theta, param)
+                deriv = self._st3dist.dl1_dp1(y, st3theta, param)
                 return deriv
             case 1:
-                return -(m1 / s1) * st3dist.dl1_dp1(y, st3theta, 0) + (
+                return -(m1 / s1) * self._st3dist.dl1_dp1(y, st3theta, 0) + (
                     1 / s1
-                ) * st3dist.dl1_dp1(y, st3theta, 1)
+                ) * self._st3dist.dl1_dp1(y, st3theta, 1)
             case 2:
-                dl1dmu1 = st3dist.dl1_dp1(y, st3theta, 0)
-                dl1dd1 = st3dist.dl1_dp1(y, st3theta, 1)
-                dl1dv = st3dist.dl1_dp1(y, st3theta, 2)
+                dl1dmu1 = self._st3dist.dl1_dp1(y, st3theta, 0)
+                dl1dd1 = self._st3dist.dl1_dp1(y, st3theta, 1)
+                dl1dv = self._st3dist.dl1_dp1(y, st3theta, 2)
                 dmu1dm1 = -sigma / s1
                 dmu1ds1 = (sigma * m1) / (s1**2)
                 dd1ds1 = -sigma / (s1**2)
@@ -323,9 +323,9 @@ class SkewTMeanStd(ScipyMixin, Distribution):
                 )
                 return dldv
             case 3:
-                dl1dmu1 = st3dist.dl1_dp1(y, st3theta, 0)
-                dl1dd1 = st3dist.dl1_dp1(y, st3theta, 1)
-                dl1dt = st3dist.dl1_dp1(y, st3theta, 3)
+                dl1dmu1 = self._st3dist.dl1_dp1(y, st3theta, 0)
+                dl1dd1 = self._st3dist.dl1_dp1(y, st3theta, 1)
+                dl1dt = self._st3dist.dl1_dp1(y, st3theta, 3)
                 dmu1dm1 = -sigma / s1
                 dmu1ds1 = (sigma * m1) / (s1**2)
                 dd1ds1 = -sigma / (s1**2)
