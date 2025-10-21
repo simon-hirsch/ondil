@@ -33,10 +33,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
             rotation=rotation,
         )
         self.is_multivariate = True
-        self._adr_lower_diag = {0: False}
         self._regularization_allowed = {0: False}
-        self._regularization = ""  # or adr
-        self._scoring = "fisher"
 
     @staticmethod
     def fitted_elements(dim: int):
