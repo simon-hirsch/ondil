@@ -151,14 +151,6 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
             nu = np.full((M, 1), 10)  # default degrees of freedom
             return nu
 
-    def theta_to_scipy(self, theta: Dict[int, np.ndarray]):
-        rho, nu = self.theta_to_params(theta)
-        out = {
-            "rho": rho,
-            "df": nu,
-        }
-        return out
-
     def cdf(self, y, theta):
         raise NotImplementedError("Not implemented")
 
