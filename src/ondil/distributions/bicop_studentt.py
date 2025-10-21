@@ -43,10 +43,6 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
     def fitted_elements(dim: int):
         return {0: int(dim * (dim - 1) // 2), 1: 1}
 
-    @property
-    def param_structure(self):
-        return self._param_structure
-
     @staticmethod
     def set_theta_element(theta: Dict, value: np.ndarray, param: int, k: int) -> Dict:
         """Sets an element of theta for parameter param and place k.

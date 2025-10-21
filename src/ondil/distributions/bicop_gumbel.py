@@ -71,10 +71,6 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
 
         return rot
 
-    @property
-    def param_structure(self):
-        return self._param_structure
-
     @staticmethod
     def set_theta_element(theta: Dict, value: np.ndarray, param: int, k: int) -> Dict:
         """Sets an element of theta for parameter param and place k.
