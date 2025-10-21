@@ -121,12 +121,6 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
         tau = st.kendalltau(y[:, 0], y[:, 1]).correlation
         return np.full((M, 1), tau)
 
-    def theta_to_scipy(self, theta: Dict[int, np.ndarray]):
-        out = {
-            "theta": theta,
-        }
-        return out
-
     def cdf(self, y, theta):
         raise NotImplementedError("Not implemented")
 
