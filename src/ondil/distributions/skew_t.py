@@ -204,7 +204,7 @@ class SkewTMeanStd(ScipyMixin, Distribution):
                 3: shape_link,
             }
         )
-        self._self._st3dist = SkewT()
+        self._st3dist = SkewT()
 
     def _map(self, theta):
         mu, sigma, nu, tau = self.theta_to_params(theta)
