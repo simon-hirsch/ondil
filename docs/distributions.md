@@ -23,6 +23,8 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 | [`Normal`](#ondil.distributions.Normal)                               | Gaussian (mean and standard deviation) | `scipy.stats.norm`      |
 | [`NormalMeanVariance`](#ondil.distributions.NormalMeanVariance)       | Gaussian (mean and variance)           | `scipy.stats.norm`      |
 | [`StudentT`](#ondil.distributions.StudentT)                           | Student's $t$ distribution             | `scipy.stats.t`         |
+| [`SkewT`](#ondil.distributions.SkewT)                                 | Skewed Student's $t$ distribution      | -                       |
+| [`SkewTMeanStd`](#ondil.distributions.SkewTMeanStd)                   | Skewed Student's $t$ distribution (mean and standard deviation)  | - |
 | [`JSU`](#ondil.distributions.JSU)                                     | Johnson's SU distribution              | `scipy.stats.johnsonsu` |
 | [`Gamma`](#ondil.distributions.Gamma)                                 | Gamma distribution                     | `scipy.stats.gamma`     |
 | [`LogNormal`](#ondil.distributions.LogNormal)                         | Log-normal distribution                | `scipy.stats.lognorm`   |
@@ -57,6 +59,10 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 ::: ondil.distributions.NormalMeanVariance
 
 ::: ondil.distributions.StudentT
+
+::: ondil.distributions.SkewT
+
+::: ondil.distributions.SkewTMeanStd
 
 ::: ondil.distributions.JSU
 

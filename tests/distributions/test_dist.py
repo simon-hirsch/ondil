@@ -11,6 +11,7 @@ CLIP_BOUNDS = (-1e5, 1e5)
 # Distributions that need higher tolerance
 SPECIAL_TOLERANCE_DISTRIBUTIONS = {
     "InverseGaussian": 1e-3,
+    "SkewT": 1e-5,
 }
 
 SPECIAL_BOUNDS_DISTRIBUTIONS = {"PowerExponential": (-1e4, 1e4)}
