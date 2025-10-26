@@ -95,30 +95,26 @@ class Poisson(ScipyMixin, Distribution):
 
     def pdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         """
-        For discrete distributions, PDF is not defined. Use PMF instead.
+        For discrete distributions, PDF delegates to PMF.
 
         Args:
             y (np.ndarray): An array of data points.
             theta (np.ndarray): An array of parameters for the distribution.
 
-        Raises:
-            NotImplementedError: PDF is not implemented for discrete distributions.
+        Returns:
+            np.ndarray: An array of PMF values (same as pmf method).
         """
-        raise NotImplementedError(
-            "PDF is not implemented for discrete distributions. Use PMF instead."
-        )
+        return self.pmf(y, theta)
 
     def logpdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         """
-        For discrete distributions, log PDF is not defined. Use log PMF instead.
+        For discrete distributions, log PDF delegates to log PMF.
 
         Args:
             y (np.ndarray): An array of data points.
             theta (np.ndarray): An array of parameters for the distribution.
 
-        Raises:
-            NotImplementedError: Log PDF is not implemented for discrete distributions.
+        Returns:
+            np.ndarray: An array of log PMF values (same as logpmf method).
         """
-        raise NotImplementedError(
-            "Log PDF is not implemented for discrete distributions. Use log PMF instead."
-        )
+        return self.logpmf(y, theta)

@@ -101,6 +101,14 @@ def test_poisson_log_functions():
     cdf_vals = dist.cdf(y, theta)
     assert np.allclose(logcdf_vals, np.log(cdf_vals))
 
+    # Test that logpdf delegates to logpmf for discrete distributions
+    logpdf_vals = dist.logpdf(y, theta)
+    assert np.allclose(logpdf_vals, logpmf_vals)
+
+    # Test that pdf delegates to pmf for discrete distributions
+    pdf_vals = dist.pdf(y, theta)
+    assert np.allclose(pdf_vals, pmf_vals)
+
 
 def test_poisson_rvs():
     """Test random variate generation."""
@@ -139,3 +147,47 @@ def test_poisson_derivatives_shape():
     assert dl2_dpp.shape == y.shape
     # For Poisson with single parameter, this should raise an error or return zeros
     # The validation should catch that params must be different
+
+
+def test_poisson_with_estimator():
+    """Test Poisson distribution with OnlineDistributionalRegression."""
+    from ondil.estimators import OnlineDistributionalRegression
+
+    # Generate some Poisson data
+    np.random.seed(42)
+    n = 100
+
+    # Create predictors
+    X = np.random.randn(n, 2)
+
+    # True coefficients
+    true_beta = np.array([1.5, 0.3, -0.2])
+
+    # Generate mu
+    mu = np.exp(true_beta[0] + X[:, 0] * true_beta[1] + X[:, 1] * true_beta[2])
+
+    # Generate Poisson samples
+    y = np.random.poisson(lam=mu)
+
+    # Fit the model
+    estimator = OnlineDistributionalRegression(
+        distribution=Poisson(),
+        equation={0: np.array([0, 1])},  # Use both predictors for mu
+        method="ols",
+        scale_inputs=False,
+        fit_intercept=True,
+    )
+
+    estimator.fit(X=X, y=y)
+
+    # Check that coefficients are reasonably close to true values
+    coef_error = np.abs(estimator.beta[0] - true_beta).mean()
+    assert coef_error < 0.5, f"Coefficient error too large: {coef_error}"
+
+    # Make predictions
+    fv = estimator.predict(X=X)
+    assert fv.shape == (n,)
+
+    # Check that predictions are reasonable
+    pred_error = np.abs(fv - mu).mean()
+    assert pred_error < 2.0, f"Prediction error too large: {pred_error}"
