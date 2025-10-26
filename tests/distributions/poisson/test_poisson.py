@@ -124,7 +124,9 @@ def test_poisson_rvs():
     # Check that mean is approximately mu
     sample_mean = np.mean(samples)
     # Allow for some variance due to randomness
-    assert np.abs(sample_mean - mu) < 1.0, f"Sample mean {sample_mean} too far from {mu}"
+    assert np.abs(sample_mean - mu) < 1.0, (
+        f"Sample mean {sample_mean} too far from {mu}"
+    )
 
 
 def test_poisson_derivatives_shape():
