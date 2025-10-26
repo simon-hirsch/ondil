@@ -100,14 +100,14 @@ class Pareto(ScipyMixin, Distribution):
 
         match param:
             case 0:
-                # MU: Expected Fisher information
-                # E[d2ldm2] = -sigma*(2*mu*sigma + sigma - 1) / (mu^2 * (sigma+1) * (sigma+2))
-                numerator = -sigma * (2 * mu * sigma + sigma - 1)
-                denominator = mu**2 * (sigma + 1) * (sigma + 2)
+                # MU: Observed second derivative
+                # d2ldm2 = (mu^2 - 2*mu*sigma*y - sigma*y^2) / (mu^2*(mu+y)^2)
+                numerator = mu**2 - 2 * mu * sigma * y - sigma * y**2
+                denominator = mu**2 * (mu + y) ** 2
                 return numerator / denominator
             case 1:
-                # SIGMA: Expected Fisher information
-                # E[d2ldd2] = -1/sigma^2
+                # SIGMA: Observed second derivative
+                # d2ldd2 = -1/sigma^2
                 return -1 / sigma**2
 
     def dl2_dpp(
@@ -115,9 +115,9 @@ class Pareto(ScipyMixin, Distribution):
     ) -> np.ndarray:
         self._validate_dl2_dpp_inputs(y, theta, params)
         if sorted(params) == [0, 1]:
-            # Expected cross derivative: E[d2ldmdd] = 1 / (mu * (sigma+1))
-            mu, sigma = self.theta_to_params(theta)
-            return 1 / (mu * (sigma + 1))
+            # Observed cross derivative: d2ldmdd = y / (mu*(mu + y))
+            mu, _ = self.theta_to_params(theta)
+            return y / (mu * (mu + y))
 
     def initial_values(self, y: np.ndarray) -> np.ndarray:
         # Use method of moments estimates
