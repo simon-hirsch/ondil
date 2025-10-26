@@ -60,13 +60,13 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
         rot = np.empty_like(theta_values, dtype=int)
 
         if family_code == 401:
-            rot[:] = np.where(theta_values >= 1, 0, 2)
+            rot[:] = np.where(theta_values > 1, 0, 2)
         elif family_code == 402:
-            rot[:] = np.where(theta_values >= 1, 0, 3)
+            rot[:] = np.where(theta_values > 1, 0, 3)
         elif family_code == 403:
-            rot[:] = np.where(theta_values >= 1, 1, 2)
+            rot[:] = np.where(theta_values > 1, 1, 2)
         elif family_code == 404:
-            rot[:] = np.where(theta_values >= 1, 1, 3)
+            rot[:] = np.where(theta_values > 1, 1, 3)
         else:
             raise ValueError(f"Unsupported family code: {family_code}. Supported codes: 401, 402, 403, 404.")
 
@@ -305,7 +305,6 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
         UMAX = 1 - 1e-12
 
         theta = np.asarray(theta).copy()      # <- prevents in-place mutation of caller's array
-
         u = np.clip(u, UMIN, UMAX).reshape(-1, 1)
         v = np.clip(v, UMIN, UMAX).reshape(-1, 1)
 
@@ -315,7 +314,6 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
 
         # Get rotations for all samples
         rotation = get_effective_rotation(theta, family_code)
-        
         # Apply rotation transformations vectorized
         u_rot, v_rot = u.copy(), v.copy()
         
@@ -331,7 +329,7 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
         
         # 270° rotation
         mask_3 = (rotation == 3)
-        v_rot[mask_3] = 1 - v[mask_3]
+        u_rot[mask_3] = 1 - u[mask_3]
         theta[mask_3] = -theta[mask_3]
 
         log_u = np.log(u_rot)
@@ -343,6 +341,8 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
 
         copula_val = np.exp(-sum_t ** (1.0 / theta))
         h = -(copula_val * (sum_t ** (1.0/theta - 1.0)) * t2) / (v_rot * log_v)
+        h[mask_1] = 1 - h[mask_1]  # 180° rotation
+        h[mask_3] = 1 - h[mask_3]  # 270° rotation
 
         return h.squeeze()
 
@@ -417,13 +417,13 @@ def get_effective_rotation(theta_values: np.ndarray, family_code: int) -> np.nda
     rot = np.empty_like(theta_values, dtype=int)
 
     if family_code == 401:
-        rot[:] = np.where(theta_values >= 0, 0, 2)
+        rot[:] = np.where(theta_values > 0, 0, 2)
     elif family_code == 402:
-        rot[:] = np.where(theta_values >= 0, 0, 3)
+        rot[:] = np.where(theta_values > 0, 0, 3)
     elif family_code == 403:
-        rot[:] = np.where(theta_values >= 0, 1, 2)
+        rot[:] = np.where(theta_values > 0, 1, 2)
     elif family_code == 404:
-        rot[:] = np.where(theta_values >= 0, 1, 3)
+        rot[:] = np.where(theta_values > 0, 1, 3)
     else:
         raise ValueError(f"Unsupported family code: {family_code}. Supported codes: 401, 402, 403, 404.")
 
@@ -578,7 +578,6 @@ def _derivative_2nd(y, theta, family_code=401):
     v = np.clip(y[:, 1], 1e-12, 1 - 1e-12).reshape(-1, 1)
 
     rotation = get_effective_rotation(theta, family_code)
-    print(rotation)
     u_rot, v_rot = u.copy(), v.copy()
     
     # 180° rotation (survival)
@@ -593,7 +592,7 @@ def _derivative_2nd(y, theta, family_code=401):
 
     # 270° rotation
     mask_3 = (rotation == 3)
-    v_rot[mask_3] = 1 - v_rot[mask_3]
+    u_rot[mask_3] = 1 - u_rot[mask_3]
     theta[mask_3] = -theta[mask_3]
 
 

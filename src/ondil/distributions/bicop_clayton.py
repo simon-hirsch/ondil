@@ -213,11 +213,20 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
         UMIN = 1e-12
         UMAX = 1 - 1e-12
 
+        # Apply clipping using masks
+        u_mask_low = u < UMIN
+        u_mask_high = u > UMAX
+        v_mask_low = v < UMIN
+        v_mask_high = v > UMAX
+        
+        u = np.where(u_mask_low, UMIN, u)
+        u = np.where(u_mask_high, UMAX, u)
+        v = np.where(v_mask_low, UMIN, v)
+        v = np.where(v_mask_high, UMAX, v)
+
         theta = np.asarray(theta).copy()      # <- prevents in-place mutation of caller's array
-
-
-        u = np.clip(u, UMIN, UMAX).reshape(-1, 1)
-        v = np.clip(v, UMIN, UMAX).reshape(-1, 1)
+        u = u.reshape(-1, 1)
+        v = v.reshape(-1, 1)
 
         # Swap u and v if un == 1
         if un == 1:
@@ -241,10 +250,9 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
         
         # 270° rotation
         mask_3 = (rotation == 3)
-        v_rot[mask_3] = 1 - v[mask_3]
+        u_rot[mask_3] = 1 - u[mask_3]
         theta[mask_3] = -theta[mask_3]
 
-       
         
         # Vectorized conditional distribution computation
         t1 = v_rot ** (-theta - 1)
@@ -257,8 +265,16 @@ class BivariateCopulaClayton(CopulaMixin, Distribution):
         h[mask_4] = u[mask_4]
 
         # Apply rotation-specific transformations
+
+        
+        # Ensure results are in [0,1] using masks
+        h_mask_low = h < 0
+        h_mask_high = h > 1
+        h = np.where(h_mask_low, 0, h)
+        h = np.where(h_mask_high, 1, h)
+        h[mask_1] = 1 - h[mask_1]  # 180° rotation
         h[mask_3] = 1 - h[mask_3]  # 270° rotation
-        h = np.clip(h, UMIN, UMAX)
+        
         return h.squeeze()
 
 
@@ -419,9 +435,8 @@ def _derivative_2nd(y, theta, family_code):
     # Extract u and v from the y matrix
     u = np.clip(y[:, 0], UMIN, UMAX).reshape(-1, 1)
     v = np.clip(y[:, 1], UMIN, UMAX).reshape(-1, 1)
-    
-    rotation = get_effective_rotation(theta, family_code)
 
+    rotation = get_effective_rotation(theta, family_code)
     u_rot, v_rot = u.copy(), v.copy()
     
     # 180° rotation (survival)
@@ -435,7 +450,7 @@ def _derivative_2nd(y, theta, family_code):
 
 
     mask_3 = (rotation == 3)
-    v_rot[mask_3] = 1 - v[mask_3]
+    u_rot[mask_3] = 1 - u[mask_3]
     theta[mask_3] = -theta[mask_3]
         
      

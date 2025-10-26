@@ -1017,7 +1017,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                         dl1dp1 = self.distribution.element_dl1_dp1(
                             y, theta=theta[a], param=p, k=k
                         )
-
                         # Second derivatives wrt to the parameter
                         dl2dp2 = self.distribution.element_dl2_dp2(
                             y, theta=theta[a], param=p, k=k
@@ -1074,7 +1073,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                         eta = self.distribution.link_function(theta[a][p], p)
                         eta = self.distribution.cube_to_flat(eta, param=p)
                         # Derivatives wrt to the parameter
-
                         dl1dp1 = self.distribution.element_dl1_dp1(
                             y, theta=theta[a], param=p, k=k
                         )
@@ -1241,10 +1239,10 @@ class MultivariateOnlineDistributionalRegressionPath(
                             param=p,
                             k=k,
                         )
+
                         theta[a][p] = self.distribution.link_inverse(
                             self.distribution.flat_to_cube(eta, param=p), param=p
                         )
-
                     if (self._overshoot_correction[p] is not None) and (
                         inner_iteration + outer_iteration < 1
                     ):
@@ -1257,6 +1255,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 self._current_likelihood[a] = (
                     self.distribution.logpdf(y, theta=theta[a]) * weights_forget
                 ).sum()
+
                 if isinstance(self.distribution, (BivariateCopulaClayton, BivariateCopulaGumbel)):
                         eta[a][p] = np.sign(eta[a][p]) * np.minimum(np.abs(eta[a][p]), 200)
                         tau[a][p] = self.distribution.flat_to_cube(np.tanh(eta[a][p]/ 2), param=p) * (1-1e-5)
@@ -1512,11 +1511,12 @@ class MultivariateOnlineDistributionalRegressionPath(
                 )
                 @ self.coef_[0][k][self.optimal_adr_, :]
             ).squeeze()
+       
         out = self.distribution.flat_to_cube(array, 0)
         #out = self.distribution.link_inverse(out, 0)
-        out = np.clip(np.tanh(out / 2), -1+1e-5, 1-1e-5)
+        out = np.tanh(out / 2)*(1-1e-8)
         if issubclass(self.distribution.__class__, CopulaMixin):
-            out = self.distribution.param_link_inverse(out, param=0)*(1 - 1e-5)
+            out = self.distribution.param_link_inverse(out*(1-1e-8), param=0)*(1 - 1e-8)
         return out
 
                   
@@ -1564,7 +1564,12 @@ class MultivariateOnlineDistributionalRegressionPath(
                     @ self.coef_[p][k][self.optimal_adr_, :]
                 ).squeeze()
             out[p] = self.distribution.flat_to_cube(array, p)
-            out[p] = self.distribution.link_inverse(out[p], p)
+            if not issubclass(self.distribution.__class__, CopulaMixin) or (issubclass(self.distribution.__class__, CopulaMixin) and p == 1):
+                out[p] = self.distribution.link_inverse(out[p], p)
+            if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
+                out[p] = np.tanh(out[p] / 2)*(1-1e-8)
+                out[p] = self.distribution.param_link_inverse(out[p]*(1-1e-8), param=0)*(1 - 1e-8)
+            
         return out
 
     def predict_all_adr(

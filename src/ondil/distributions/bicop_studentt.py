@@ -198,7 +198,7 @@ class BivariateCopulaStudentT(CopulaMixin, Distribution):
             rho = np.full((M, 1), tau)
             return rho
         else:  # nu
-            nu = np.full((M, 1), 9.03)  # default degrees of freedom
+            nu = np.full((M, 1), 10)  # default degrees of freedom
             return nu
     
     def cube_to_flat(self, x: np.ndarray, param: int):
@@ -304,13 +304,22 @@ class BivariateCopulaStudentT(CopulaMixin, Distribution):
         Returns:
             np.ndarray: Array of shape (n,) with conditional probabilities.
         """
+
         rho, nu = self.theta_to_params(theta)
 
         UMIN = 1e-12
         UMAX = 1 - 1e-12
 
-        u = np.clip(u, UMIN, UMAX)
-        v = np.clip(v, UMIN, UMAX)
+        # Apply clipping using masks
+        u_mask_low = u < UMIN
+        u_mask_high = u > UMAX
+        v_mask_low = v < UMIN
+        v_mask_high = v > UMAX
+        
+        u = np.where(u_mask_low, UMIN, u)
+        u = np.where(u_mask_high, UMAX, u)
+        v = np.where(v_mask_low, UMIN, v)
+        v = np.where(v_mask_high, UMAX, v)
 
         # Swap u and v if un == 2
         if un == 1:
@@ -318,22 +327,25 @@ class BivariateCopulaStudentT(CopulaMixin, Distribution):
 
         # Handle edge cases
         h = np.where((v == 0) | (u == 0), 0, np.nan)
-        h = np.where(v == 1, u, h)
-        
-        qt_u = np.array([st.t.ppf(u[i, 0], df=nu[i]) for i in range(len(u))]).reshape(-1, 1)
-        qt_v = np.array([st.t.ppf(v[i, 0], df=nu[i]) for i in range(len(v))]).reshape(-1, 1)
+        h = np.where(v == 1, u, h).reshape(-1, 1)
+
+        qt_u = np.array([st.t.ppf(u[i], df=nu[i]) for i in range(len(u))]).reshape(-1, 1)
+        qt_v = np.array([st.t.ppf(v[i], df=nu[i]) for i in range(len(v))]).reshape(-1, 1)
 
         denom = np.sqrt((nu + qt_v**2) * (1 - rho**2) / (nu + 1))
         x = (qt_u - rho * qt_v) / denom
+
         
-        if np.isfinite(x):
-            h = st.t.cdf(x, df=nu + 1)
-        elif (qt_u - rho * qt_v) < 0:
-            h = 0
-        else:
-            h = 1
-        
-        return h
+        # Use masks to handle finite and infinite cases
+        finite_mask = np.isfinite(x)
+        neg_mask = ~finite_mask & ((qt_u - rho * qt_v) < 0)
+        pos_mask = ~finite_mask & ((qt_u - rho * qt_v) >= 0)
+
+        h = np.where(finite_mask, np.array([st.t.cdf(x[i, 0], df=nu[i]) for i in range(len(x))]).reshape(-1, 1), h)
+        h = np.where(neg_mask, 0, h)
+        h = np.where(pos_mask, 1, h)
+
+        return h.squeeze()
     
     def get_regularization_size(self, dim: int) -> int:
         return dim

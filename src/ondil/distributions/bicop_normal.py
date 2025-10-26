@@ -294,30 +294,36 @@ class BivariateCopulaNormal(CopulaMixin, Distribution):
         UMIN = 1e-12
         UMAX = 1 - 1e-12
 
-        u = np.clip(u, UMIN, UMAX)
-        v = np.clip(v, UMIN, UMAX)
+        # Apply clipping using masks
+        u_mask_low = u < UMIN
+        u_mask_high = u > UMAX
+        v_mask_low = v < UMIN
+        v_mask_high = v > UMAX
+        
+        u = np.where(u_mask_low, UMIN, u)
+        u = np.where(u_mask_high, UMAX, u)
+        v = np.where(v_mask_low, UMIN, v)
+        v = np.where(v_mask_high, UMAX, v)
 
 
         # Swap u and v if un == 1
         if un == 1:
             u, v = v, u
 
-        # Handle edge cases
-        h = np.where((v == 0) | (u == 0), 0, np.nan)
-        h = np.where(v == 1, u, h)
-
         qnorm_u = st.norm.ppf(u).reshape(-1, 1)
         qnorm_v = st.norm.ppf(v).reshape(-1, 1) 
 
-        print(qnorm_u.shape, qnorm_v.shape, theta.shape)
-        denom = np.sqrt(1.0 - np.square(theta))
+        denom = np.sqrt(1.0 - theta**2)
         x = (qnorm_u - theta * qnorm_v) / denom
-        print(x.shape)
+
         h = np.where(np.isfinite(x), st.norm.cdf(x), 
                 np.where((qnorm_u - theta * qnorm_v) < 0, 0, 1))
 
-        # Clip output for numerical stability
-        h = np.clip(h, UMIN, UMAX)
+        # Ensure results are in [0,1] using masks
+        h_mask_low = h < 0
+        h_mask_high = h > 1
+        h = np.where(h_mask_low, 0, h)
+        h = np.where(h_mask_high, 1, h)
 
         return h.squeeze()
 
