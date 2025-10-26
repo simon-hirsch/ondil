@@ -42,10 +42,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         return {0: 1, 1: 1}
 
     def theta_to_params(self, theta):
-        if len(theta) > 1:
-            return theta[0], theta[1]  # rho, nu
-        else:
-            return theta[0], 4.0  # default nu = 4
+        return theta[0], theta[1]  # default nu = 4
 
     def set_initial_guess(self, theta, param):
         return theta
@@ -127,7 +124,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
             rho = np.full((M, 1), tau)
             return rho
         else:  # nu
-            nu = np.full((M, 1), 10)  # default degrees of freedom
+            nu = np.full((M, 1), 9.03)  # default degrees of freedom
             return nu
 
     def cdf(self, y, theta):
@@ -197,7 +194,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
             np.ndarray: Array of shape (n,) with conditional probabilities.
         """
         rho, nu = self.theta_to_params(theta)
-        M = u.shape[0]
+
         UMIN = 1e-12
         UMAX = 1 - 1e-12
 
@@ -205,38 +202,31 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         v = np.clip(v, UMIN, UMAX)
 
         # Swap u and v if un == 2
-        if un == 2:
+        if un == 1:
             u, v = v, u
 
         # Handle edge cases
         h = np.where((v == 0) | (u == 0), 0, np.nan)
         h = np.where(v == 1, u, h)
+        
+        qt_u = np.array([st.t.ppf(u[i, 0], df=nu[i]) for i in range(len(u))]).reshape(-1, 1)
+        qt_v = np.array([st.t.ppf(v[i, 0], df=nu[i]) for i in range(len(v))]).reshape(-1, 1)
 
-        qt_u = st.t.ppf(u, df=nu)
-        qt_v = st.t.ppf(v, df=nu)
-
-        for m in range(M):
-            rho_m = rho[m] if hasattr(rho, "__len__") else rho
-            nu_m = nu[m] if hasattr(nu, "__len__") else nu
-
-            denom = np.sqrt((nu_m + qt_v[m] ** 2) * (1 - rho_m**2) / (nu_m + 1))
-            x = (qt_u[m] - rho_m * qt_v[m]) / denom
-
-            if np.isfinite(x):
-                h[m] = st.t.cdf(x, df=nu_m + 1)
-            elif (qt_u[m] - rho_m * qt_v[m]) < 0:
-                h[m] = 0
-            else:
-                h[m] = 1
-
-        # Clip output for numerical stability
-        h = np.clip(h, UMIN, UMAX)
+        denom = np.sqrt((nu + qt_v**2) * (1 - rho**2) / (nu + 1))
+        x = (qt_u - rho * qt_v) / denom
+        
+        if np.isfinite(x):
+            h = st.t.cdf(x, df=nu + 1)
+        elif (qt_u - rho * qt_v) < 0:
+            h = 0
+        else:
+            h = 1
+        
         return h
 
     def get_regularization_size(self, dim: int) -> int:
         return dim
-
-
+    
 ##########################################################
 ### Functions for the Student-t copula derivatives #####
 ##########################################################
@@ -244,316 +234,236 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
 
 def stable_gamma_division(x1, x2):
     """Stable computation of gamma(x1)/gamma(x2)"""
-    if x1 <= 0 or x2 <= 0:
-        return float(sp.gamma(x1)) / float(sp.gamma(x2))
+    # Handle scalar inputs by converting to arrays
 
-    a1 = max(x1, x2) % 1.0
-    a2 = max(x1, x2) - a1
-    b1 = min(x1, x2) % 1.0
-    b2 = min(x1, x2) - b1
-    sum_val = 1.0
+    x1_arr = np.asarray(x1, dtype=float)
+    x2_arr = np.asarray(x2, dtype=float)
 
-    if a1 == 0.0 and b1 == 0.0:
-        for i in range(1, int(b2)):
-            sum_val *= ((a1 + a2) - i) / ((b1 + b2) - i)
-        for i in range(int(b2), int(a2)):
-            sum_val *= (a1 + a2) - i
-    elif a1 > 0.0 and b1 == 0.0:
-        for i in range(1, int(b2)):
-            sum_val *= ((a1 + a2) - i) / ((b1 + b2) - i)
-        for i in range(int(b2), int(a2) + 1):  # Fixed: should be <= in C
-            sum_val *= (a1 + a2) - i
-        sum_val *= float(sp.gamma(a1))
-    elif a1 == 0.0 and b1 > 0.0:
-        for i in range(1, int(b2) + 1):
-            sum_val *= ((a1 + a2) - i) / ((b1 + b2) - i)
-        for i in range(int(b2) + 1, int(a2)):
-            sum_val *= (a1 + a2) - i
-        sum_val /= float(sp.gamma(b1))
-    elif a1 > 0.0 and b1 > 0.0:
-        for i in range(1, int(b2) + 1):
-            sum_val *= ((a1 + a2) - i) / ((b1 + b2) - i)
-        for i in range(int(b2) + 1, int(a2) + 1):
-            sum_val *= (a1 + a2) - i
-        sum_val *= float(sp.gamma(a1)) / float(sp.gamma(b1))
+    # Broadcast to common shape
+    x1_b, x2_b = np.broadcast_arrays(x1_arr, x2_arr)
+    result = np.empty_like(x1_b, dtype=float)
 
-    if x2 > x1:
-        sum_val = 1.0 / sum_val
-    return sum_val
+    it = np.nditer([x1_b, x2_b, result], flags=["multi_index"], op_flags=[["readonly"], ["readonly"], ["writeonly"]])
+    for xi, yi, out in it:
+        x1_i = float(xi)
+        x2_i = float(yi)
 
+        a1 = math.fmod(max(x1_i, x2_i), 1.0)
+        a2 = max(x1_i, x2_i) - a1
+        b1 = math.fmod(min(x1_i, x2_i), 1.0)
+        b2 = min(x1_i, x2_i) - b1
+
+        s = 1.0
+        if a1 == 0.0 and b1 == 0.0:
+            i = 1
+            while i < int(b2):
+                s *= ((a1 + a2) - float(i)) / ((b1 + b2) - float(i))
+                i += 1
+            i = int(b2)
+            while i < int(a2):
+                s *= ((a1 + a2) - float(i))
+                i += 1
+        elif a1 > 0.0 and b1 == 0.0:
+            i = 1
+            while i < int(b2):
+                s *= ((a1 + a2) - float(i)) / ((b1 + b2) - float(i))
+                i += 1
+            i = int(b2)
+            while i <= int(a2):
+                s *= ((a1 + a2) - float(i))
+                i += 1
+            s *= float(sp.gamma(a1))
+        elif a1 == 0.0 and b1 > 0.0:
+            i = 1
+            while i <= int(b2):
+                s *= ((a1 + a2) - float(i)) / ((b1 + b2) - float(i))
+                i += 1
+            i = int(b2) + 1
+            while i < int(a2):
+                s *= ((a1 + a2) - float(i))
+                i += 1
+            s /= float(sp.gamma(b1))
+        elif a1 > 0.0 and b1 > 0.0:
+            i = 1
+            while i <= int(b2):
+                s *= ((a1 + a2) - float(i)) / ((b1 + b2) - float(i))
+                i += 1
+            i = int(b2) + 1
+            while i <= int(a2):
+                s *= ((a1 + a2) - float(i))
+                i += 1
+            s *= float(sp.gamma(a1)) / float(sp.gamma(b1))
+
+        if x2_i > x1_i:
+            s = 1.0 / s
+
+        out[...] = s
+
+    result = result if result.shape != () else float(result)
+    
+    return result
 
 def _log_likelihood_t(y, rho, nu):
     """Log-likelihood for bivariate t copula"""
-    M = y.shape[0]
-    f = np.empty(M)
+
     UMIN = 1e-12
     UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)
-    u = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 0], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
-    v = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 1], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
 
-    for m in range(M):
-        rho_m = rho[m] if hasattr(rho, "__len__") else rho
-        nu_m = nu[m] if hasattr(nu, "__len__") else nu
+    t1 = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y_clipped))]).reshape(-1, 1)
+    t2 = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y_clipped))]).reshape(-1, 1)
 
-        t1 = u[m]
-        t2 = v[m]
+    # Bivariate t copula density (following C code structure)
+    # f = StableGammaDivision((nu+2)/2, nu/2) / (nu*pi*sqrt(1-rho^2)*dt(t1,nu)*dt(t2,nu)) 
+    #     * (1 + (t1^2 + t2^2 - 2*rho*t1*t2)/(nu*(1-rho^2)))^(-(nu+2)/2)
 
-        # Bivariate t copula density (following C code structure)
-        # f = StableGammaDivision((nu+2)/2, nu/2) / (nu*pi*sqrt(1-rho^2)*dt(t1,nu)*dt(t2,nu))
-        #     * (1 + (t1^2 + t2^2 - 2*rho*t1*t2)/(nu*(1-rho^2)))^(-(nu+2)/2)
+    # Calculate the gamma ratio using stable division
+    gamma_ratio = stable_gamma_division((nu + 2.0) / 2.0, nu / 2.0)
 
-        # Calculate the gamma ratio using stable division
-        gamma_ratio = stable_gamma_division((nu_m + 2.0) / 2.0, nu_m / 2.0)
+    # Calculate t distribution PDFs (dt in C code)
+    dt1 = st.t.pdf(t1, df=nu)
+    dt2 = st.t.pdf(t2, df=nu)
 
-        # Calculate t distribution PDFs (dt in C code)
-        dt1 = st.t.pdf(t1, df=nu_m)
-        dt2 = st.t.pdf(t2, df=nu_m)
-
-        # Calculate the quadratic form in the exponent
-        quad_form = (t1 * t1 + t2 * t2 - 2.0 * rho_m * t1 * t2) / (
-            nu_m * (1 - rho_m**2)
-        )
-
-        # Calculate the full density
-        f[m] = (
-            gamma_ratio
-            / (nu_m * np.pi * np.sqrt(1 - rho_m**2) * dt1 * dt2)
-            * np.power(1.0 + quad_form, -(nu_m + 2.0) / 2.0)
-        )
-
+    # Calculate the quadratic form in the exponent
+    quad_form = (t1*t1 + t2*t2 - 2.0*rho*t1*t2) / (nu * (1-rho**2))
+    
+    # Calculate the full density
+    f = (gamma_ratio / 
+        (nu * np.pi * np.sqrt(1-rho**2) * dt1 * dt2) * 
+        np.power(1.0 + quad_form, -(nu + 2.0) / 2.0))
+        
     f[f <= 0] = 1e-16
-    return f
+
+    return f.squeeze()
 
 
 def _derivative_1st_rho(y, rho, nu):
     """First derivative wrt rho for t copula"""
-    M = y.shape[0]
-    deriv = np.empty((M, 1), dtype=np.float64)
+
     UMIN = 1e-12
     UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)
-    u = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 0], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
-    v = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 1], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
 
-    for m in range(M):
-        rho_m = rho[m] if hasattr(rho, "__len__") else rho
-        nu_m = nu[m] if hasattr(nu, "__len__") else nu
+    t1 = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
+    t2 = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
 
-        # Calculate current likelihood
-        # c = _log_likelihood_t(y_clipped[m:m+1], rho_m, nu_m)
-        t1 = u[m]
-        t2 = v[m]
-        t3 = -(nu_m + 2.0) / 2.0
-        t10 = nu_m * (1.0 - rho_m * rho_m)
-        t4 = -2.0 * t1 * t2 / t10
-        t11 = t1 * t1 + t2 * t2 - 2.0 * rho_m * t1 * t2
-        t5 = 2.0 * t11 * rho_m / t10 / (1.0 - rho_m * rho_m)
-        t6 = 1.0 + (t11 / t10)
-        t7 = rho_m / (1.0 - rho_m * rho_m)
-        deriv[m] = t3 * (t4 + t5) / t6 + t7
-
+    t3 = -(nu + 2.0) / 2.0
+    t10 = nu * (1.0 - rho * rho)
+    t4 = -2.0 * t1 * t2 / t10
+    t11 = (t1 * t1 + t2 * t2 - 2.0 * rho * t1 * t2)
+    t5 = 2.0 * t11 * rho / t10 / (1.0 - rho * rho)
+    t6 = 1.0 + (t11 / t10)
+    t7 = rho / (1.0 - rho * rho)
+    deriv = (t3 * (t4 + t5) / t6 + t7)
+    
     return deriv.squeeze()
 
 
 def _derivative_1st_rho_l(y, rho, nu):
     """First derivative wrt rho for t copula"""
-    M = y.shape[0]
-    deriv = np.empty((M, 1), dtype=np.float64)
+
     UMIN = 1e-12
     UMAX = 1 - 1e-12
+
     y_clipped = np.clip(y, UMIN, UMAX)
-    u = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 0], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
-    v = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 1], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
 
-    for m in range(M):
-        rho_m = rho[m] if hasattr(rho, "__len__") else rho
-        nu_m = nu[m] if hasattr(nu, "__len__") else nu
+    c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
+    
 
-        # Calculate current likelihood
-        c = _log_likelihood_t(y_clipped[m : m + 1], rho_m, nu_m)
-        t1 = u[m]
-        t2 = v[m]
-        t3 = -(nu_m + 2.0) / 2.0
-        t10 = nu_m * (1.0 - rho_m * rho_m)
-        t4 = -2.0 * t1 * t2 / t10
-        t11 = t1 * t1 + t2 * t2 - 2.0 * rho_m * t1 * t2
-        t5 = 2.0 * t11 * rho_m / t10 / (1.0 - rho_m * rho_m)
-        t6 = 1.0 + (t11 / t10)
-        t7 = rho_m / (1.0 - rho_m * rho_m)
-        deriv[m] = c * (t3 * (t4 + t5) / t6 + t7)
+    t1 = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
+    t2 = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
+    
+    # Calculate current likelihood
+    t3 = -(nu + 2.0) / 2.0
+    t10 = nu * (1.0 - rho * rho)
+    t4 = -2.0 * t1 * t2 / t10
+    t11 = (t1 * t1 + t2 * t2 - 2.0 * rho * t1 * t2)
+    t5 = 2.0 * t11 * rho / t10 / (1.0 - rho * rho)
+    t6 = 1.0 + (t11 / t10)
+    t7 = rho / (1.0 - rho * rho)
+    deriv = c * (t3 * (t4 + t5) / t6 + t7)
 
     return deriv.squeeze()
 
 
 def _derivative_1st_nu(y, rho, nu):
     """First derivative wrt nu for t copula"""
-    M = y.shape[0]
-    deriv = np.empty((M, 1), dtype=np.float64)
+
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
 
-    u = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 0], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
-    v = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 1], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
+    u = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
+    v = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
 
-    for m in range(M):
-        rho_m = rho[m] if hasattr(rho, "__len__") else rho
-        nu_m = nu[m] if hasattr(nu, "__len__") else nu
+    # Follow C code structure exactly
+    t1 = sp.digamma((nu + 1.0) / 2.0)
+    t2 = sp.digamma(nu / 2.0)
+    t3 = 0.5 * np.log(1.0 - rho * rho)
+    t4 = (nu- 2.0) / (2.0 * nu)
+    t5 = 0.5 * np.log(nu)
+    t6 = -t1 + t2 + t3 - t4 - t5
+    t10 = (nu + 2.0) / 2.0
+    
+    x1 = u
+    x2 = v
+    
+    # Derivatives of quantile function wrt nu
+    out1 = _diff_quantile_nu(x1, nu)
+    out2 = _diff_quantile_nu(x2, nu)
+    
+    t7 = 1.0 + 2.0 * x1 * out1
+    t8 = 1.0 + 2.0 * x2 * out2
+    t9 = (nu + 1.0) / 2.0 * (t7 / (nu + x1 * x1) + t8 / (nu + x2 * x2))
+    
+    M = nu * (1.0 - rho * rho) + x1 * x1 + x2 * x2 - 2.0 * rho * x1 * x2
+    t11 = 1.0 - rho * rho + 2.0 * x1 * out1 + 2.0 * x2 * out2 - 2.0 * rho * (x1 * out2 + x2 * out1)
+    t12 = 0.5 * np.log((nu + x1 * x1) * (nu + x2 * x2))
+    t13 = 0.5 * np.log(M)
+    
+    deriv = (t6 + t9 + t12 - t10 * t11 / M - t13)
 
-        # Follow C code structure exactly
-        t1 = sp.digamma((nu_m + 1.0) / 2.0)
-        t2 = sp.digamma(nu_m / 2.0)
-        t3 = 0.5 * np.log(1.0 - rho_m * rho_m)
-        t4 = (nu_m - 2.0) / (2.0 * nu_m)
-        t5 = 0.5 * np.log(nu_m)
-        t6 = -t1 + t2 + t3 - t4 - t5
-        t10 = (nu_m + 2.0) / 2.0
-
-        x1 = u[m]
-        x2 = v[m]
-
-        # Derivatives of quantile function wrt nu
-        out1 = _diff_quantile_nu(x1, nu_m)
-        out2 = _diff_quantile_nu(x2, nu_m)
-
-        t7 = 1.0 + 2.0 * x1 * out1
-        t8 = 1.0 + 2.0 * x2 * out2
-        t9 = (nu_m + 1.0) / 2.0 * (t7 / (nu_m + x1 * x1) + t8 / (nu_m + x2 * x2))
-
-        M = nu_m * (1.0 - rho_m * rho_m) + x1 * x1 + x2 * x2 - 2.0 * rho_m * x1 * x2
-        t11 = (
-            1.0
-            - rho_m * rho_m
-            + 2.0 * x1 * out1
-            + 2.0 * x2 * out2
-            - 2.0 * rho_m * (x1 * out2 + x2 * out1)
-        )
-        t12 = 0.5 * np.log((nu_m + x1 * x1) * (nu_m + x2 * x2))
-        t13 = 0.5 * np.log(M)
-
-        deriv[m] = t6 + t9 + t12 - t10 * t11 / M - t13
     return deriv.squeeze()
 
 
 def _derivative_1st_nu_l(y, rho, nu):
     """First derivative wrt nu for t copula"""
-    M = y.shape[0]
-    deriv = np.empty((M, 1), dtype=np.float64)
+
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
 
-    u = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 0], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
-    v = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 1], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
+    u = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
+    v = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
 
-    for m in range(M):
-        rho_m = rho[m] if hasattr(rho, "__len__") else rho
-        nu_m = nu[m] if hasattr(nu, "__len__") else nu
+    # Calculate current likelihood
+    c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
+    
+    # Follow C code structure exactly
+    t1 = sp.digamma((nu + 1.0) / 2.0)
+    t2 = sp.digamma(nu / 2.0)
+    t3 = 0.5 * np.log(1.0 - rho * rho)
+    t4 = (nu - 2.0) / (2.0 * nu)
+    t5 = 0.5 * np.log(nu)
+    t6 = -t1 + t2 + t3 - t4 - t5
+    t10 = (nu + 2.0) / 2.0
+    
+    x1 = u
+    x2 = v
+    
+    # Derivatives of quantile function wrt nu
+    out1 = _diff_quantile_nu(x1, nu)
+    out2 = _diff_quantile_nu(x2, nu)
+    
+    t7 = 1.0 + 2.0 * x1 * out1
+    t8 = 1.0 + 2.0 * x2 * out2
+    t9 = (nu + 1.0) / 2.0 * (t7 / (nu + x1 * x1) + t8 / (nu + x2 * x2))
 
-        # Calculate current likelihood
-        c = _log_likelihood_t(y_clipped[m : m + 1], rho_m, nu_m)
+    M_val = nu * (1.0 - rho * rho) + x1 * x1 + x2 * x2 - 2.0 * rho * x1 * x2
+    t11 = 1.0 - rho * rho + 2.0 * x1 * out1 + 2.0 * x2 * out2 - 2.0 * rho * (x1 * out2 + x2 * out1)
+    t12 = 0.5 * np.log((nu + x1 * x1) * (nu + x2 * x2))
+    t13 = 0.5 * np.log(M_val)
+    
+    deriv = c * (t6 + t9 + t12 - t10 * t11 / M_val - t13)
 
-        # Follow C code structure exactly
-        t1 = sp.digamma((nu_m + 1.0) / 2.0)
-        t2 = sp.digamma(nu_m / 2.0)
-        t3 = 0.5 * np.log(1.0 - rho_m * rho_m)
-        t4 = (nu_m - 2.0) / (2.0 * nu_m)
-        t5 = 0.5 * np.log(nu_m)
-        t6 = -t1 + t2 + t3 - t4 - t5
-        t10 = (nu_m + 2.0) / 2.0
-
-        x1 = u[m]
-        x2 = v[m]
-
-        # Derivatives of quantile function wrt nu
-        out1 = _diff_quantile_nu(x1, nu_m)
-        out2 = _diff_quantile_nu(x2, nu_m)
-
-        t7 = 1.0 + 2.0 * x1 * out1
-        t8 = 1.0 + 2.0 * x2 * out2
-        t9 = (nu_m + 1.0) / 2.0 * (t7 / (nu_m + x1 * x1) + t8 / (nu_m + x2 * x2))
-
-        M_val = nu_m * (1.0 - rho_m * rho_m) + x1 * x1 + x2 * x2 - 2.0 * rho_m * x1 * x2
-        t11 = (
-            1.0
-            - rho_m * rho_m
-            + 2.0 * x1 * out1
-            + 2.0 * x2 * out2
-            - 2.0 * rho_m * (x1 * out2 + x2 * out1)
-        )
-        t12 = 0.5 * np.log((nu_m + x1 * x1) * (nu_m + x2 * x2))
-        t13 = 0.5 * np.log(M_val)
-
-        deriv[m] = c * (t6 + t9 + t12 - t10 * t11 / M_val - t13)
     return deriv.squeeze()
 
 
@@ -622,158 +532,102 @@ def _derivative_1st_nu_l(y, rho, nu):
 
 def _derivative_2nd_rho(y, rho, nu):
     """Second derivative wrt rho for t copula"""
-    M = y.shape[0]
-    deriv = np.empty((M, 1), dtype=np.float64)
+ 
     UMIN = 1e-12
     UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)
+    
+    u = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
+    v = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
 
-    u = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 0], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
-    v = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 1], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
+    # Calculate current likelihood
+    c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
+    c = np.exp(np.log(c))
+    # Get first derivative
+    diff = _derivative_1st_rho_l(y_clipped, rho, nu).reshape(-1, 1)
 
-    for m in range(M):
-        rho_m = rho[m] if hasattr(rho, "__len__") else rho
-        nu_m = nu[m] if hasattr(nu, "__len__") else nu
-
-        # Calculate current likelihood
-        c = _log_likelihood_t(y_clipped[m : m + 1], rho_m, nu_m)
-        c = np.exp(np.log(c))
-
-        # Get first derivative
-        diff = _derivative_1st_rho_l(y_clipped[m : m + 1], rho_m, nu_m)
-
-        t1 = u[m]
-        t2 = v[m]
-        t4 = 1.0 - rho_m * rho_m
-        M_val = nu_m * t4 + t1 * t1 + t2 * t2 - 2.0 * rho_m * t1 * t2
-
-        t3 = -(nu_m + 1.0) * (1.0 + rho_m * rho_m) / t4 / t4
-        t5 = (nu_m + 2.0) * nu_m / M_val
-        t6 = 2.0 * (nu_m + 2.0) * np.power(nu_m * rho_m + t1 * t2, 2.0) / M_val / M_val
-        t7 = diff / c
-
-        deriv[m] = c * (t3 + t5 + t6 + t7 * t7)
-
+    t1 = u
+    t2 = v
+    t4 = 1.0 - rho * rho
+    M_val = nu * t4 + t1 * t1 + t2 * t2 - 2.0 * rho * t1 * t2
+    
+    t3 = -(nu + 1.0) * (1.0 + rho * rho) / t4 / t4
+    t5 = (nu + 2.0) * nu / M_val
+    t6 = 2.0 * (nu + 2.0) * np.power(nu * rho + t1 * t2, 2.0) / M_val / M_val
+    t7 = diff / c
+    
+    deriv = c * (t3 + t5 + t6 + t7 * t7)
     return deriv.squeeze()
 
 
 def _derivative_2nd_nu(y, rho, nu):
     """Second derivative wrt nu for t copula"""
-    M = y.shape[0]
-    deriv = np.empty((M, 1), dtype=np.float64)
+   
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
 
-    u = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 0], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
-    v = np.array(
-        [
-            st.t.ppf(
-                y_clipped[i, 1], df=nu[i] if hasattr(nu, "__len__") else nu
-            ).squeeze()
-            for i in range(M)
-        ]
-    )
+    u = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
+    v = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(-1, 1)
+        
+    # Calculate current likelihood
+    c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
+    c = np.exp(np.log(c))
+    
+    # Get first derivative
+    diff_nu = _derivative_1st_nu_l(y_clipped, rho, nu).reshape(-1, 1)
+    x1 = u
+    x2 = v
+    
+    # Common terms
+    t1 = (nu + 1.0) / 2.0
+    t2 = nu / 2.0
+    t23 = nu * nu
+    t3 = 1.0 / t23
+    t4 = 1.0 / (2.0 * nu)
+    t5 = 0.5 * sp.polygamma(1, t1)  # trigamma
+    t6 = 1.0 - rho * rho
+    t9 = 0.5 * sp.polygamma(1, t2)  # trigamma
+    t10 = -t5 + t9 - t3 - t4
+    
+    # Get derivatives of quantile functions
+    out1 = _diff_quantile_nu(x1, nu)
+    out2 = _diff_quantile_nu(x2, nu)
+    
+    M_val = nu * t6 + x1 * x1 + x2 * x2 - 2.0 * rho * x1 * x2
+    
+    t8 = x1 * out2 + out1 * x2
+    M_nu = t6 + 2.0 * x1 * out1 + 2.0 * x2 * out2 - 2.0 * rho * t8
+    
+    t24 = x1 * x1
+    t25 = x2 * x2
+    
+    t11 = 1.0 + 2.0 * x1 * out1
+    t12 = nu + t24
+    t13 = t11 / t12
+    
+    t14 = 1.0 + 2.0 * x2 * out2
+    t15 = nu + t25
+    t16 = t14 / t15
+    
+    # Second derivatives of quantile functions (simplified approximation)
+    out3 = diff2_x_nu(x1, nu)  # Second derivative of quantile function wrt nu
+    out4 = diff2_x_nu(x2, nu)  # Second derivative of quantile function wrt nu
 
-    for m in range(M):
-        rho_m = rho[m] if hasattr(rho, "__len__") else rho
-        nu_m = nu[m] if hasattr(nu, "__len__") else nu
-
-        # Calculate current likelihood
-        c = _log_likelihood_t(y_clipped[m : m + 1], rho_m, nu_m)
-
-        # Get first derivative
-        diff_nu = _derivative_1st_nu_l(y_clipped[m : m + 1], rho_m, nu_m)
-
-        x1 = u[m]
-        x2 = v[m]
-
-        # Common terms
-        t1 = (nu_m + 1.0) / 2.0
-        t2 = nu_m / 2.0
-        t23 = nu_m * nu_m
-        t3 = 1.0 / t23
-        t4 = 1.0 / (2.0 * nu_m)
-        t5 = 0.5 * sp.polygamma(1, t1)  # trigamma
-        t6 = 1.0 - rho_m * rho_m
-        t9 = 0.5 * sp.polygamma(1, t2)  # trigamma
-        t10 = -t5 + t9 - t3 - t4
-
-        # Get derivatives of quantile functions
-        out1 = _diff_quantile_nu(x1, nu_m)
-        out2 = _diff_quantile_nu(x2, nu_m)
-
-        M_val = nu_m * t6 + x1 * x1 + x2 * x2 - 2.0 * rho_m * x1 * x2
-
-        t8 = x1 * out2 + out1 * x2
-        M_nu = t6 + 2.0 * x1 * out1 + 2.0 * x2 * out2 - 2.0 * rho_m * t8
-
-        t24 = x1 * x1
-        t25 = x2 * x2
-
-        t11 = 1.0 + 2.0 * x1 * out1
-        t12 = nu_m + t24
-        t13 = t11 / t12
-
-        t14 = 1.0 + 2.0 * x2 * out2
-        t15 = nu_m + t25
-        t16 = t14 / t15
-
-        # Second derivatives of quantile functions (simplified approximation)
-        out3 = diff2_x_nu(x1, nu_m)  # Second derivative of quantile function wrt nu
-        out4 = diff2_x_nu(x2, nu_m)  # Second derivative of quantile function wrt nu
-
-        t17 = 2.0 * out1 * out1 + 2.0 * x1 * out3
-        t18 = t17 / t12
-
-        t19 = 2.0 * out2 * out2 + 2.0 * x2 * out4
-        t20 = t19 / t15
-
-        t21 = t13 * t13
-        t22 = t16 * t16
-
-        M_nu_nu = (
-            2.0 * out1 * out1
-            + 2.0 * x1 * out3
-            + 2.0 * out2 * out2
-            + 2.0 * x2 * out4
-            - 4.0 * rho_m * out1 * out2
-            - 2.0 * rho_m * (x2 * out3 + x1 * out4)
-        )
-
-        deriv[m] = (
-            c
-            * (
-                t10
-                + 0.5 * (t13 + t16)
-                + t1 * (t18 - t21 + t20 - t22)
-                + 0.5 * t13
-                + 0.5 * t16
-                - M_nu / M_val
-                - (nu_m / 2.0 + 1.0) * (M_nu_nu / M_val - M_nu * M_nu / M_val / M_val)
-            )
-            + diff_nu * diff_nu / c
-        )
+    t17 = 2.0 * out1 * out1 + 2.0 * x1 * out3
+    t18 = t17 / t12
+    
+    t19 = 2.0 * out2 * out2 + 2.0 * x2 * out4
+    t20 = t19 / t15
+    
+    t21 = t13 * t13
+    t22 = t16 * t16
+    
+    M_nu_nu = (2.0 * out1 * out1 + 2.0 * x1 * out3 + 2.0 * out2 * out2 + 
+                2.0 * x2 * out4 - 4.0 * rho * out1 * out2 - 
+                2.0 * rho * (x2 * out3 + x1 * out4))
+    deriv = c * (t10 + 0.5 * (t13 + t16) + t1 * (t18 - t21 + t20 - t22) + 
+                    0.5 * t13 + 0.5 * t16 - M_nu / M_val - 
+                    (nu / 2.0 + 1.0) * (M_nu_nu / M_val - M_nu * M_nu / M_val / M_val)) + diff_nu * diff_nu / c
 
     return deriv.squeeze()
 
@@ -808,9 +662,8 @@ from typing import List, Sequence, Tuple
 
 import numpy as np
 import scipy.stats as st
-from scipy.special import beta as betafunc
-from scipy.special import betaln as lbeta
-from scipy.special import digamma, polygamma
+from scipy.special import betaln as lbeta, digamma, polygamma, beta as betafunc
+import math
 
 # Make st.beta a function (alias to scipy.special.beta) so your function works unchanged
 try:
@@ -1198,139 +1051,185 @@ def inbeder(
 
 
 # ------------------------------ Derivative helpers ------------------------------
-
-
-def diff_t_nu_nu(x: float, nu: float) -> float:
+def diff_t_nu_nu(x, nu):
     """
-    Translation of C diff_t_nu_nu.
+    Vectorized translation of C diff_t_nu_nu.
+    Accepts scalar or array-like x and nu. Returns array broadcast to common shape.
     """
-    x_help = x if x >= 0.0 else -x
-    xmax = nu / (nu + x_help * x_help)
+    x_arr = np.asarray(x, dtype=float)
+    nu_arr = np.asarray(nu, dtype=float)
+    x_b, nu_b = np.broadcast_arrays(x_arr, nu_arr)
 
-    t1 = 1.0 / (x_help * x_help + nu)
-    t2 = nu / 2.0
-    t3 = 0.5
+    # Numerics
+    nu_eff = np.clip(nu_b, 1e-6, np.inf)
+    abs_x = np.abs(x_b)
+    sign = np.where(x_b < 0.0, -1.0, 1.0)
 
-    I, Ip, Ipp = inbeder(xmax, t2, t3)
-    nu = np.clip(nu, 1e-6, np.inf)
-    t4 = (nu + 1.0) / 2.0
-    t5 = pow(nu, nu / 2.0 - 1.0) * x_help
-    t6 = pow(t1, t4)
+    xmax = nu_eff / (nu_eff + abs_x * abs_x)
+    t1 = 1.0 / (abs_x * abs_x + nu_eff)          # 1 / (x^2 + nu)
+    t2 = 0.5 * nu_eff                             # nu/2
+    t4 = 0.5 * (nu_eff + 1.0)                     # (nu+1)/2
+
+    # Compute Ipp from inbeder (scalar routine) only where needed
+    Ipp = np.empty_like(x_b, dtype=float)
+    flat_xmax = np.ravel(xmax)
+    flat_t2 = np.ravel(t2)
+    flat_Ipp = np.empty_like(flat_xmax, dtype=float)
+    for i in range(flat_xmax.size):
+        # inbeder returns (I, dI/dp, d2I/dp2); we need the third
+        flat_Ipp[i] = inbeder(float(flat_xmax[i]), float(flat_t2[i]), 0.5)[2]
+    Ipp[...] = flat_Ipp.reshape(x_b.shape)
+
+    # Remaining terms (vectorized)
+    t5 = np.power(nu_eff, (nu_eff / 2.0) - 1.0) * abs_x
+    t6 = np.power(t1, t4)
     t7 = betafunc(t2, 0.5)
     t8 = t5 * t6
-    t9 = nu * t1
+    t9 = nu_eff * t1
 
-    t11 = digamma(0.5 * nu)
-    t12 = digamma(0.5 * nu + 0.5)
+    t11 = digamma(0.5 * nu_eff)
+    t12 = digamma(0.5 * nu_eff + 0.5)
     t13 = t11 - t12
     t14 = 1.0 / t7
 
-    t10 = -t1 * t4 + (t2 - 1.0) / nu + 0.5 * log(t1) + 0.5 * log(nu)
+    t10 = -t1 * t4 + (t2 - 1.0) / nu_eff + 0.5 * np.log(t1) + 0.5 * np.log(nu_eff)
 
-    out = -0.125 * Ipp + t8 * t14 * (-0.25 * log(t9) + 0.5 * t13 - 0.5 * t10)
-    if x < 0.0:
-        out = -out
+    out = -0.125 * Ipp + t8 * t14 * (-0.25 * np.log(t9) + 0.5 * t13 - 0.5 * t10)
+    out *= sign
+
+    if out.size == 1:
+        return float(out)
     return out
 
 
-def diff_dt_nu(x: float, nu: float) -> float:
+def diff_dt_nu(x, nu):
     """
-    Translation of C diff_dt_nu.
+    Vectorized translation of C diff_dt_nu.
     """
-    t1 = (nu + 1.0) / 2.0
+    x_b, nu_b = np.broadcast_arrays(np.asarray(x, float), np.asarray(nu, float))
+    nu_eff = np.clip(nu_b, 1e-6, np.inf)
+
+    t1 = (nu_eff + 1.0) / 2.0
     t2 = digamma(t1)
-    t3 = betafunc(nu * 0.5, 0.5)
-    nu = max(nu, 1e-6)
-    t4 = sqrt(nu)
-    t6 = digamma(0.5 * nu)
-    t10 = -0.5 / t3 / t4 * (t6 - t2 + 1.0 / nu)
-    t11 = 1.0 + (x * x) / nu
-    t13 = pow(t11, -t1)
+    t3 = betafunc(0.5 * nu_eff, 0.5)
+    t4 = np.sqrt(nu_eff)
+    t6 = digamma(0.5 * nu_eff)
+
+    t10 = -0.5 / t3 / t4 * (t6 - t2 + 1.0 / nu_eff)
+    t11 = 1.0 + (x_b * x_b) / nu_eff
+    t13 = np.power(t11, -t1)
     t14 = 1.0 / t3 / t4
-    t15 = log(t11)
-    t16 = -t1 * x * x / (nu * nu) / t11
+    t15 = np.log(t11)
+    t16 = -t1 * x_b * x_b / (nu_eff * nu_eff) / t11
 
     out = t10 * t13 + t14 * (t13 * (-0.5 * t15 - t16))
+    if out.size == 1:
+        return float(out)
     return out
 
 
-def diff_dt_x(x: float, nu: float) -> float:
+def diff_dt_x(x, nu):
     """
-    Translation of C diff_dt_x.
+    Vectorized translation of C diff_dt_x.
     """
-    t2 = (nu + 1.0) / nu
-    nu = max(nu, 1e-6)
-    t3 = sqrt(nu)
-    t4 = 1.0 / (t3 * betafunc(nu * 0.5, 0.5))
-    t5 = 1.0 + (x * x) / nu
-    t6 = (nu + 3.0) / 2.0
-    t7 = pow(t5, -t6)
-    out = -t4 * t2 * x * t7
+    x_b, nu_b = np.broadcast_arrays(np.asarray(x, float), np.asarray(nu, float))
+    nu_eff = np.clip(nu_b, 1e-6, np.inf)
+
+    t2 = (nu_eff + 1.0) / nu_eff
+    t3 = np.sqrt(nu_eff)
+    t4 = 1.0 / (t3 * betafunc(0.5 * nu_eff, 0.5))
+    t5 = 1.0 + (x_b * x_b) / nu_eff
+    t6 = (nu_eff + 3.0) / 2.0
+    t7 = np.power(t5, -t6)
+    out = -t4 * t2 * x_b * t7
+
+    if out.size == 1:
+        return float(out)
     return out
-
-
-# ------------------------------ Your function (unchanged) ------------------------------
 
 
 def _diff_quantile_nu(x, nu):
-    """Derivative of t quantile function wrt degrees of freedom parameter"""
-    x_help = np.abs(x)
-
-    # Handle edge cases
-    if np.isclose(x_help, 0):
-        return 0.0
-
-    # Calculate components based on the C code
-    xmax = nu / (nu + x_help**2)
-
-    # t distribution pdf at x_help (dt function in C)
-    t1 = st.t.pdf(x_help, df=nu)
-
-    # Parameters for incomplete beta function
-    t2 = nu / 2.0
-    t3 = 0.5
-
-    # Incomplete beta function derivative using inbeder function
-    inbeder_result = inbeder(xmax, t2, t3)
-    inbeder_out_1 = inbeder_result[1]  # First derivative wrt p
-
-    t4 = (nu + 1.0) / 2.0
-    t5 = np.power(nu, nu / 2.0 - 1.0) * x_help
-    t6 = np.power(1.0 / (x_help**2 + nu), t4)
-    t7 = st.beta(nu / 2.0, 0.5)
-
-    # Main calculation matching C code exactly
-    result = 1.0 / (2.0 * t1) * (0.5 * inbeder_out_1 + (t5 * t6) / t7)
-
-    # Apply sign correction
-    if x < 0:
-        result = -result
-
-    return result
-
-
-# ------------------------------ Top-level: diff2_x_nu ------------------------------
-
-
-def diff2_x_nu(x: float, nu: float) -> float:
     """
-    Translation of C diff2_x_nu:
+    Derivative of t quantile function wrt degrees of freedom (vectorized).
+    Accepts scalar or array-like x and nu. Returns array broadcast to the common shape.
+    """
+    # Broadcast inputs
+    x_arr = np.asarray(x, dtype=float)
+    nu_arr = np.asarray(nu, dtype=float)
+    x_b, nu_b = np.broadcast_arrays(x_arr, nu_arr)
+
+    # Prepare output
+    out = np.zeros_like(x_b, dtype=float)
+
+    # Masks and numerics
+    EPS_X = 1e-14
+    TINY = 1e-300
+
+    abs_x = np.abs(x_b)
+    sign = np.where(x_b < 0.0, -1.0, 1.0)
+    mask = abs_x > EPS_X  # where derivative is not trivially 0
+
+    if not np.any(mask):
+        return float(0.0) if out.size == 1 else out
+
+    # Clamp nu for stability
+    nu_eff = np.maximum(nu_b, 1e-8)
+
+    # Common terms (vectorized)
+    t_pdf = st.t.pdf(abs_x, df=nu_eff)
+    t_pdf = np.maximum(t_pdf, TINY)  # avoid division by zero
+
+    t2 = 0.5 * nu_eff
+    t4 = 0.5 * (nu_eff + 1.0)
+    denom = abs_x * abs_x + nu_eff
+    t6 = np.power(1.0 / denom, t4)
+    t5 = np.power(nu_eff, t2 - 1.0) * abs_x
+    t7 = betafunc(t2, 0.5)
+
+    xmax = nu_eff / (nu_eff + abs_x * abs_x)
+
+    # Compute dI/dp via inbeder for masked positions
+    idxs = np.flatnonzero(mask)
+    dIdp_vals = np.empty(idxs.size, dtype=float)
+    for i, j in enumerate(idxs):
+        dIdp_vals[i] = inbeder(float(xmax.flat[j]), float(t2.flat[j]), 0.5)[1]
+
+    dIdp = np.zeros_like(x_b, dtype=float)
+    dIdp.flat[idxs] = dIdp_vals
+
+    # Final result
+    res = 0.5 / t_pdf * (0.5 * dIdp + (t5 * t6) / t7)
+    res *= sign
+    out[mask] = res[mask]
+
+    if out.size == 1:
+        return float(out)
+    return out
+
+
+def diff2_x_nu(x, nu):
+    """
+    Vectorized translation of C diff2_x_nu:
         out = (-t5*t4^2 - t2 - 2*t3*t4) / t1
     where:
-        t1 = t.pdf(x; nu)               (SciPy)
+        t1 = t.pdf(x; nu)
         t2 = diff_t_nu_nu(x, nu)
         t3 = diff_dt_nu(x, nu)
-        t4 = _diff_quantile_nu(x, nu)   (your function)
+        t4 = _diff_quantile_nu(x, nu)
         t5 = diff_dt_x(x, nu)
     """
-    t1 = st.t.pdf(x, df=nu)
-    t2 = diff_t_nu_nu(x, nu)
-    t3 = diff_dt_nu(x, nu)
-    t4 = _diff_quantile_nu(x, nu)
-    t5 = diff_dt_x(x, nu)
+    x_b, nu_b = np.broadcast_arrays(np.asarray(x, float), np.asarray(nu, float))
 
-    if t1 == 0.0:
-        raise ZeroDivisionError("t.pdf(x, nu) returned 0; cannot divide.")
+    t1 = st.t.pdf(x_b, df=nu_b)
+    TINY = 1e-300
+    denom = np.maximum(t1, TINY)  # avoid division by zero in a vectorized way
 
-    out = (-t5 * t4 * t4 - t2 - 2.0 * t3 * t4) / t1
+    t2 = diff_t_nu_nu(x_b, nu_b)
+    t3 = diff_dt_nu(x_b, nu_b)
+    t4 = _diff_quantile_nu(x_b, nu_b)
+    t5 = diff_dt_x(x_b, nu_b)
+
+    out = (-t5 * t4 * t4 - t2 - 2.0 * t3 * t4) / denom
+    if out.size == 1:
+        return float(out)
     return out

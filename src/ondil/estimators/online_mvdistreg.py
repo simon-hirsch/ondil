@@ -1008,6 +1008,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                             tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
                             #tau[a][p] = theta[a][p]
 
+
                         tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
                         eta[a][p] = 2*np.arctanh(tau[a][p])
                         eta[a][p] = self.distribution.cube_to_flat(eta[a][p], p)
@@ -1016,11 +1017,12 @@ class MultivariateOnlineDistributionalRegressionPath(
                         dl1dp1 = self.distribution.element_dl1_dp1(
                             y, theta=theta[a], param=p, k=k
                         )
+
                         # Second derivatives wrt to the parameter
                         dl2dp2 = self.distribution.element_dl2_dp2(
                             y, theta=theta[a], param=p, k=k
                         )
-                        print(dl2dp2)
+
                         #if isinstance(self.distribution, BivariateCopulaNormal):
                         dl1_link = 1.0 / (1.0 + np.cosh(eta[a][p])).squeeze()
                         #else:
@@ -1067,11 +1069,12 @@ class MultivariateOnlineDistributionalRegressionPath(
                         
 
                     else:
-                        if (inner_iteration == 0) and (outer_iteration == 0):
+                        if (inner_iteration == 0) and (outer_iteration == 0) and not issubclass(self.distribution.__class__, CopulaMixin):
                             theta[a] = self.distribution.set_initial_guess(theta[a], p)
                         eta = self.distribution.link_function(theta[a][p], p)
                         eta = self.distribution.cube_to_flat(eta, param=p)
                         # Derivatives wrt to the parameter
+
                         dl1dp1 = self.distribution.element_dl1_dp1(
                             y, theta=theta[a], param=p, k=k
                         )
@@ -1178,6 +1181,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                             k=k,
                             param=p,
                         )
+
                         # select optimal beta and theta
                         self.coef_[p][k][a] = self.coef_path_[p][k][a][opt_ic, :]
                         theta[a] = self.distribution.set_theta_element(
@@ -1202,8 +1206,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                             param=p,
                             k=k,
                         ).reshape(-1,1)
-
-                        
 
                         if isinstance(self.distribution, (BivariateCopulaClayton, BivariateCopulaGumbel)):
                             eta[a][p] = np.sign(eta[a][p]) * np.minimum(np.abs(eta[a][p]), 200)
@@ -1255,7 +1257,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 self._current_likelihood[a] = (
                     self.distribution.logpdf(y, theta=theta[a]) * weights_forget
                 ).sum()
-                if isinstance(self.distribution, (BivariateCopulaClayton,)):
+                if isinstance(self.distribution, (BivariateCopulaClayton, BivariateCopulaGumbel)):
                         eta[a][p] = np.sign(eta[a][p]) * np.minimum(np.abs(eta[a][p]), 200)
                         tau[a][p] = self.distribution.flat_to_cube(np.tanh(eta[a][p]/ 2), param=p) * (1-1e-5)
                         tau[a][p] = np.sign(eta[a][p]* (1-1e-5)) * np.minimum(np.abs(tau[a][p]*(1-1e-5)), 200)

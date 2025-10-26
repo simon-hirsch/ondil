@@ -92,7 +92,10 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution):
         self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False
     ):
         theta_param = self.theta_to_params(theta)
-        deriv = _derivative_1st(y, theta_param)
+        
+        deriv = _derivative_1st(
+                    y, theta_param,  self.family_code,
+                )
         return deriv
 
     def element_dl2_dp2(
