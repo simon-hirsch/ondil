@@ -15,14 +15,14 @@ def test_pareto_distribution():
     # library("gamlss")
     # library("gamlss.dist")
     # data(mtcars)
-    
+
     # model = gamlss(
     #     mpg ~ cyl + hp,
     #     sigma.formula = ~cyl + hp,
     #     family=PARETO2(),
     #     data=as.data.frame(mtcars)
     # )
-    
+
     # coef(model, "mu")
     # coef(model, "sigma")
 
