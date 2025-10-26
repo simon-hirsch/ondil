@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 from scipy.stats import weibull_min
 
 from ondil.distributions import Weibull
@@ -198,5 +197,5 @@ def test_weibull_estimation():
     estimator.fit(X=X, y=y)
     
     # Check that coefficients were estimated
-    assert estimator.beta[0].shape[0] == 2  # Intercept + 1 covariate
+    assert estimator.beta[0].shape[0] == 3  # Intercept + 2 covariates
     assert not np.any(np.isnan(estimator.beta[0]))
