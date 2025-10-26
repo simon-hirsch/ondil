@@ -88,7 +88,7 @@ class SkewNormal(ScipyMixin, Distribution):
 
         if param == 0:
             # dL/dmu
-            return z / sigma + (nu / sigma) * ratio
+            return z / sigma - (nu / sigma) * ratio
 
         if param == 1:
             # dL/dsigma
@@ -112,7 +112,7 @@ class SkewNormal(ScipyMixin, Distribution):
 
         if param == 0:
             # d2L/dmu2
-            dl_dmu = z / sigma + (nu / sigma) * ratio
+            dl_dmu = z / sigma - (nu / sigma) * ratio
             return -(dl_dmu**2)
 
         if param == 1:
@@ -141,13 +141,13 @@ class SkewNormal(ScipyMixin, Distribution):
 
         if sorted(params) == [0, 1]:
             # d2L/dmu dsigma
-            dl_dmu = z / sigma + (nu / sigma) * ratio
+            dl_dmu = z / sigma - (nu / sigma) * ratio
             dl_dsigma = -1 / sigma + (z**2) / sigma - (nu * z / sigma) * ratio
             return -(dl_dmu * dl_dsigma)
 
         if sorted(params) == [0, 2]:
             # d2L/dmu dnu
-            dl_dmu = z / sigma + (nu / sigma) * ratio
+            dl_dmu = z / sigma - (nu / sigma) * ratio
             dl_dnu = z * ratio
             return -(dl_dmu * dl_dnu)
 
