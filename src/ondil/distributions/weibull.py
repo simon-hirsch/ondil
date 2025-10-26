@@ -115,9 +115,9 @@ class Weibull(ScipyMixin, Distribution):
         log_y = np.log(y)
         log_y_mean = np.mean(log_y)
         log_y_var = np.var(log_y, ddof=1)
-        
+
         sigma_init = 1.283 / np.sqrt(log_y_var) if log_y_var > 0 else 1.0
         mu_init = np.exp(log_y_mean + 0.5772 / sigma_init)
-        
+
         initial_params = [mu_init, sigma_init]
         return np.tile(initial_params, (y.shape[0], 1))
