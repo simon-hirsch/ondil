@@ -12,7 +12,7 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 
-from ..base import Distribution, OndilEstimatorMixin, CopulaMixin, MarginalCopulaMixin
+from ..base import Distribution, OndilEstimatorMixin, CopulaMixin
 from ..design_matrix import make_intercept
 from ..distributions import MultivariateNormalInverseCholesky, BivariateCopulaNormal, BivariateCopulaClayton, BivariateCopulaGumbel
 from ..gram import init_forget_vector
@@ -623,7 +623,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         self.adr_steps_ = self.distribution.get_regularization_size(self.dim_)
         if self.max_regularisation_size is not None:
             self.adr_steps_ = np.fmin(self.adr_steps_, self.max_regularisation_size)
-        if self.distribution._regularization == "":
+        else:
             self.adr_steps_ = 1
 
         self.optimal_adr_ = self.adr_steps_
@@ -1626,10 +1626,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                         )
                         @ self.coef_[p][k][a, :]
                     ).squeeze()
-                if issubclass(self.distribution.__class__, MarginalCopulaMixin):
-                    out[a][p] = self.distribution.flat_to_cube(array, p)
-                    out[a][p] = self.distribution.update_link_inverse(out[a][p], p)
-                else:
+                
                     out[a][p] = self.distribution.flat_to_cube(array, p)
                     out[a][p] = self.distribution.link_inverse(out[a][p], p)
 
@@ -1762,10 +1759,7 @@ class MultivariateOnlineDistributionalRegressionPath(
 
                 else:
 
-                    if issubclass(self.distribution.__class__, CopulaMixin) or (
-                        issubclass(self.distribution.__class__, MarginalCopulaMixin)
-                        and p > 1
-                    ):
+                    if issubclass(self.distribution.__class__, CopulaMixin):
                         if (inner_iteration == 0) and (outer_iteration == 0):
                             theta[a] = self.distribution.set_initial_guess(theta[a], p)
                             tau = self._make_initial_eta(theta)

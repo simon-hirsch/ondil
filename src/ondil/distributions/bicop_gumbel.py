@@ -11,7 +11,7 @@ from ..links import KendallsTauToParameterGumbel, Log
 from ..types import ParameterShapes
 
 
-class BivariateCopulaGumbel(CopulaMixin, Distribution):
+class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
 
     corresponding_gamlss: str = None
     parameter_names = {0: "theta"}
