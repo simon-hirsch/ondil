@@ -235,6 +235,56 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         h = np.where(pos_mask, 1, h)
 
         return h.squeeze()
+
+    def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
+        """
+        Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
+
+        Args:
+            u (np.ndarray): Array of shape (n,) with values in (0, 1).
+            v (np.ndarray): Array of shape (n,) with values in (0, 1).
+            theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
+            un (int): Determines which conditional to compute.
+
+        Returns:
+            np.ndarray: Array of shape (n,) with inverse conditional probabilities.
+        """
+
+        UMIN = 1e-12
+        UMAX = 1 - 1e-12
+
+        # Apply clipping using masks
+        u_mask_low = u < UMIN
+        u_mask_high = u > UMAX
+        v_mask_low = v < UMIN
+        v_mask_high = v > UMAX
+        
+        u = np.where(u_mask_low, UMIN, u)
+        u = np.where(u_mask_high, UMAX, u)
+        v = np.where(v_mask_low, UMIN, v)
+        v = np.where(v_mask_high, UMAX, v)
+       
+        rho, nu = self.theta_to_params(theta)
+        
+        qt_u = np.array([st.t.ppf(u[i], df=nu[i] + 1.0) for i in range(len(u))]).reshape(-1, 1)
+        qt_v = np.array([st.t.ppf(v[i], df=nu[i]) for i in range(len(v))]).reshape(-1, 1)
+        
+        mu = rho * qt_v
+        var = ((nu + qt_v**2) * (1.0 - rho**2)) / (nu + 1.0)
+        
+        hinv = np.array([st.t.cdf((np.sqrt(var[i]) * qt_u[i] + mu[i])[0], df=nu[i]) for i in range(len(u))]).reshape(-1, 1)
+
+        # Clip output for numerical stability
+        # Ensure results are in [0,1] using masks
+
+        h_mask_low = hinv < 0
+        h_mask_high = hinv > 1
+        hinv = np.where(h_mask_low, 0, hinv)
+        hinv = np.where(h_mask_high, 1, hinv)
+
+        return hinv.squeeze()
+
+
     
     def get_regularization_size(self, dim: int) -> int:
         return dim

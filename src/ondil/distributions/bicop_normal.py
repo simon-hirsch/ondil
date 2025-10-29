@@ -186,10 +186,6 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         v = np.where(v_mask_low, UMIN, v)
         v = np.where(v_mask_high, UMAX, v)
 
-        # Swap u and v if un == 1
-        if un == 1:
-            u, v = v, u
-
         qnorm_u = st.norm.ppf(u).reshape(-1, 1)
         qnorm_v = st.norm.ppf(v).reshape(-1, 1)
 
@@ -206,6 +202,52 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         h = np.where(h_mask_high, 1, h)
 
         return h.squeeze()
+    
+
+    def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
+        """
+        Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
+
+        Args:
+            u (np.ndarray): Array of shape (n,) with values in (0, 1).
+            v (np.ndarray): Array of shape (n,) with values in (0, 1).
+            theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
+            un (int): Determines which conditional to compute.
+
+        Returns:
+            np.ndarray: Array of shape (n,) with inverse conditional probabilities.
+        """
+
+        UMIN = 1e-12
+        UMAX = 1 - 1e-12
+
+        # Apply clipping using masks
+        u_mask_low = u < UMIN
+        u_mask_high = u > UMAX
+        v_mask_low = v < UMIN
+        v_mask_high = v > UMAX
+        
+        u = np.where(u_mask_low, UMIN, u)
+        u = np.where(u_mask_high, UMAX, u)
+        v = np.where(v_mask_low, UMIN, v)
+        v = np.where(v_mask_high, UMAX, v)
+        
+        qnorm_u = st.norm.ppf(u).reshape(-1, 1)
+        qnorm_v = st.norm.ppf(v).reshape(-1, 1)
+
+        x = qnorm_u * np.sqrt(1.0 - theta**2) + theta * qnorm_v
+        hinv = st.norm.cdf(x)
+
+        # Clip output for numerical stability
+        # Ensure results are in [0,1] using masks
+
+        h_mask_low = hinv < 0
+        h_mask_high = hinv > 1
+        hinv = np.where(h_mask_low, 0, hinv)
+        hinv = np.where(h_mask_high, 1, hinv)
+
+        return hinv.squeeze()
+
 
 
 ##########################################################
@@ -310,41 +352,3 @@ def _derivative_2nd(y, theta):
         + t29 * t44
     )
     return deriv.squeeze()
-
-
-def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
-    """
-    Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
-
-    Args:
-        u (np.ndarray): Array of shape (n,) with values in (0, 1).
-        v (np.ndarray): Array of shape (n,) with values in (0, 1).
-        theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
-        un (int): Determines which conditional to compute.
-
-    Returns:
-        np.ndarray: Array of shape (n,) with inverse conditional probabilities.
-    """
-    M = u.shape[0]
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
-
-    u = np.clip(u, UMIN, UMAX)
-    v = np.clip(v, UMIN, UMAX)
-
-    # Swap u and v if un == 1
-    if un == 1:
-        u, v = v, u
-
-    hinv = np.empty(M)
-    qnorm_u = st.norm.ppf(u)
-    qnorm_v = st.norm.ppf(v)
-
-    for m in range(M):
-        theta_m = theta[0][m] if hasattr(theta[0], "__len__") else theta[0]
-        x = qnorm_u[m] * np.sqrt(1.0 - theta_m**2) + theta_m * qnorm_v[m]
-        hinv[m] = st.norm.cdf(x)
-
-    # Clip output for numerical stability
-    hinv = np.clip(hinv, UMIN, UMAX)
-    return hinv

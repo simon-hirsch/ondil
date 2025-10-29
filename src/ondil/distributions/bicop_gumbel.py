@@ -180,10 +180,6 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
         u = np.clip(u, UMIN, UMAX).reshape(-1, 1)
         v = np.clip(v, UMIN, UMAX).reshape(-1, 1)
 
-        # Swap u and v if un == 1
-        if un == 1:
-            u, v = v, u
-
         # Get rotations for all samples
         rotation = get_effective_rotation(theta, family_code)
         # Apply rotation transformations vectorized
@@ -194,15 +190,26 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
         u_rot[mask_1] = 1 - u[mask_1]
         v_rot[mask_1] = 1 - v[mask_1]
 
-        # 90° rotation
-        mask_2 = rotation == 2
-        v_rot[mask_2] = 1 - v[mask_2]
-        theta[mask_2] = -theta[mask_2]
+        if un == 1:
+              # 90° rotation
+            mask_2 = rotation == 2
+            u_rot[mask_2] = 1 - u[mask_2]
+            theta[mask_2] = -theta[mask_2]
 
-        # 270° rotation
-        mask_3 = (rotation == 3)
-        u_rot[mask_3] = 1 - u[mask_3]
-        theta[mask_3] = -theta[mask_3]
+            # 270° rotation
+            mask_3 = (rotation == 3)
+            v_rot[mask_3] = 1 - v[mask_3]
+            theta[mask_3] = -theta[mask_3]
+        else: 
+            # 90° rotation
+            mask_2 = rotation == 2
+            v_rot[mask_2] = 1 - v[mask_2]
+            theta[mask_2] = -theta[mask_2]
+
+            # 270° rotation
+            mask_3 = (rotation == 3)
+            u_rot[mask_3] = 1 - u[mask_3]
+            theta[mask_3] = -theta[mask_3]
 
         log_u = np.log(u_rot)
         log_v = np.log(v_rot)
@@ -213,13 +220,18 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
 
         copula_val = np.exp(-sum_t ** (1.0 / theta))
         h = -(copula_val * (sum_t ** (1.0/theta - 1.0)) * t2) / (v_rot * log_v)
-        h[mask_1] = 1 - h[mask_1]  # 180° rotation
-        h[mask_3] = 1 - h[mask_3]  # 270° rotation
+
+        if un == 1:
+            h[mask_1] = 1 - h[mask_1]  # 180° rotation
+            h[mask_2] = 1 - h[mask_2]  # 270° rotation
+        else: 
+            h[mask_1] = 1 - h[mask_1]  # 180° rotation
+            h[mask_3] = 1 - h[mask_3]  # 270° rotation
 
         return h.squeeze()
 
     def hinv(
-        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int
+        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code: int
     ) -> np.ndarray:
         """
         Inverse conditional distribution function h^(-1)(u|v) for the bivariate Gumbel copula.
@@ -234,44 +246,149 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
         Returns:
             np.ndarray: Array of shape (n,) with inverse conditional probabilities.
         """
-        M = u.shape[0]
         UMIN = 1e-12
         UMAX = 1 - 1e-12
 
-        u = np.clip(u, UMIN, UMAX)
-        v = np.clip(v, UMIN, UMAX)
+        # Apply clipping using masks
+        u_mask_low = u < UMIN
+        u_mask_high = u > UMAX
+        v_mask_low = v < UMIN
+        v_mask_high = v > UMAX
+        
+        u = np.where(u_mask_low, UMIN, u)
+        u = np.where(u_mask_high, UMAX, u)
+        v = np.where(v_mask_low, UMIN, v)
+        v = np.where(v_mask_high, UMAX, v)
+        u = u.reshape(-1, 1)
+        v = v.reshape(-1, 1)
 
-        # Swap u and v if un == 1
+        rotation = get_effective_rotation(theta, family_code)
+        # Apply rotation transformations vectorized
+        u_rot, v_rot = u.copy(), v.copy()
+        hinv = np.zeros_like(u)
+        # 180° rotation (survival)
+        mask_1 = (rotation == 1)
+        u_rot[mask_1] = 1 - u[mask_1]
+        v_rot[mask_1] = 1 - v[mask_1]
+
         if un == 1:
-            u, v = v, u
+            # 90° rotation
+            mask_2 = (rotation == 2)
+            u_rot[mask_2] = 1 - u[mask_2]
+            theta[mask_2] = -theta[mask_2]
 
-        hinv = np.empty(M)
+            # 270° rotation
+            mask_3 = (rotation == 3)
+            v_rot[mask_3] = 1 - v[mask_3]
+            theta[mask_3] = -theta[mask_3]
+        else: 
+        # 90° rotation
+            mask_2 = rotation == 2
+            v_rot[mask_2] = 1 - v[mask_2]
+            theta[mask_2] = -theta[mask_2]
 
-        for m in range(M):
-            theta_m = theta[0][m] if hasattr(theta[0], "__len__") else theta[0]
+            # 270° rotation
+            mask_3 = (rotation == 3)
+            u_rot[mask_3] = 1 - u[mask_3]
+            theta[mask_3] = -theta[mask_3]
 
-            def h_minus_u(x):
-                # Calculate h-function and subtract target u
-                return (
-                    self.hfunc(
-                        np.array([u[m]]), np.array([v[m]]), np.array([[theta_m]]), 0
-                    )[0]
-                    - u[m]
-                )
+        hinv = qcondgum(u_rot,v_rot,theta).reshape(-1, 1)
 
-            try:
-                # Solve h(x|v) = u for x
-                hinv[m] = brentq(h_minus_u, 1e-12, 1 - 1e-12)
-            except:
-                hinv[m] = u[m]  # Fallback
+        h_mask_low = hinv < 0
+        h_mask_high = hinv > 1
+        hinv = np.where(h_mask_low, 0, hinv)
+        hinv = np.where(h_mask_high, 1, hinv)
 
-        # Clip output for numerical stability
-        hinv = np.clip(hinv, UMIN, UMAX)
-        return hinv
+        if un == 1:
+            hinv[mask_1] = 1 - hinv[mask_1]  # 180° rotation
+            hinv[mask_2] = 1 - hinv[mask_2]  # 270° rotation
+        else: 
+            hinv[mask_1] = 1 - hinv[mask_1]  # 180° rotation
+            hinv[mask_3] = 1 - hinv[mask_3]  # 270° rotation
+
+        return hinv.squeeze()
 
     def get_regularization_size(self, dim: int) -> int:
         return dim
+    
+def qcondgum(q: np.ndarray, u: np.ndarray, de: np.ndarray) -> np.ndarray:
+    """
+    Quantile function for conditional Gumbel copula.
+    Translated from C implementation.
+    
+    Args:
+        q (np.ndarray): Quantile values in (0, 1)
+        u (np.ndarray): Conditioning variable in (0, 1)
+        de (np.ndarray): Gumbel parameter (theta)
+    
+    Returns:
+        np.ndarray: Conditional quantiles
+    """
+    UMIN = 1e-12
+    UMAX = 1 - 1e-12
+    
+    q = np.asarray(q).reshape(-1, 1)
+    u = np.asarray(u).reshape(-1, 1)
+    de = np.asarray(de).reshape(-1, 1)
+    
+    p = 1 - q
+    z1 = -np.log(np.maximum(u, UMIN))
+    de1 = de - 1.0
+    
+    # Protect log(1-p) and log(z1)
+    con = np.log(np.maximum(1.0 - p, UMIN)) - z1 + (1.0 - de) * np.log(np.maximum(z1, UMIN))
+    
+    # Initial guess
+    a = np.power(2.0 * np.power(np.maximum(z1, UMIN), de), 1.0 / np.maximum(de, UMIN))
+    mxdif = np.ones_like(a)
+    iter_count = np.zeros_like(a, dtype=int)
+    dif = 0.1 * np.ones_like(a)
+    
+    max_iter = 20
+    tol = 1e-6
+    
+    while np.any((mxdif > tol) & (iter_count < max_iter)):
 
+        mask = (mxdif > tol) & (iter_count < max_iter)
+        
+        # Protect log(a)
+        g = a + de1 * np.log(np.maximum(a, UMIN)) + con
+        gp = 1.0 + de1 / np.maximum(a, UMIN)
+        
+        # Check for NaN values
+        nan_mask = mask & (np.isnan(g) | np.isnan(gp) | np.isnan(g / gp))
+        valid_mask = mask & ~nan_mask
+        
+        # Handle NaN case (for de > 50)
+        dif[nan_mask] /= -2.0
+        
+        # Normal Newton-Raphson step
+        dif[valid_mask] = g[valid_mask] / gp[valid_mask]
+        
+        a -= dif
+        iter_count += mask.astype(int)
+        
+        # Ensure a > z1
+        inner_it = 0
+        while np.any((a <= z1) & mask) and inner_it < 20:
+            adjust_mask = (a <= z1) & mask
+            dif[adjust_mask] /= 2.0
+            a[adjust_mask] += dif[adjust_mask]
+            inner_it += 1
+        
+        mxdif = np.abs(dif)
+    
+    # Final calculation with numerical protection
+    z2 = np.power(
+        np.maximum(
+            np.power(np.maximum(a, UMIN), de) - np.power(np.maximum(z1, UMIN), de),
+            UMIN
+        ),
+        1.0 / np.maximum(de, UMIN)
+    )
+    out = np.exp(-z2)
+
+    return out.squeeze()
 
 ##########################################################
 ### Functions for the derivatives and log-likelihood ####
