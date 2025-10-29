@@ -17,6 +17,7 @@ from .mv_t_chol import MultivariateStudentTInverseCholesky
 from .mv_t_low_rank import MultivariateStudentTInverseLowRank
 from .mv_t_modchol import MultivariateStudentTInverseModifiedCholesky
 from .normal import Normal, NormalMeanVariance
+from .pareto import Pareto
 from .powerexponential import PowerExponential
 from .reversegumbel import ReverseGumbel
 from .skew_t import SkewT, SkewTMeanStd
@@ -43,6 +44,7 @@ __all__ = [
     "InverseGaussian",
     "ReverseGumbel",
     "InverseGamma",
+    "Pareto",
     "MultivariateNormalInverseCholesky",
     "MultivariateNormalInverseLowRank",
     "MultivariateNormalInverseModifiedCholesky",
