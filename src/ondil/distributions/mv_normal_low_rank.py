@@ -339,7 +339,7 @@ def _deriv1_dmat(y, mat_mu, mat_d, mat_v, i):
 def _deriv2_dmat(y, mat_mu, mat_d, mat_v, i):
     omega = mat_d + mat_v @ np.swapaxes(mat_v, -2, -1)
     cov = np.linalg.inv(omega)
-    return 0.5 * -cov[:, i, i] ** 2
+    return 0.5 * -(cov[:, i, i] ** 2)
 
 
 def _deriv1_vmat(y, mat_mu, mat_d, mat_v, i, j):
@@ -369,5 +369,5 @@ def _deriv2_vmat(y, mat_mu, mat_d, mat_v, i, j):
         sum1 += cov[:, i, i] * mat_v[:, q, j] * cov[:, q, k] * mat_v[:, k, j]
         sum2 += cov[:, i, q] * mat_v[:, q, j] * cov[:, i, k] * mat_v[:, k, j]
     term1 = cov[:, i, i] - sum1 - sum2
-    term2 = -(y - mat_mu)[:, i] ** 2
+    term2 = -((y - mat_mu)[:, i] ** 2)
     return term1 + term2

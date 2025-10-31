@@ -12,7 +12,6 @@ from ..types import ParameterShapes
 
 
 class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribution):
-
     # The cholesky decomposition of
     # COV = L @ L.T
     # PRC = (L^-1).T @ (L^-1)
@@ -477,7 +476,7 @@ def _derivative_2nd_inv_chol_diag(y, fitted_loc, fitted_inv_tr_chol, i):
 @nb.jit()
 def _derivative_2nd_inv_chol_triu(y, fitted_loc, fitted_inv_tr_chol, i, j):
     y_centered = y - fitted_loc
-    return -y_centered[:, i] ** 2
+    return -(y_centered[:, i] ** 2)
 
 
 @nb.jit()

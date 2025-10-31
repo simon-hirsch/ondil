@@ -17,8 +17,11 @@ from .mv_t_chol import MultivariateStudentTInverseCholesky
 from .mv_t_low_rank import MultivariateStudentTInverseLowRank
 from .mv_t_modchol import MultivariateStudentTInverseModifiedCholesky
 from .normal import Normal, NormalMeanVariance
+from .powerexponential import PowerExponential
 from .reversegumbel import ReverseGumbel
+from .skew_t import SkewT, SkewTMeanStd
 from .studentt import StudentT
+from .weibull import Weibull
 from .zeroadjustedgamma import ZeroAdjustedGamma
 from .bicop_normal import BivariateCopulaNormal
 from .bicop_gumbel import BivariateCopulaGumbel
@@ -27,9 +30,11 @@ from .bicop_studentt import BivariateCopulaStudentT
 
 
 __all__ = [
-       "Normal",
+    "Normal",
     "NormalMeanVariance",
     "StudentT",
+    "SkewT",
+    "SkewTMeanStd",
     "JSU",
     "BetaInflated",
     "Gamma",
@@ -38,6 +43,7 @@ __all__ = [
     "LogNormalMedian",
     "Logistic",
     "Exponential",
+    "PowerExponential",
     "Gumbel",
     "InverseGaussian",
     "ReverseGumbel",
@@ -55,4 +61,5 @@ __all__ = [
     "MarginalCopula",
     "BivariateCopulaClayton",
     "BivariateCopulaStudentT",
+    "Weibull",
 ]

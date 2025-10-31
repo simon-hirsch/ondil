@@ -1,13 +1,6 @@
 name: Automated Tests for OS
 on:
-  push:
-    branches:    
-      - main            # only run on pushes to main
-      - '!gh-pages'     # excludes gh-pages
-  pull_request:
-    branches:    
-    - '**'              # matches every branch
-    - '!gh-pages'       # excludes gh-pages
+  workflow_call:
 permissions:
   contents: read
 jobs:

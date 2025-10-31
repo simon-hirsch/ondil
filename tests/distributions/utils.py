@@ -1,7 +1,7 @@
 import inspect
 
-import ondil.distributions
 from ondil.base.distribution import MultivariateDistributionMixin
+import ondil.distributions
 
 
 def get_distributions_with_gamlss():

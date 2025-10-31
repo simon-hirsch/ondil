@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ondil"
-version = "0.4.3"
+version = "0.4.4"
 authors = [
   {name="Simon Hirsch", email="simon.hirsch@stud.uni-due.de"},
   {name="Jonathan Berrisch", email="jonathan.berrisch@uni-due.de"},
@@ -15,13 +15,13 @@ authors = [
 description = "Methods for online / incremental estimation of distributional regression models"
 readme = "README.md"
 requires-python = ">=3.10, <3.14" # Introduce hard cap on python due to numba
+license = "GPL-3.0-only"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Mathematics",
@@ -44,9 +44,35 @@ dependencies=[
 ]
 
 [project.optional-dependencies]
-pandas = ["pandas >= 1.26"]
+pandas = ["pandas >= 1.20"]
 polars = ["polars"]
-all = ["ondil[pandas, polars]"]
+mpl = ["matplotlib >= 3.7"]
+all = ["ondil[pandas, polars, mpl]"]
+
+[dependency-groups]
+dev = ["ruff==0.12.4"]
+
+[tool.ruff]
+exclude = [
+    "__pycache__",
+    "build",
+    "*.egg-info",
+]
+
+[tool.ruff.lint]
+preview = true
+extend-select = ["E302", "E301", "I"]
+
+[tool.ruff.format]
+preview = true
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-sort-within-sections = true
+known-first-party = ["ondil"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.setuptools.packages.find]
 where = ["src"]
