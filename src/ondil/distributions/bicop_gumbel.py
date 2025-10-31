@@ -218,8 +218,8 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
         t2 = (-log_v) ** theta
         sum_t = t1 + t2
 
-        copula_val = np.exp(-sum_t ** (1.0 / theta))
-        h = -(copula_val * (sum_t ** (1.0/theta - 1.0)) * t2) / (v_rot * log_v)
+        copula_val = np.exp(-(sum_t ** (1.0 / theta)))
+        h = -(copula_val * (sum_t ** (1.0 / theta - 1.0)) * t2) / (v_rot * log_v)
 
         if un == 1:
             h[mask_1] = 1 - h[mask_1]  # 180° rotation

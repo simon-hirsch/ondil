@@ -250,7 +250,6 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         return hinv.squeeze()
 
 
-
 ##########################################################
 ### numba JIT-compiled functions for the derivatives #####
 ##########################################################
