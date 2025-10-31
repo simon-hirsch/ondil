@@ -142,21 +142,25 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
 
         UMIN = 1e-12
         UMAX = 1 - 1e-12
+        uc = u.copy()
+        vc = v.copy()
+        # Apply clipping using masks
+        u_mask_low = u < UMIN
+        u_mask_high = u > UMAX
+        v_mask_low = v < UMIN
+        v_mask_high = v > UMAX
+        
+        u = np.where(u_mask_low, UMIN, u)
+        u = np.where(u_mask_high, UMAX, u)
+        v = np.where(v_mask_low, UMIN, v)
+        v = np.where(v_mask_high, UMAX, v)
 
-        theta = np.asarray(
-            theta
-        ).copy()  # <- prevents in-place mutation of caller's array
-
-        u = np.clip(u, UMIN, UMAX).reshape(-1, 1)
-        v = np.clip(v, UMIN, UMAX).reshape(-1, 1)
-
-        # Swap u and v if un == 1
-        if un == 1:
-            u, v = v, u
+        theta = np.asarray(theta).copy()      # <- prevents in-place mutation of caller's array
+        u = u.reshape(-1, 1)
+        v = v.reshape(-1, 1)
 
         # Get rotations for all samples
         rotation = get_effective_rotation(theta, family_code)
-
         # Apply rotation transformations vectorized
         u_rot, v_rot = u.copy(), v.copy()
 
@@ -165,31 +169,230 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         u_rot[mask_1] = 1 - u[mask_1]
         v_rot[mask_1] = 1 - v[mask_1]
 
-        # 90° rotation
-        mask_2 = rotation == 2
-        v_rot[mask_2] = 1 - v[mask_2]
-        theta[mask_2] = -theta[mask_2]
+        if un == 1:
+              # 90° rotation
+            mask_2 = rotation == 2
+            u_rot[mask_2] = 1 - u[mask_2]
+            theta[mask_2] = -theta[mask_2]
 
-        # 270° rotation
-        mask_3 = rotation == 3
-        v_rot[mask_3] = 1 - v[mask_3]
-        theta[mask_3] = -theta[mask_3]
+            # 270° rotation
+            mask_3 = (rotation == 3)
+            v_rot[mask_3] = 1 - v[mask_3]
+            theta[mask_3] = -theta[mask_3]
+        else: 
+            # 90° rotation
+            mask_2 = rotation == 2
+            v_rot[mask_2] = 1 - v[mask_2]
+            theta[mask_2] = -theta[mask_2]
+
+            # 270° rotation
+            mask_3 = (rotation == 3)
+            u_rot[mask_3] = 1 - u[mask_3]
+            theta[mask_3] = -theta[mask_3]
 
         # Vectorized conditional distribution computation
         t1 = v_rot ** (-theta - 1)
         t2 = u_rot ** (-theta) + v_rot ** (-theta) - 1
+        t1 = np.where(np.isinf(t1), 1e50, t1)
+        t2 = np.where(np.isinf(t2), 1e50, t2)
         t2 = np.maximum(t2, UMIN)
         t3 = -1.0 - 1.0 / theta
         h = t1 * (t2**t3)
-
         mask_4 = theta < 1e-4
-        h[mask_4] = u[mask_4]
+        h[mask_4] = u_rot[mask_4]
 
-        # Apply rotation-specific transformations
-        h[mask_3] = 1 - h[mask_3]  # 270° rotation
-        h = np.clip(h, UMIN, UMAX)
+        # Ensure results are in [0,1] using masks
+        h_mask_low = h < 0
+        h_mask_high = h > 1
+        h = np.where(h_mask_low, 0, h)
+        h = np.where(h_mask_high, 1, h)
+
+        if un == 1:
+            h[mask_1] = 1 - h[mask_1]  # 180° rotation
+            h[mask_2] = 1 - h[mask_2]  # 270° rotation
+        else: 
+            h[mask_1] = 1 - h[mask_1]  # 180° rotation
+            h[mask_3] = 1 - h[mask_3]  # 270° rotation
+
         return h.squeeze()
 
+    def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code: int) -> np.ndarray:
+            """
+            Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
+
+            Args:
+                u (np.ndarray): Array of shape (n,) with values in (0, 1).
+                v (np.ndarray): Array of shape (n,) with values in (0, 1).
+                theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
+                un (int): Determines which conditional to compute.
+
+            Returns:
+                np.ndarray: Array of shape (n,) with inverse conditional probabilities.
+            """
+
+            UMIN = 1e-12
+            UMAX = 1 - 1e-12
+
+            # Apply clipping using masks
+            u_mask_low = u < UMIN
+            u_mask_high = u > UMAX
+            v_mask_low = v < UMIN
+            v_mask_high = v > UMAX
+            
+            u = np.where(u_mask_low, UMIN, u)
+            u = np.where(u_mask_high, UMAX, u)
+            v = np.where(v_mask_low, UMIN, v)
+            v = np.where(v_mask_high, UMAX, v)
+            u = u.reshape(-1, 1)
+            v = v.reshape(-1, 1)
+
+            XEPS = 1e-4
+            rotation = get_effective_rotation(theta, family_code)
+            # Apply rotation transformations vectorized
+            u_rot, v_rot = u.copy(), v.copy()
+
+            # 180° rotation (survival)
+            mask_1 = rotation == 1
+            u_rot[mask_1] = 1 - u[mask_1]
+            v_rot[mask_1] = 1 - v[mask_1]
+
+            if un == 1:
+              # 90° rotation
+                mask_2 = rotation == 2
+                u_rot[mask_2] = 1 - u[mask_2]
+                theta[mask_2] = -theta[mask_2]
+
+                # 270° rotation
+                mask_3 = (rotation == 3)
+                v_rot[mask_3] = 1 - v[mask_3]
+                theta[mask_3] = -theta[mask_3]
+            else: 
+            # 90° rotation
+                mask_2 = rotation == 2
+                v_rot[mask_2] = 1 - v[mask_2]
+                theta[mask_2] = -theta[mask_2]
+
+                # 270° rotation
+                mask_3 = (rotation == 3)
+                u_rot[mask_3] = 1 - u[mask_3]
+                theta[mask_3] = -theta[mask_3]
+
+            # Prepare output array
+            hinv = np.zeros_like(u)
+            
+            # Case 1: theta < XEPS
+            mask_small = np.abs(theta) < XEPS
+            hinv[mask_small] = u_rot[mask_small]
+            
+            # Case 2: theta < 75
+            mask_medium = (~mask_small) & (np.abs(theta) < 75)
+            if np.any(mask_medium):
+                u_med = u_rot[mask_medium]
+                v_med = v_rot[mask_medium]
+                theta_med = theta[mask_medium]
+                
+                term1 = u_med * np.power(v_med, theta_med + 1.0)
+                term2 = np.power(term1, -theta_med / (theta_med + 1.0))
+                term3 = 1.0 - np.power(v_med, -theta_med)
+                hinv[mask_medium] = np.power(term2 + term3, -1.0 / theta_med)
+            
+            # Case 3: theta >= 75 (numerical inversion fallback)
+            mask_large = (~mask_small) & (~mask_medium)
+            if np.any(mask_large):
+                u_large = u_rot[mask_large]
+                v_large = v_rot[mask_large]
+                theta_large = theta[mask_large]
+
+                hinv[mask_large] = _hinv_numerical(u_large, v_large, theta_large, self.family_code, un = un)
+
+
+            # Clip output for numerical stability
+            # Ensure results are in [0,1] using masks
+
+            h_mask_low = hinv < 0
+            h_mask_high = hinv > 1
+            hinv = np.where(h_mask_low, 0, hinv)
+            hinv = np.where(h_mask_high, 1, hinv)
+
+            if un == 1:
+                hinv[mask_1] = 1 - hinv[mask_1]  # 180° rotation
+                hinv[mask_2] = 1 - hinv[mask_2]  # 270° rotation
+            else: 
+                hinv[mask_1] = 1 - hinv[mask_1]  # 180° rotation
+                hinv[mask_3] = 1 - hinv[mask_3]  # 270° rotation
+        
+            return hinv.squeeze()
+
+def _hinv_numerical(u: np.ndarray, v: np.ndarray, theta: np.ndarray, family_code: int, un: int) -> np.ndarray:
+    """
+    Vectorized numerical inversion of h-function using bisection method.
+    
+    Args:
+        u (np.ndarray): Target values in (0, 1)
+        v (np.ndarray): Conditioning values in (0, 1)
+        theta (np.ndarray): Copula parameters
+        family_code (int): Family code
+        un (int): Determines which conditional to compute
+        
+    Returns:
+        np.ndarray: Inverse conditional probabilities
+    """
+    UMIN = 1e-12
+    UMAX = 1 - 1e-12
+    tol = 1e-12
+    max_iter = 50
+
+    # Initialize bounds as arrays matching the shape of theta
+    x0 = np.full_like(theta, UMIN, dtype=float)
+    x1 = np.full_like(theta, UMAX, dtype=float)
+    
+    # Create dummy BivariateCopulaClayton instance to access hfunc
+    temp_copula = BivariateCopulaClayton(family_code=family_code)
+    print(x0,v,theta,un,family_code)
+    # Evaluate at boundaries
+  
+    fl = (temp_copula.hfunc(x0, v, theta, un, family_code) - u).reshape(-1,1)
+    fh = (temp_copula.hfunc(x1, v, theta, un, family_code) - u).reshape(-1,1)
+
+
+    # Initialize result
+    ans = (x0 + x1) / 2.0
+    
+    # Check if solution is at boundaries
+    at_lower = np.abs(fl) <= tol
+    at_upper = np.abs(fh) <= tol
+    ans = np.where(at_lower, x0, ans)
+    ans = np.where(at_upper, x1, ans)
+    
+    # Track which elements still need iteration
+    active = ~(at_lower | at_upper).squeeze()
+    
+    # Bisection method
+    for it in range(max_iter):
+        if not np.any(active):
+            break
+            
+        # Only update active elements
+        ans[active] = (x0[active] + x1[active]) / 2.0
+
+
+        val = temp_copula.hfunc(ans, v, theta, un, family_code) - u
+
+        
+        # Check convergence
+        converged = (np.abs(val) <= tol) | (np.abs(x1 - x0) <= tol)
+        active = active & ~converged
+        
+        # Update intervals for active elements
+        update_upper = active & (val > 0.0)
+        update_lower = active & (val <= 0.0)
+        
+        x1 = np.where(update_upper, ans, x1)
+        fh = np.where(update_upper, val, fh)
+        x0 = np.where(update_lower, ans, x0)
+        fl = np.where(update_lower, val, fl)
+
+    return ans.squeeze()
 
 ##########################################################
 # Helper functions for the log-likelihood and derivatives #
@@ -360,7 +563,6 @@ def _derivative_2nd(y, theta, family_code):
     v = np.clip(y[:, 1], UMIN, UMAX).reshape(-1, 1)
 
     rotation = get_effective_rotation(theta, family_code)
-
     u_rot, v_rot = u.copy(), v.copy()
 
     # 180° rotation (survival)
@@ -372,8 +574,9 @@ def _derivative_2nd(y, theta, family_code):
     v_rot[mask_2] = 1 - v[mask_2]
     theta[mask_2] = -theta[mask_2]
 
-    mask_3 = rotation == 3
-    v_rot[mask_3] = 1 - v[mask_3]
+
+    mask_3 = (rotation == 3)
+    u_rot[mask_3] = 1 - u[mask_3]
     theta[mask_3] = -theta[mask_3]
 
     # Basic terms (matching C variable names)

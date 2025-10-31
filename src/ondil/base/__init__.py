@@ -2,7 +2,6 @@ from .distribution import (
     BivariateCopulaMixin,
     CopulaMixin,
     Distribution,
-    MarginalCopulaMixin,
     MultivariateDistributionMixin,
     ScipyMixin,
 )
