@@ -131,6 +131,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         # Transform to uniform marginals using the normal CDF
         u = st.norm.cdf(x)
         v = st.norm.cdf(y)
+        
         return np.column_stack((u, v))
 
     def pdf(self, y, theta):
