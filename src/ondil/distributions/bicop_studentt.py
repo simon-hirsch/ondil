@@ -135,29 +135,23 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
 
     def rvs(self, size, theta):
         """
-        Generate random samples from the bivariate t copula.
+        Generate random samples from the bivariate normal copula.
 
         Args:
             size (int): Number of samples to generate.
-            theta (dict or tuple): (rho, nu) parameters.
+            theta (dict or np.ndarray): Correlation parameter(s).
 
         Returns:
             np.ndarray: Samples of shape (size, 2) in (0, 1).
         """
-        rho, nu = self.theta_to_params(theta)
+        # Generate standard normal samples
 
-        # Generate from bivariate t distribution
-        z = np.random.multivariate_normal([0, 0], [[1, rho], [rho, 1]], size=size)
-        w = np.random.gamma(nu / 2, 2 / nu, size=size)
+        z1 = np.random.uniform(size=size)
+        z2 = np.random.uniform(size=size)
 
-        # Scale by chi-squared random variable
-        t_samples = z / np.sqrt(w[:, np.newaxis])
-
-        # Transform to uniform marginals using the t CDF
-        u = st.t.cdf(t_samples[:, 0], df=nu)
-        v = st.t.cdf(t_samples[:, 1], df=nu)
-
-        return np.column_stack((u, v))
+        x = hinv(z1, z2, theta, un=2)
+        
+        return x
 
     def pdf(self, y, theta):
         return np.exp(self.logpdf(y, theta))

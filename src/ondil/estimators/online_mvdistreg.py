@@ -1752,11 +1752,18 @@ class MultivariateOnlineDistributionalRegressionPath(
                         
                         sel = (~np.isnan(wt)) & (wt > 0)
 
-                        if not np.any(sel):
-                            wt = ((1 + theta[a][p] ** 2) / (1 - theta[a][p] ** 2) ** 2).squeeze()
-                            wt = (dl1_link * self.distribution.param_link_function_derivative(tau[a][p],param=p).squeeze()) ** 2 * wt
+                        if np.isscalar(wt) or wt.size == 1:
+                            # Handle scalar case
+                            if not sel or wt <= 0 or np.isnan(wt):
+                                wt = ((1 + theta[a][p] ** 2) / (1 - theta[a][p] ** 2) ** 2).squeeze()
+                                wt = (dl1_link * self.distribution.param_link_function_derivative(tau[a][p],param=p).squeeze()) ** 2 * wt
                         else:
-                            wt[~sel] = np.mean(wt[sel])
+                            # Handle array case
+                            if not np.any(sel):
+                                wt = ((1 + theta[a][p] ** 2) / (1 - theta[a][p] ** 2) ** 2).squeeze()
+                                wt = (dl1_link * self.distribution.param_link_function_derivative(tau[a][p],param=p).squeeze()) ** 2 * wt
+                            else:
+                                wt[~sel] = np.mean(wt[sel])
 
                         # Compute quantiles for clipping
                         ratio = u / wt

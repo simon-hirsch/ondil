@@ -122,18 +122,23 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
 
     def rvs(self, size, theta):
         """
-        Generate random samples from the bivariate Gumbel copula.
+        Generate random samples from the bivariate normal copula.
 
         Args:
             size (int): Number of samples to generate.
-            theta (dict or np.ndarray): Gumbel parameter(s).
+            theta (dict or np.ndarray): Correlation parameter(s).
 
         Returns:
             np.ndarray: Samples of shape (size, 2) in (0, 1).
         """
-        # Use rejection sampling or other methods for Gumbel copula
-        # This is a simplified implementation
-        raise NotImplementedError("Gumbel copula sampling not implemented")
+        # Generate standard normal samples
+
+        z1 = np.random.uniform(size=size)
+        z2 = np.random.uniform(size=size)
+
+        x = hinv(z1, z2, theta, un=2)
+        
+        return x
 
     def pdf(self, y, theta):
         return np.exp(self.logpdf(y, theta))

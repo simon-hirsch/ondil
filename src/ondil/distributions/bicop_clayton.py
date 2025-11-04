@@ -118,11 +118,24 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         raise NotImplementedError("Not implemented for Clayton copula.")
 
     def rvs(self, size, theta):
-        theta = self.theta_to_params(theta)
-        u = np.random.uniform(size=size)
-        w = np.random.uniform(size=size)
-        v = (w ** (-theta / (1 + theta)) * (u ** (-theta) - 1) + 1) ** (-1 / theta)
-        return np.column_stack((u, v))
+        """
+        Generate random samples from the bivariate normal copula.
+
+        Args:
+            size (int): Number of samples to generate.
+            theta (dict or np.ndarray): Correlation parameter(s).
+
+        Returns:
+            np.ndarray: Samples of shape (size, 2) in (0, 1).
+        """
+        # Generate standard normal samples
+
+        z1 = np.random.uniform(size=size)
+        z2 = np.random.uniform(size=size)
+
+        x = hinv(z1, z2, theta, un=1)
+        
+        return x
 
     def logcdf(self, y, theta):
         raise NotImplementedError("Not implemented for Clayton copula.")
@@ -348,7 +361,6 @@ def _hinv_numerical(u: np.ndarray, v: np.ndarray, theta: np.ndarray, family_code
     
     # Create dummy BivariateCopulaClayton instance to access hfunc
     temp_copula = BivariateCopulaClayton(family_code=family_code)
-    print(x0,v,theta,un,family_code)
     # Evaluate at boundaries
   
     fl = (temp_copula.hfunc(x0, v, theta, un, family_code) - u).reshape(-1,1)
@@ -374,7 +386,6 @@ def _hinv_numerical(u: np.ndarray, v: np.ndarray, theta: np.ndarray, family_code
             
         # Only update active elements
         ans[active] = (x0[active] + x1[active]) / 2.0
-
 
         val = temp_copula.hfunc(ans, v, theta, un, family_code) - u
 

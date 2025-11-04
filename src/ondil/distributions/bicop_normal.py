@@ -121,18 +121,14 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         Returns:
             np.ndarray: Samples of shape (size, 2) in (0, 1).
         """
-
         # Generate standard normal samples
-        z1 = np.random.normal(size=size)
-        z2 = np.random.normal(size=size)
-        x = z1
-        y = theta * z1 + np.sqrt(1 - theta**2) * z2
 
-        # Transform to uniform marginals using the normal CDF
-        u = st.norm.cdf(x)
-        v = st.norm.cdf(y)
+        z1 = np.random.uniform(size=size)
+        z2 = np.random.uniform(size=size)
+
+        x = hinv(z1, z2, theta, un=1)
         
-        return np.column_stack((u, v))
+        return x
 
     def pdf(self, y, theta):
         return np.exp(self.logpdf(y, theta))
