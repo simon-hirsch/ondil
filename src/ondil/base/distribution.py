@@ -438,7 +438,6 @@ class CopulaMixin(ABC):
 
 
 class BivariateCopulaMixin(ABC):
-
     def __init__(self, links, param_links: dict[int, LinkFunction]) -> None:
         self.links = links
         self.param_links = param_links
@@ -464,7 +463,6 @@ class BivariateCopulaMixin(ABC):
         k: int = 0,
         d: int = 0,
     ) -> np.ndarray:
-
         return self.links[param].element_link(y)
 
     def element_link_function_derivative(
@@ -521,31 +519,18 @@ class BivariateCopulaMixin(ABC):
         fitted = self.flat_to_cube(eta, param=param)
         fitted = self.link_inverse(fitted, param=param)
         return self.log_likelihood(y, theta={**theta, param: fitted})
-    
-    def param_link_function(self, y, param=0):
 
+    def param_link_function(self, y, param=0):
         return self.param_links[param].link(y)
 
-
-
     def param_link_inverse(self, y, param=0):
-
         return self.param_links[param].inverse(y)
 
-
-
     def param_link_function_derivative(self, y, param=0):
-
         return self.param_links[param].link_derivative(y)
 
-
-
     def param_link_function_second_derivative(self, y, param=0):
-
         return self.param_links[param].link_second_derivative(y)
 
-
-
     def param_link_inverse_derivative(self, y, param=0):
-
         return self.param_links[param].inverse_derivative(y)

@@ -31,7 +31,7 @@ class Log(LinkFunction):
         return 1 / np.clip(x, 1e-6, None)
 
     def link_second_derivative(self, x: np.ndarray) -> np.ndarray:
-        return -1 / np.clip(x, 1e-6, None)**2
+        return -1 / np.clip(x, 1e-6, None) ** 2
 
 
 class LogShiftValue(LinkFunction):
