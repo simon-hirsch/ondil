@@ -1,9 +1,12 @@
 # Author Simon Hirsch
 # MIT Licence
-from typing import Dict
+import math
+from math import exp, fabs, log
+from typing import Dict, List, Tuple
 
 import numpy as np
 import scipy.special as sp
+from scipy.special import beta as betafunc, betaln as lbeta, digamma, polygamma
 import scipy.stats as st
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
@@ -789,13 +792,6 @@ def _derivative_2nd_nu(y, rho, nu):
 
 #     return deriv.squeeze()
 
-
-import math
-from math import exp, fabs, log
-from typing import List, Tuple
-
-import numpy as np
-from scipy.special import beta as betafunc, betaln as lbeta, digamma, polygamma
 
 # Make st.beta a function (alias to scipy.special.beta) so your function works unchanged
 try:
