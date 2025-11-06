@@ -57,7 +57,6 @@ __all__ = [
     "ZeroAdjustedGamma",
     "BivariateCopulaNormal",
     "BivariateCopulaGumbel",
-    "MarginalCopula",
     "BivariateCopulaClayton",
     "BivariateCopulaStudentT",
     "Weibull",
