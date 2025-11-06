@@ -4,7 +4,6 @@ from typing import Dict
 
 import numpy as np
 import scipy.stats as st
-from scipy.optimize import brentq
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
 from ..links import KendallsTauToParameterGumbel, Log

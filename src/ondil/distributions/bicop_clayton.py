@@ -1,6 +1,5 @@
 # Author: Your Name
 # MIT Licence
-from typing import Dict
 
 import numpy as np
 import scipy.stats as st

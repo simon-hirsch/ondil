@@ -1,3 +1,4 @@
+from .display import DiagnosticDisplay
 from .distribution import (
     BivariateCopulaMixin,
     CopulaMixin,
@@ -5,8 +6,6 @@ from .distribution import (
     MultivariateDistributionMixin,
     ScipyMixin,
 )
-from .display import DiagnosticDisplay
-from .distribution import Distribution, MultivariateDistributionMixin, ScipyMixin
 from .estimation_method import EstimationMethod
 from .estimator import Estimator, OndilEstimatorMixin
 from .link import LinkFunction

@@ -11,14 +11,12 @@ from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import check_is_fitted, validate_data
 
-
-from ..base import Distribution, OndilEstimatorMixin, CopulaMixin
+from ..base import CopulaMixin, Distribution, OndilEstimatorMixin
 from ..design_matrix import make_intercept
 from ..distributions import (
-    MultivariateNormalInverseCholesky,
-    BivariateCopulaNormal,
     BivariateCopulaClayton,
     BivariateCopulaGumbel,
+    MultivariateNormalInverseCholesky,
 )
 from ..gram import init_forget_vector
 from ..information_criteria import InformationCriterion

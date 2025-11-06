@@ -790,13 +790,12 @@ def _derivative_2nd_nu(y, rho, nu):
 #     return deriv.squeeze()
 
 
-from math import exp, fabs, log, pow, sqrt
-from typing import List, Sequence, Tuple
+import math
+from math import exp, fabs, log
+from typing import List, Tuple
 
 import numpy as np
-import scipy.stats as st
-from scipy.special import betaln as lbeta, digamma, polygamma, beta as betafunc
-import math
+from scipy.special import beta as betafunc, betaln as lbeta, digamma, polygamma
 
 # Make st.beta a function (alias to scipy.special.beta) so your function works unchanged
 try:
