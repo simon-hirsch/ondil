@@ -132,7 +132,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         z1 = np.random.uniform(size=size)
         z2 = np.random.uniform(size=size)
 
-        x = hinv(z1, z2, theta, un=1)
+        x = self.hinv(z1, z2, theta, un=1)
 
         return x
 
@@ -153,8 +153,6 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
     ) -> np.ndarray:
         UMIN = 1e-12
         UMAX = 1 - 1e-12
-        uc = u.copy()
-        vc = v.copy()
         # Apply clipping using masks
         u_mask_low = u < UMIN
         u_mask_high = u > UMAX

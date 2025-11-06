@@ -125,7 +125,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         z1 = np.random.uniform(size=size)
         z2 = np.random.uniform(size=size)
 
-        x = hinv(z1, z2, theta, un=1)
+        x = self.hinv(z1, z2, theta, un=1)
 
         return x
 

@@ -151,7 +151,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         z1 = np.random.uniform(size=size)
         z2 = np.random.uniform(size=size)
 
-        x = hinv(z1, z2, theta, un=2)
+        x = self.hinv(z1, z2, theta, un=2)
 
         return x
 
