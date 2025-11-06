@@ -1,3 +1,4 @@
+# ruff: noqa: E402, F821, F811
 # %%
 
 import importlib
@@ -28,7 +29,6 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from ondil.src.ondil.distributions.bicop_studentt import BivariateCopulaStudentT
 from src.ondil.distributions import (
     BivariateCopulaNormal,
     BivariateCopulaStudentT,
