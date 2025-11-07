@@ -1,4 +1,5 @@
 # ruff: noqa: E402
+
 from importlib.metadata import version
 from importlib.util import find_spec
 
