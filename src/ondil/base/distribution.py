@@ -35,6 +35,7 @@ class Distribution(ABC):
         """Parameter name for each column of theta."""
         pass
 
+    @property
     def n_params(self) -> int:
         """Each subclass must define 'n_params'."""
         return len(self.parameter_names)
