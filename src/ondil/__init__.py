@@ -1,5 +1,5 @@
 # ruff: noqa: E402
-
+from importlib.metadata import version
 from importlib.util import find_spec
 
 HAS_PANDAS = False
@@ -28,6 +28,8 @@ from . import (
     utils,
     warnings,
 )
+
+__version__ = version("ondil")
 
 __all__ = [
     "base",
