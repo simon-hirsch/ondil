@@ -155,6 +155,21 @@ class Distribution(ABC):
     ) -> np.ndarray:
         """Calculate the initial values for the GAMLSS fit."""
 
+    def quantile(self, q: np.ndarray, theta: np.ndarray) -> np.ndarray:
+        """
+        Compute the quantile function for the given data.
+
+        This is a alias for the `ppf` method.
+
+        Args:
+            q (np.ndarray): The quantiles to compute.
+            theta (np.ndarray): The parameters of the distribution.
+
+        Returns:
+            np.ndarray: The quantiles corresponding to the given probabilities.
+        """
+        return self.ppf(q, theta)
+
     @abstractmethod
     def calculate_conditional_initial_values(
         self,
