@@ -1,6 +1,10 @@
 from .beta import Beta
 from .betainflated import BetaInflated
 from .betainflatedzero import BetaInflatedZero
+from .bicop_clayton import BivariateCopulaClayton
+from .bicop_gumbel import BivariateCopulaGumbel
+from .bicop_normal import BivariateCopulaNormal
+from .bicop_studentt import BivariateCopulaStudentT
 from .exponential import Exponential
 from .gamma import Gamma
 from .gumbel import Gumbel
@@ -23,11 +27,6 @@ from .skew_t import SkewT, SkewTMeanStd
 from .studentt import StudentT
 from .weibull import Weibull
 from .zeroadjustedgamma import ZeroAdjustedGamma
-from .bicop_normal import BivariateCopulaNormal
-from .bicop_gumbel import BivariateCopulaGumbel
-from .bicop_clayton import BivariateCopulaClayton
-from .bicop_studentt import BivariateCopulaStudentT
-
 
 __all__ = [
     "Normal",
@@ -58,7 +57,6 @@ __all__ = [
     "ZeroAdjustedGamma",
     "BivariateCopulaNormal",
     "BivariateCopulaGumbel",
-    "MarginalCopula",
     "BivariateCopulaClayton",
     "BivariateCopulaStudentT",
     "Weibull",

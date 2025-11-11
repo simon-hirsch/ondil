@@ -1,6 +1,5 @@
 # Author: Your Name
 # MIT Licence
-from typing import Dict
 
 import numpy as np
 import scipy.stats as st
@@ -152,17 +151,14 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
     def hfunc(
         self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code: int
     ) -> np.ndarray:
-
         UMIN = 1e-12
         UMAX = 1 - 1e-12
-        uc = u.copy()
-        vc = v.copy()
         # Apply clipping using masks
         u_mask_low = u < UMIN
         u_mask_high = u > UMAX
         v_mask_low = v < UMIN
         v_mask_high = v > UMAX
-        
+
         u = np.where(u_mask_low, UMIN, u)
         u = np.where(u_mask_high, UMAX, u)
         v = np.where(v_mask_low, UMIN, v)
@@ -190,7 +186,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
             mask_3 = (rotation == 3).squeeze()
             v_rot[mask_3] = 1 - v[mask_3]
             theta[mask_3] = -theta[mask_3]
-        else: 
+        else:
             # 90° rotation
             mask_2 = (rotation == 2).squeeze()
             v_rot[mask_2] = 1 - v[mask_2]
@@ -221,28 +217,30 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         if un == 1:
             h[mask_1] = 1 - h[mask_1]  # 180° rotation
             h[mask_2] = 1 - h[mask_2]  # 270° rotation
-        else: 
+        else:
             h[mask_1] = 1 - h[mask_1]  # 180° rotation
             h[mask_3] = 1 - h[mask_3]  # 270° rotation
 
         return h.squeeze()
 
-    def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code: int) -> np.ndarray:
-            """
-            Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
+    def hinv(
+        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code: int
+    ) -> np.ndarray:
+        """
+        Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
 
-            Args:
-                u (np.ndarray): Array of shape (n,) with values in (0, 1).
-                v (np.ndarray): Array of shape (n,) with values in (0, 1).
-                theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
-                un (int): Determines which conditional to compute.
+        Args:
+            u (np.ndarray): Array of shape (n,) with values in (0, 1).
+            v (np.ndarray): Array of shape (n,) with values in (0, 1).
+            theta (np.ndarray or float): Correlation parameter(s), shape (n,) or scalar.
+            un (int): Determines which conditional to compute.
 
-            Returns:
-                np.ndarray: Array of shape (n,) with inverse conditional probabilities.
-            """
+        Returns:
+            np.ndarray: Array of shape (n,) with inverse conditional probabilities.
+        """
 
-            UMIN = 1e-12
-            UMAX = 1 - 1e-12
+        UMIN = 1e-12
+        UMAX = 1 - 1e-12
 
             # Apply clipping using masks
             u_mask_low = u < UMIN
@@ -258,15 +256,15 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
             v = v.reshape(-1, 1)
             theta = theta.copy()      # <- prevents in-place mutation of caller's array
 
-            XEPS = 1e-4
-            rotation = get_effective_rotation(theta, family_code)
-            # Apply rotation transformations vectorized
-            u_rot, v_rot = u.copy(), v.copy()
+        XEPS = 1e-4
+        rotation = get_effective_rotation(theta, family_code)
+        # Apply rotation transformations vectorized
+        u_rot, v_rot = u.copy(), v.copy()
 
-            # 180° rotation (survival)
-            mask_1 = rotation == 1
-            u_rot[mask_1] = 1 - u[mask_1]
-            v_rot[mask_1] = 1 - v[mask_1]
+        # 180° rotation (survival)
+        mask_1 = rotation == 1
+        u_rot[mask_1] = 1 - u[mask_1]
+        v_rot[mask_1] = 1 - v[mask_1]
 
             if un == 1:
               # 90° rotation
@@ -315,37 +313,41 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
                 v_large = v_rot[mask_large]
                 theta_large = theta[mask_large]
 
-                hinv[mask_large] = _hinv_numerical(u_large, v_large, theta_large, self.family_code, un = un)
+            hinv[mask_large] = _hinv_numerical(
+                u_large, v_large, theta_large, self.family_code, un=un
+            )
+
+        # Clip output for numerical stability
+        # Ensure results are in [0,1] using masks
+
+        h_mask_low = hinv < 0
+        h_mask_high = hinv > 1
+        hinv = np.where(h_mask_low, 0, hinv)
+        hinv = np.where(h_mask_high, 1, hinv)
+
+        if un == 1:
+            hinv[mask_1] = 1 - hinv[mask_1]  # 180° rotation
+            hinv[mask_2] = 1 - hinv[mask_2]  # 270° rotation
+        else:
+            hinv[mask_1] = 1 - hinv[mask_1]  # 180° rotation
+            hinv[mask_3] = 1 - hinv[mask_3]  # 270° rotation
+
+        return hinv.squeeze()
 
 
-            # Clip output for numerical stability
-            # Ensure results are in [0,1] using masks
-
-            h_mask_low = hinv < 0
-            h_mask_high = hinv > 1
-            hinv = np.where(h_mask_low, 0, hinv)
-            hinv = np.where(h_mask_high, 1, hinv)
-
-            if un == 1:
-                hinv[mask_1] = 1 - hinv[mask_1]  # 180° rotation
-                hinv[mask_2] = 1 - hinv[mask_2]  # 270° rotation
-            else: 
-                hinv[mask_1] = 1 - hinv[mask_1]  # 180° rotation
-                hinv[mask_3] = 1 - hinv[mask_3]  # 270° rotation
-        
-            return hinv.squeeze()
-
-def _hinv_numerical(u: np.ndarray, v: np.ndarray, theta: np.ndarray, family_code: int, un: int) -> np.ndarray:
+def _hinv_numerical(
+    u: np.ndarray, v: np.ndarray, theta: np.ndarray, family_code: int, un: int
+) -> np.ndarray:
     """
     Vectorized numerical inversion of h-function using bisection method.
-    
+
     Args:
         u (np.ndarray): Target values in (0, 1)
         v (np.ndarray): Conditioning values in (0, 1)
         theta (np.ndarray): Copula parameters
         family_code (int): Family code
         un (int): Determines which conditional to compute
-        
+
     Returns:
         np.ndarray: Inverse conditional probabilities
     """
@@ -357,52 +359,51 @@ def _hinv_numerical(u: np.ndarray, v: np.ndarray, theta: np.ndarray, family_code
     # Initialize bounds as arrays matching the shape of theta
     x0 = np.full_like(theta, UMIN, dtype=float)
     x1 = np.full_like(theta, UMAX, dtype=float)
-    
+
     # Create dummy BivariateCopulaClayton instance to access hfunc
     temp_copula = BivariateCopulaClayton(family_code=family_code)
     # Evaluate at boundaries
-  
-    fl = (temp_copula.hfunc(x0, v, theta, un, family_code) - u).reshape(-1,1)
-    fh = (temp_copula.hfunc(x1, v, theta, un, family_code) - u).reshape(-1,1)
 
+    fl = (temp_copula.hfunc(x0, v, theta, un, family_code) - u).reshape(-1, 1)
+    fh = (temp_copula.hfunc(x1, v, theta, un, family_code) - u).reshape(-1, 1)
 
     # Initialize result
     ans = (x0 + x1) / 2.0
-    
+
     # Check if solution is at boundaries
     at_lower = np.abs(fl) <= tol
     at_upper = np.abs(fh) <= tol
     ans = np.where(at_lower, x0, ans)
     ans = np.where(at_upper, x1, ans)
-    
+
     # Track which elements still need iteration
     active = ~(at_lower | at_upper).squeeze()
-    
+
     # Bisection method
     for it in range(max_iter):
         if not np.any(active):
             break
-            
+
         # Only update active elements
         ans[active] = (x0[active] + x1[active]) / 2.0
 
         val = temp_copula.hfunc(ans, v, theta, un, family_code) - u
 
-        
         # Check convergence
         converged = (np.abs(val) <= tol) | (np.abs(x1 - x0) <= tol)
         active = active & ~converged
-        
+
         # Update intervals for active elements
         update_upper = active & (val > 0.0)
         update_lower = active & (val <= 0.0)
-        
+
         x1 = np.where(update_upper, ans, x1)
         fh = np.where(update_upper, val, fh)
         x0 = np.where(update_lower, ans, x0)
         fl = np.where(update_lower, val, fl)
 
     return ans.squeeze()
+
 
 ##########################################################
 # Helper functions for the log-likelihood and derivatives #
@@ -441,7 +442,6 @@ def get_effective_rotation(theta_values: np.ndarray, family_code: int) -> np.nda
 
 
 def _log_likelihood(y, theta, family_code=None):
-
     theta = np.asarray(theta).copy()  # <- prevents in-place mutation of caller's array
 
     u = y[:, 0].reshape(-1, 1)
@@ -584,8 +584,7 @@ def _derivative_2nd(y, theta, family_code):
     v_rot[mask_2] = 1 - v[mask_2]
     theta[mask_2] = -theta[mask_2]
 
-
-    mask_3 = (rotation == 3)
+    mask_3 = rotation == 3
     u_rot[mask_3] = 1 - u[mask_3]
     theta[mask_3] = -theta[mask_3]
 

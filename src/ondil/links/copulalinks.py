@@ -1,8 +1,7 @@
-from typing import Tuple
-
 import numpy as np
 
 from ..base import LinkFunction
+
 
 class FisherZLink(LinkFunction):
     """
@@ -18,7 +17,7 @@ class FisherZLink(LinkFunction):
         2 * atanh(x) = log((1 + x) / (1 - x)), so atanh(x) = 0.5 * log((1 + x) / (1 - x)).
         Thus, Fisher Z transform is exactly atanh(x), and 2 * atanh(x) = log((1 + x) / (1 - x)).
     """
-    
+
     # The Fisher Z transform is defined for x in (-1, 1), exclusive.
     link_support = (np.nextafter(-1, 0), np.nextafter(1, 0))
 
@@ -26,7 +25,7 @@ class FisherZLink(LinkFunction):
         pass
 
     def link(self, x: np.ndarray) -> np.ndarray:
-        return np.log((1+x)/(1-x))*(1 - 1e-5)
+        return np.log((1 + x) / (1 - x)) * (1 - 1e-5)
 
     def inverse(self, x: np.ndarray) -> np.ndarray:
         # Ensure output is strictly within (-1, 1)
@@ -44,11 +43,12 @@ class FisherZLink(LinkFunction):
         sinh_x = np.sinh(x)
         # Avoid division by zero
         sinh_x_safe = np.where(np.abs(sinh_x) < 1e-10, 1e-10, sinh_x)
-        return -4.0 * sinh_half**4 * (1.0 / sinh_x_safe)**3
-    
+        return -4.0 * sinh_half**4 * (1.0 / sinh_x_safe) ** 3
+
     def inverse_derivative(self, x: np.ndarray) -> np.ndarray:
         # The derivative of the inverse Fisher Z transform (tanh(x/2)) is 0.5 * sech^2(x/2)
         return 0.5 * (1 / np.cosh(x / 2)) ** 2
+
 
 class GumbelLink(LinkFunction):
     """
@@ -88,7 +88,6 @@ class GumbelLink(LinkFunction):
         return np.exp(x)
 
 
-
 class KendallsTauToParameter(LinkFunction):
     """
     Link function mapping Kendall's tau to the Gaussian copula correlation parameter rho.
@@ -98,6 +97,7 @@ class KendallsTauToParameter(LinkFunction):
     The inverse is:
         tau = (2/pi) * arcsin(rho)
     """
+
     # The tau parameter is in (-1, 1), but for the Gaussian copula, rho is also in (-1, 1).
     # For practical numerical stability, avoid endpoints.
     link_support = (np.nextafter(-1, 0), np.nextafter(1, 0))
@@ -123,7 +123,7 @@ class KendallsTauToParameter(LinkFunction):
 
     def inverse_derivative(self, x: np.ndarray) -> np.ndarray:
         # Derivative of (2/pi) * arcsin(x) w.r.t x
-        return (2 / np.pi) / np.sqrt(1 - x ** 2)
+        return (2 / np.pi) / np.sqrt(1 - x**2)
 
 
 class KendallsTauToParameterGumbel(LinkFunction):
@@ -144,7 +144,7 @@ class KendallsTauToParameterGumbel(LinkFunction):
         pass
 
     def link(self, x: np.ndarray) -> np.ndarray:
-        return x/np.abs(x) - 1/x
+        return x / np.abs(x) - 1 / x
 
     def inverse(self, x: np.ndarray) -> np.ndarray:
         return x / ((1 - np.abs(x)) * np.abs(x))
@@ -153,12 +153,12 @@ class KendallsTauToParameterGumbel(LinkFunction):
         # Derivative of x/|x| - 1/x w.r.t x
         # d/dx(x/|x|) = 0 for x != 0 (since x/|x| = sign(x))
         # d/dx(-1/x) = 1/x^2
-        return 1 / (1-np.abs(x))**2
+        return 1 / (1 - np.abs(x)) ** 2
 
     def link_second_derivative(self, x: np.ndarray) -> np.ndarray:
         # Second derivative of x/|x| - 1/x w.r.t x
         # d²/dx²(-1/x) = -2/x^3
-        return -2*np.sign(x)/(np.abs(x)-1)**3
+        return -2 * np.sign(x) / (np.abs(x) - 1) ** 3
 
     def inverse_derivative(self, x: np.ndarray) -> np.ndarray:
         # Derivative of x/((1-|x|)*|x|) w.r.t x
@@ -195,18 +195,15 @@ class KendallsTauToParameterClayton(LinkFunction):
     def link_derivative(self, x: np.ndarray) -> np.ndarray:
         # Derivative of x/(2 + |x|) w.r.t x
         abs_x = np.abs(x)
-        return 2 / (1 - abs_x)**2
+        return 2 / (1 - abs_x) ** 2
 
     def link_second_derivative(self, x: np.ndarray) -> np.ndarray:
         # Second derivative of x/(2 + |x|) w.r.t x
         abs_x = np.abs(x)
         sign_x = np.sign(x)
-        return -4 * sign_x /  (abs_x -1)**3
+        return -4 * sign_x / (abs_x - 1) ** 3
 
     def inverse_derivative(self, x: np.ndarray) -> np.ndarray:
         # Derivative of 2*x/(1 - |x|) w.r.t x
         abs_x = np.abs(x)
-        return 2 / (1 - abs_x)**2
-
-
-
+        return 2 / (1 - abs_x) ** 2

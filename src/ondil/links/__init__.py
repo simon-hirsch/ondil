@@ -1,3 +1,10 @@
+from .copulalinks import (
+    FisherZLink,
+    GumbelLink,
+    KendallsTauToParameter,
+    KendallsTauToParameterClayton,
+    KendallsTauToParameterGumbel,
+)
 from .identitylinks import Identity
 from .logitlinks import Logit
 from .loglinks import Log, LogIdent, LogShiftTwo, LogShiftValue
@@ -8,8 +15,6 @@ from .softpluslinks import (
     InverseSoftPlusShiftValue,
 )
 from .sqrtlinks import Sqrt, SqrtShiftTwo, SqrtShiftValue
-from .copulalinks import FisherZLink, KendallsTauToParameter, GumbelLink, KendallsTauToParameterGumbel, KendallsTauToParameterClayton
-
 
 __all__ = [
     "Identity",
@@ -31,5 +36,5 @@ __all__ = [
     "KendallsTauToParameter",
     "GumbelLink",
     "KendallsTauToParameterGumbel",
-    "KendallsTauToParameterClayton"
+    "KendallsTauToParameterClayton",
 ]

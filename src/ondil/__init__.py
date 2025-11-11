@@ -30,7 +30,8 @@ from . import (
     warnings,
 )
 
-    
+__version__ = version("ondil")
+
 __all__ = [
     "base",
     "diagnostics",

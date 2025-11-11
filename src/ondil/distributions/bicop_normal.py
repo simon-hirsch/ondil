@@ -11,7 +11,6 @@ from ..types import ParameterShapes
 
 
 class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
-
     corresponding_gamlss: str = None
     parameter_names = {0: "rho"}
     parameter_support = {0: (-1, 1)}
@@ -126,8 +125,8 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         z1 = np.random.uniform(size=size)
         z2 = np.random.uniform(size=size)
 
-        x = hinv(z1, z2, theta, un=1)
-        
+        x = self.hinv(z1, z2, theta, un=1)
+
         return x
 
     def pdf(self, y, theta):
@@ -177,7 +176,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         u_mask_high = u > UMAX
         v_mask_low = v < UMIN
         v_mask_high = v > UMAX
-        
+
         u = np.where(u_mask_low, UMIN, u)
         u = np.where(u_mask_high, UMAX, u)
         v = np.where(v_mask_low, UMIN, v)
@@ -189,8 +188,11 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         denom = np.sqrt(1.0 - theta**2)
         x = (qnorm_u - theta * qnorm_v) / denom
 
-        h = np.where(np.isfinite(x), st.norm.cdf(x), 
-                np.where((qnorm_u - theta * qnorm_v) < 0, 0, 1))
+        h = np.where(
+            np.isfinite(x),
+            st.norm.cdf(x),
+            np.where((qnorm_u - theta * qnorm_v) < 0, 0, 1),
+        )
 
         # Ensure results are in [0,1] using masks
         h_mask_low = h < 0
@@ -199,9 +201,10 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         h = np.where(h_mask_high, 1, h)
 
         return h.squeeze()
-    
 
-    def hinv(self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int) -> np.ndarray:
+    def hinv(
+        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int
+    ) -> np.ndarray:
         """
         Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
 
@@ -223,12 +226,12 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         u_mask_high = u > UMAX
         v_mask_low = v < UMIN
         v_mask_high = v > UMAX
-        
+
         u = np.where(u_mask_low, UMIN, u)
         u = np.where(u_mask_high, UMAX, u)
         v = np.where(v_mask_low, UMIN, v)
         v = np.where(v_mask_high, UMAX, v)
-        
+
         qnorm_u = st.norm.ppf(u).reshape(-1, 1)
         qnorm_v = st.norm.ppf(v).reshape(-1, 1)
 
@@ -252,7 +255,6 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
 
 
 def _log_likelihood(y, theta):
-
     M = y.shape[0]
 
     f = np.empty(M)
@@ -310,7 +312,6 @@ def _derivative_1st(y, theta):
 
 
 def _derivative_2nd(y, theta):
-
     M = y.shape[0]
     deriv = np.empty((M, 1), dtype=np.float64)
 
