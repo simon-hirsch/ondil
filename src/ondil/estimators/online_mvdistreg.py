@@ -1569,7 +1569,12 @@ class MultivariateOnlineDistributionalRegressionPath(
                             @ self.coef_[p][k][a, :]
                         ).squeeze()
                     out[a][p] = self.distribution.flat_to_cube(array, p)
-                    out[a][p] = self.distribution.link_inverse(out[a][p], p)
+                   
+                    if not issubclass(self.distribution.__class__, CopulaMixin) or (issubclass(self.distribution.__class__, CopulaMixin) and p == 1):
+                                            out[a][p] = self.distribution.link_inverse(out[a][p], p)
+                    if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
+                        out[a][p] = np.tanh(out[a][p] / 2)*(1-1e-8)
+                        out[a][p] = self.distribution.param_link_inverse(out[a][p]*(1-1e-8), param=0)*(1 - 1e-8) 
             else:
                 out[a] = copy.deepcopy(out[self.optimal_adr_])
             for p in range(self.distribution.n_params):
@@ -1585,9 +1590,11 @@ class MultivariateOnlineDistributionalRegressionPath(
                     ).squeeze()
                 
                     out[a][p] = self.distribution.flat_to_cube(array, p)
-                    out[a][p] = self.distribution.link_inverse(out[a][p], p)
-
-
+                    if not issubclass(self.distribution.__class__, CopulaMixin) or (issubclass(self.distribution.__class__, CopulaMixin) and p == 1):
+                        out[a][p] = self.distribution.link_inverse(out[a][p], p)
+                    if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
+                        out[a][p] = np.tanh(out[a][p] / 2)*(1-1e-8)
+                        out[a][p] = self.distribution.param_link_inverse(out[a][p]*(1-1e-8), param=0)*(1 - 1e-8)
 
         return out
 
@@ -1694,7 +1701,11 @@ class MultivariateOnlineDistributionalRegressionPath(
         for inner_iteration in range(self.max_iterations_inner):
             # If the likelihood is at some point decreasing, we're breaking
             # Hence we need to store previous iteration values:
-            if (inner_iteration > 0) | (outer_iteration > 0):
+
+            if (inner_iteration == 0) and (outer_iteration == 0):
+                eta = self._make_initial_eta(theta)
+
+            elif (inner_iteration > 0) | (outer_iteration > 0):
                 prev_theta = copy.copy(theta)
                 prev_x_gram = copy.copy(self._x_gram[p])
                 prev_y_gram = copy.copy(self._y_gram[p])
@@ -1712,17 +1723,13 @@ class MultivariateOnlineDistributionalRegressionPath(
                     ))
 
                 else:
+                    eta = self.distribution.link_function(theta[a][p], p)
+                    eta = self.distribution.cube_to_flat(eta, param=p)
 
                     if (issubclass(self.distribution.__class__, CopulaMixin) and p == 0):
-                        if (inner_iteration == 0) and (outer_iteration == 0):
-                            tau = self._make_initial_eta(theta)
-                            tau[a][p] = self.distribution.set_initial_guess(theta[a][p], p)
-                            eta = self._make_initial_eta(theta)
-                            theta[a][p] = self.distribution.param_link_inverse(tau[a][p], p)
-                       
-                        else:
-                            eta = self._make_initial_eta(theta)
-                            tau = self._make_initial_eta(theta)
+                      
+                        eta = self._make_initial_eta(theta)
+                        tau = self._make_initial_eta(theta)
 
                         tau[a][p] = self.distribution.param_link_function(theta[a][p], p)
                         eta[a][p] = 2*np.arctanh(np.clip(tau[a][p], -1+1e-8, 1-1e-8))
@@ -1734,8 +1741,8 @@ class MultivariateOnlineDistributionalRegressionPath(
                             y, theta=theta[a], param=p, k=k
                         )
 
-                        dl1_link = 1.0 / (1.0 + np.cosh(np.clip(eta[a][p], -200, 200))).squeeze()
-                        sinh_half = np.sinh(np.clip(eta[a][p] / 2.0, -200, 200))
+                        dl1_link = 1.0 / (1.0 + np.cosh(eta[a][p])).squeeze()
+                        sinh_half = np.sinh(eta[a][p] / 2.0)
                         sinh_x = np.sinh(eta[a][p])
                         sinh_x_safe = np.where(np.abs(sinh_x) < 1e-10, 1e-10, sinh_x)
                         dl2_link = (-4.0 * sinh_half**4 * (1.0 / sinh_x_safe)**3).squeeze()

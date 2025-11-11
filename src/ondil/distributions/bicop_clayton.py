@@ -117,7 +117,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
     def ppf(self, q, theta):
         raise NotImplementedError("Not implemented for Clayton copula.")
 
-    def rvs(self, size, theta):
+    def rvs(self, size, theta, family_code=None):
         """
         Generate random samples from the bivariate normal copula.
 
@@ -133,7 +133,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         z1 = np.random.uniform(size=size)
         z2 = np.random.uniform(size=size)
 
-        x = hinv(z1, z2, theta, un=1)
+        x = self.hinv(z1, z2, theta, un=1, family_code=family_code)
         
         return x
 
@@ -168,7 +168,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         v = np.where(v_mask_low, UMIN, v)
         v = np.where(v_mask_high, UMAX, v)
 
-        theta = np.asarray(theta).copy()      # <- prevents in-place mutation of caller's array
+        theta = theta.copy()      # <- prevents in-place mutation of caller's array
         u = u.reshape(-1, 1)
         v = v.reshape(-1, 1)
 
@@ -176,30 +176,28 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         rotation = get_effective_rotation(theta, family_code)
         # Apply rotation transformations vectorized
         u_rot, v_rot = u.copy(), v.copy()
-
         # 180° rotation (survival)
-        mask_1 = rotation == 1
+        mask_1 = (rotation == 1).squeeze()
         u_rot[mask_1] = 1 - u[mask_1]
         v_rot[mask_1] = 1 - v[mask_1]
-
         if un == 1:
               # 90° rotation
-            mask_2 = rotation == 2
+            mask_2 = (rotation == 2).squeeze()
             u_rot[mask_2] = 1 - u[mask_2]
             theta[mask_2] = -theta[mask_2]
 
             # 270° rotation
-            mask_3 = (rotation == 3)
+            mask_3 = (rotation == 3).squeeze()
             v_rot[mask_3] = 1 - v[mask_3]
             theta[mask_3] = -theta[mask_3]
         else: 
             # 90° rotation
-            mask_2 = rotation == 2
+            mask_2 = (rotation == 2).squeeze()
             v_rot[mask_2] = 1 - v[mask_2]
             theta[mask_2] = -theta[mask_2]
 
             # 270° rotation
-            mask_3 = (rotation == 3)
+            mask_3 = (rotation == 3).squeeze()
             u_rot[mask_3] = 1 - u[mask_3]
             theta[mask_3] = -theta[mask_3]
 
@@ -211,7 +209,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         t2 = np.maximum(t2, UMIN)
         t3 = -1.0 - 1.0 / theta
         h = t1 * (t2**t3)
-        mask_4 = theta < 1e-4
+        mask_4 = (theta < 1e-4).squeeze()
         h[mask_4] = u_rot[mask_4]
 
         # Ensure results are in [0,1] using masks
@@ -258,6 +256,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
             v = np.where(v_mask_high, UMAX, v)
             u = u.reshape(-1, 1)
             v = v.reshape(-1, 1)
+            theta = theta.copy()      # <- prevents in-place mutation of caller's array
 
             XEPS = 1e-4
             rotation = get_effective_rotation(theta, family_code)
@@ -272,22 +271,22 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
             if un == 1:
               # 90° rotation
                 mask_2 = rotation == 2
-                u_rot[mask_2] = 1 - u[mask_2]
+                u_rot[mask_2] = 1 - u_rot[mask_2]
                 theta[mask_2] = -theta[mask_2]
 
                 # 270° rotation
                 mask_3 = (rotation == 3)
-                v_rot[mask_3] = 1 - v[mask_3]
+                v_rot[mask_3] = 1 - v_rot[mask_3]
                 theta[mask_3] = -theta[mask_3]
             else: 
             # 90° rotation
                 mask_2 = rotation == 2
-                v_rot[mask_2] = 1 - v[mask_2]
+                v_rot[mask_2] = 1 - v_rot[mask_2]
                 theta[mask_2] = -theta[mask_2]
 
                 # 270° rotation
                 mask_3 = (rotation == 3)
-                u_rot[mask_3] = 1 - u[mask_3]
+                u_rot[mask_3] = 1 - u_rot[mask_3]
                 theta[mask_3] = -theta[mask_3]
 
             # Prepare output array
@@ -308,7 +307,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
                 term2 = np.power(term1, -theta_med / (theta_med + 1.0))
                 term3 = 1.0 - np.power(v_med, -theta_med)
                 hinv[mask_medium] = np.power(term2 + term3, -1.0 / theta_med)
-            
+
             # Case 3: theta >= 75 (numerical inversion fallback)
             mask_large = (~mask_small) & (~mask_medium)
             if np.any(mask_large):
