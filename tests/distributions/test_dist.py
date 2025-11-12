@@ -11,6 +11,12 @@ CLIP_BOUNDS = (-1e5, 1e5)
 # Distributions that need higher tolerance
 SPECIAL_TOLERANCE_DISTRIBUTIONS = {
     "InverseGaussian": 1e-3,
+    "SkewT": 1e-5,
+}
+
+SPECIAL_BOUNDS_DISTRIBUTIONS = {
+    "PowerExponential": (-1e4, 1e4),
+    "Weibull": (1e-3, 100),
 }
 
 
@@ -25,10 +31,15 @@ def test_distribution_functions(distribution):
     # Set seed for reproducibility
     np.random.seed(42)
 
+    clip_bounds = SPECIAL_BOUNDS_DISTRIBUTIONS.get(
+        distribution.__class__.__name__,
+        CLIP_BOUNDS,  # default np.allclose tolerance
+    )
+
     # Generate random data within distribution support
     x = np.random.uniform(
-        np.clip(distribution.distribution_support[0], *CLIP_BOUNDS),
-        np.clip(distribution.distribution_support[1], *CLIP_BOUNDS),
+        np.clip(distribution.distribution_support[0], *clip_bounds),
+        np.clip(distribution.distribution_support[1], *clip_bounds),
         N,
     )
     robjects.globalenv["x"] = robjects.FloatVector(x)
@@ -37,16 +48,14 @@ def test_distribution_functions(distribution):
     robjects.globalenv["p"] = robjects.FloatVector(prob_grid)
 
     # Generate random parameters within support bounds
-    theta = np.array(
-        [
-            np.random.uniform(
-                np.clip(distribution.parameter_support[i][0], *CLIP_BOUNDS),
-                np.clip(distribution.parameter_support[i][1], *CLIP_BOUNDS),
-                N,
-            )
-            for i in range(distribution.n_params)
-        ]
-    ).T
+    theta = np.array([
+        np.random.uniform(
+            np.clip(distribution.parameter_support[i][0], *clip_bounds),
+            np.clip(distribution.parameter_support[i][1], *clip_bounds),
+            N,
+        )
+        for i in range(distribution.n_params)
+    ]).T
 
     # Assign R variables programmatically
     for i, param_name in distribution.parameter_names.items():

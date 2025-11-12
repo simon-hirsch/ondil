@@ -1,5 +1,6 @@
 import numpy as np
 import rpy2.robjects as robjects
+
 from ondil.distributions import BetaInflated
 
 
@@ -35,14 +36,12 @@ def test_betainflated_distribution():
     R_list = robjects.r(code)
 
     y = np.array(R_list.rx2("y"))
-    theta = np.array(
-        [
-            R_list.rx2("mu"),  # mu
-            R_list.rx2("sigma"),  # sigma
-            R_list.rx2("nu"),  # nu
-            R_list.rx2("tau"),  # tau
-        ]
-    )
+    theta = np.array([
+        R_list.rx2("mu"),  # mu
+        R_list.rx2("sigma"),  # sigma
+        R_list.rx2("nu"),  # nu
+        R_list.rx2("tau"),  # tau
+    ])
 
     cdf = dist.cdf(y, theta=theta.T)
     pdf = dist.pdf(y, theta=theta.T)

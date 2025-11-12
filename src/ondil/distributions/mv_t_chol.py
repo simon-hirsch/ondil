@@ -12,7 +12,6 @@ from ..types import ParameterShapes
 
 
 class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distribution):
-
     # Covariance Matrix SIGMA
     # Precision Matrix OMEGA
     # Cholesky Factor inv(chol(SIGMA))
@@ -239,7 +238,6 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
         theta: Dict[int, np.ndarray],
         param: int,
     ) -> Dict[int, np.ndarray]:
-
         if param == 1:
             M = y.shape[0]
             residuals = y - theta[0]
