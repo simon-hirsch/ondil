@@ -136,3 +136,21 @@ For the future, the following would be nice:
 The `AutoRegressive` Term in this respect is based on lagged values of $\theta$, not on lagged values of $X$ or $y$.
 
 Lagged values of $y$ could be added as an additional term. Lagged values of $X$ could be post-processed (to be discussed).
+
+# Implementation 
+
+- For the terms, we can create a new module `ondil.terms` where we define the base class `terms`. Each term type can then be implemented as a subclass of this base class.
+- The additive model class is `OnlineStructuredAdditiveDistributionRegressor`. Currently, this class needs to be extended to implement the fitting procedure outlined above.
+
+## Terms
+
+- For the implementation of the update, it is important that we can create copies of the terms without altering the existing ones in place during the update procedure. This should be done carefully to avoid excessive memory usage. 
+- It seems sensible to seperate the terms into a logic and a data component. The logic component implements the methods outlined above, while the data component stores the parameters and hyperparameters of the term. This way, we can create copies of the data component when needed without duplicating the logic component.
+
+### Data Component
+
+- Needs to hold parameters and hyperparameters of the term.
+- Should be easily copyable _WITH OLD OR NEW PARAMETERS_ on demand. A possible option would be to have a data class with `replace` method based on the `dataclasses` module in Python. Running the `replace` method would create a copy of the data class with updated parameters. The logic component would then always refer to the data class for its parameters.
+
+### Logic Component
+
