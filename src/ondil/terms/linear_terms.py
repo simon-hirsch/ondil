@@ -8,7 +8,6 @@ from ..methods import get_estimation_method
 
 
 class LinearTerm(Term):
-
     def __init__(
         self,
         features: np.ndarray | list[int] | Literal["all"],
