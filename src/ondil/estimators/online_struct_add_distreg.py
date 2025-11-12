@@ -10,7 +10,7 @@ from .. import HAS_PANDAS, HAS_POLARS
 from ..base import Distribution, EstimationMethod, OndilEstimatorMixin
 from ..distributions import Normal
 from ..scaler import OnlineScaler
-from ..terms.linear_terms import LinearTerm
+from ..terms.linear_terms import LinearTerm, RegularizedLinearTermIC
 
 if HAS_PANDAS:
     pass
@@ -46,10 +46,10 @@ class OnlineStructuredAdditiveDistributionRegressor(
         verbose: int = 0,
         max_outer_iterations: int = 10,
         max_inner_iterations: int = 10,
-        rel_tol_outer: float = 1e-4,
-        rel_tol_inner: float = 1e-4,
-        abs_tol_outer: float = 1e-4,
-        abs_tol_inner: float = 1e-4,
+        rel_tol_outer: float = 1e-3,
+        rel_tol_inner: float = 1e-3,
+        abs_tol_outer: float = 1e-3,
+        abs_tol_inner: float = 1e-3,
     ):
         self.distribution = distribution
         self.terms = terms
@@ -98,6 +98,9 @@ class OnlineStructuredAdditiveDistributionRegressor(
         outer_iteration: int,
         param: int,
     ):
+        step_decrease_counter = 0
+        step = 1.0
+
         deviance_start = -2 * np.sum(
             self.distribution.logpdf(y, self._fitted_values) * sample_weight
         )
@@ -129,7 +132,11 @@ class OnlineStructuredAdditiveDistributionRegressor(
                     y=working_vector_term,
                     sample_weight=sample_weight * estimation_weight,
                 )
-                eta_iteration += term.predict(X=X)
+                eta_iteration += step * term.predict(X=X)
+
+            # Line search could be implemented here
+            # For now we just do a simple step size adjustment
+            eta_iteration += (1 - step) * eta_start
 
             fitted_values_iteration[:, param] = self.distribution.link_inverse(
                 eta_iteration, param=param
@@ -161,7 +168,14 @@ class OnlineStructuredAdditiveDistributionRegressor(
                     f"Stopping inner optimization for param {param}."
                 )
                 self._print_message(message, level=2)
-                break
+                if step_decrease_counter < 5:
+                    step_decrease_counter += 1
+                    step = step / 2
+                    message = f"Reducing step size to {step:.5f} and retrying."
+                    self._print_message(message, level=2)
+                    # Reset fitted values and terms
+                else:
+                    break
             else:
                 terms = terms_iteration
 
@@ -180,6 +194,9 @@ class OnlineStructuredAdditiveDistributionRegressor(
         sample_weight: np.ndarray,
     ):
         self._iterations = np.zeros(
+            shape=(self.max_outer_iterations, self.distribution.n_params)
+        )
+        self._step_sizes = np.ones(
             shape=(self.max_outer_iterations, self.distribution.n_params)
         )
         self._deviance = np.full(
@@ -271,4 +288,5 @@ class OnlineStructuredAdditiveDistributionRegressor(
             y=y,
             sample_weight=sample_weight,
         )
+        return self
         return self
