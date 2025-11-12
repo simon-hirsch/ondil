@@ -10,7 +10,7 @@ from .. import HAS_PANDAS, HAS_POLARS
 from ..base import Distribution, EstimationMethod, OndilEstimatorMixin
 from ..distributions import Normal
 from ..scaler import OnlineScaler
-from ..terms.linear_terms import LinearTerm, RegularizedLinearTermIC
+from ..terms.linear_terms import LinearTerm
 
 if HAS_PANDAS:
     pass
