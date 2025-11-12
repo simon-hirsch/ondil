@@ -1,31 +1,22 @@
 import copy
-import numbers
-from typing import Any, Dict, Literal, NamedTuple, Optional, Union
-import warnings
+from typing import Any, Dict, NamedTuple, Optional
 
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
-from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
     _check_sample_weight,
-    check_is_fitted,
     validate_data,
 )
 
 from .. import HAS_PANDAS, HAS_POLARS
 from ..base import Distribution, EstimationMethod, OndilEstimatorMixin
 from ..distributions import Normal
-from ..error import OutOfSupportError
-from ..gram import init_forget_vector
-from ..information_criteria import InformationCriterion
-from ..methods import get_estimation_method
 from ..scaler import OnlineScaler
 from ..terms.linear_terms import LinearTerm
-from ..utils import calculate_effective_training_length, online_mean_update
 
 if HAS_PANDAS:
-    import pandas as pd
+    pass
 if HAS_POLARS:
     import polars as pl  # noqa
 
@@ -43,7 +34,6 @@ class OnlineStructuredAdditiveDistributionRegressor(
     RegressorMixin,
     BaseEstimator,
 ):
-
     _parameter_constraints = {
         "distribution": [Distribution],
         "estimation_method": [EstimationMethod],
