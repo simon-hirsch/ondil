@@ -4,9 +4,15 @@ import numpy as np
 
 
 class Term(ABC):
+    """The base class for terms in structured additive distributional regression."""
+
+    def _prepare_term(self) -> "Term":
+        return self
+
+    @property
     @abstractmethod
-    def __init__(self):
-        pass
+    def allow_online_updates(self) -> bool:
+        return True
 
     @abstractmethod
     def fit(

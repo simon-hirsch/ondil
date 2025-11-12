@@ -10,6 +10,10 @@ from ..methods import get_estimation_method
 
 
 class LinearTerm(Term):
+    """Linear term for structured additive distributional regression."""
+
+    allow_online_updates: bool = True
+
     def __init__(
         self,
         features: np.ndarray | list[int] | Literal["all"],
@@ -91,6 +95,10 @@ class LinearTerm(Term):
 
 
 class RegularizedLinearTermIC(Term):
+    """Linear term with regularization and information criterion for model selection."""
+
+    allow_online_updates: bool = True
+
     def __init__(
         self,
         features: np.ndarray | list[int] | Literal["all"],
