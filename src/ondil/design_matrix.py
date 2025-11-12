@@ -15,3 +15,24 @@ def make_intercept(n_observations: int) -> np.ndarray:
         np.ndarray: Intercept array.
     """
     return np.ones((n_observations, 1))
+
+
+def subset_array(X, features):
+    """Subset array X by features.
+
+    Args:
+        X (np.ndarray): Input array.
+        features (list[int] | np.ndarray): List of feature indices.
+
+    Returns:
+        np.ndarray: Subsetted array.
+    """
+    if isinstance(features, list):
+        return X[:, features]
+    elif isinstance(features, np.ndarray):
+        return X[:, features.astype(int)]
+    elif isinstance(features, str):
+        if features == "all":
+            return X
+        else:
+            raise ValueError(f"String feature specifier '{features}' not recognized.")

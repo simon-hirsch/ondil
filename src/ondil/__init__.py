@@ -26,6 +26,7 @@ from . import (
     links,
     methods,
     scaler,
+    terms,
     utils,
     warnings,
 )
@@ -34,6 +35,7 @@ __version__ = version("ondil")
 
 __all__ = [
     "base",
+    "terms",
     "diagnostics",
     "error",
     "information_criteria",
