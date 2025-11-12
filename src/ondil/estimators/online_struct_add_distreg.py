@@ -4,10 +4,7 @@ from typing import Any, Dict, NamedTuple, Optional
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
 from sklearn.utils.multiclass import type_of_target
-from sklearn.utils.validation import (
-    _check_sample_weight,
-    validate_data,
-)
+from sklearn.utils.validation import _check_sample_weight, validate_data
 
 from .. import HAS_PANDAS, HAS_POLARS
 from ..base import Distribution, EstimationMethod, OndilEstimatorMixin
