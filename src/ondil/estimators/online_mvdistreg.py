@@ -1629,12 +1629,16 @@ class MultivariateOnlineDistributionalRegressionPath(
                             @ self.coef_[p][k][a, :]
                         ).squeeze()
                     out[a][p] = self.distribution.flat_to_cube(array, p)
-                   
-                    if not issubclass(self.distribution.__class__, CopulaMixin) or (issubclass(self.distribution.__class__, CopulaMixin) and p == 1):
-                                            out[a][p] = self.distribution.link_inverse(out[a][p], p)
+
+                    if not issubclass(self.distribution.__class__, CopulaMixin) or (
+                        issubclass(self.distribution.__class__, CopulaMixin) and p == 1
+                    ):
+                        out[a][p] = self.distribution.link_inverse(out[a][p], p)
                     if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
-                        out[a][p] = np.tanh(out[a][p] / 2)*(1-1e-8)
-                        out[a][p] = self.distribution.param_link_inverse(out[a][p]*(1-1e-8), param=0)*(1 - 1e-8) 
+                        out[a][p] = np.tanh(out[a][p] / 2) * (1 - 1e-8)
+                        out[a][p] = self.distribution.param_link_inverse(
+                            out[a][p] * (1 - 1e-8), param=0
+                        ) * (1 - 1e-8)
             else:
                 out[a] = copy.deepcopy(out[self.optimal_adr_])
             for p in range(self.distribution.n_params):
@@ -1650,11 +1654,15 @@ class MultivariateOnlineDistributionalRegressionPath(
                     ).squeeze()
 
                     out[a][p] = self.distribution.flat_to_cube(array, p)
-                    if not issubclass(self.distribution.__class__, CopulaMixin) or (issubclass(self.distribution.__class__, CopulaMixin) and p == 1):
+                    if not issubclass(self.distribution.__class__, CopulaMixin) or (
+                        issubclass(self.distribution.__class__, CopulaMixin) and p == 1
+                    ):
                         out[a][p] = self.distribution.link_inverse(out[a][p], p)
                     if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
-                        out[a][p] = np.tanh(out[a][p] / 2)*(1-1e-8)
-                        out[a][p] = self.distribution.param_link_inverse(out[a][p]*(1-1e-8), param=0)*(1 - 1e-8)
+                        out[a][p] = np.tanh(out[a][p] / 2) * (1 - 1e-8)
+                        out[a][p] = self.distribution.param_link_inverse(
+                            out[a][p] * (1 - 1e-8), param=0
+                        ) * (1 - 1e-8)
 
         return out
 
@@ -1785,8 +1793,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                     eta = self.distribution.link_function(theta[a][p], p)
                     eta = self.distribution.cube_to_flat(eta, param=p)
 
-                    if (issubclass(self.distribution.__class__, CopulaMixin) and p == 0):
-                      
+                    if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
                         eta = self._make_initial_eta(theta)
                         tau = self._make_initial_eta(theta)
 

@@ -130,7 +130,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         z2 = np.random.uniform(size=size)
 
         x = self.hinv(z1, z2, theta, un=1, family_code=family_code)
-        
+
         return x
 
     def logcdf(self, y, theta):
@@ -161,7 +161,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         v = np.where(v_mask_low, UMIN, v)
         v = np.where(v_mask_high, UMAX, v)
 
-        theta = theta.copy()      # <- prevents in-place mutation of caller's array
+        theta = theta.copy()  # <- prevents in-place mutation of caller's array
         u = u.reshape(-1, 1)
         v = v.reshape(-1, 1)
 
@@ -174,7 +174,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         u_rot[mask_1] = 1 - u[mask_1]
         v_rot[mask_1] = 1 - v[mask_1]
         if un == 1:
-              # 90° rotation
+            # 90° rotation
             mask_2 = (rotation == 2).squeeze()
             u_rot[mask_2] = 1 - u[mask_2]
             theta[mask_2] = -theta[mask_2]
@@ -239,19 +239,19 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         UMIN = 1e-12
         UMAX = 1 - 1e-12
 
-            # Apply clipping using masks
-            u_mask_low = u < UMIN
-            u_mask_high = u > UMAX
-            v_mask_low = v < UMIN
-            v_mask_high = v > UMAX
-            
-            u = np.where(u_mask_low, UMIN, u)
-            u = np.where(u_mask_high, UMAX, u)
-            v = np.where(v_mask_low, UMIN, v)
-            v = np.where(v_mask_high, UMAX, v)
-            u = u.reshape(-1, 1)
-            v = v.reshape(-1, 1)
-            theta = theta.copy()      # <- prevents in-place mutation of caller's array
+        # Apply clipping using masks
+        u_mask_low = u < UMIN
+        u_mask_high = u > UMAX
+        v_mask_low = v < UMIN
+        v_mask_high = v > UMAX
+
+        u = np.where(u_mask_low, UMIN, u)
+        u = np.where(u_mask_high, UMAX, u)
+        v = np.where(v_mask_low, UMIN, v)
+        v = np.where(v_mask_high, UMAX, v)
+        u = u.reshape(-1, 1)
+        v = v.reshape(-1, 1)
+        theta = theta.copy()  # <- prevents in-place mutation of caller's array
 
         XEPS = 1e-4
         rotation = get_effective_rotation(theta, family_code)
@@ -263,56 +263,56 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         u_rot[mask_1] = 1 - u[mask_1]
         v_rot[mask_1] = 1 - v[mask_1]
 
-            if un == 1:
-              # 90° rotation
-                mask_2 = rotation == 2
-                u_rot[mask_2] = 1 - u_rot[mask_2]
-                theta[mask_2] = -theta[mask_2]
-
-                # 270° rotation
-                mask_3 = (rotation == 3)
-                v_rot[mask_3] = 1 - v_rot[mask_3]
-                theta[mask_3] = -theta[mask_3]
-            else: 
+        if un == 1:
             # 90° rotation
-                mask_2 = rotation == 2
-                v_rot[mask_2] = 1 - v_rot[mask_2]
-                theta[mask_2] = -theta[mask_2]
+            mask_2 = rotation == 2
+            u_rot[mask_2] = 1 - u_rot[mask_2]
+            theta[mask_2] = -theta[mask_2]
 
-                # 270° rotation
-                mask_3 = (rotation == 3)
-                u_rot[mask_3] = 1 - u_rot[mask_3]
-                theta[mask_3] = -theta[mask_3]
+            # 270° rotation
+            mask_3 = rotation == 3
+            v_rot[mask_3] = 1 - v_rot[mask_3]
+            theta[mask_3] = -theta[mask_3]
+        else:
+            # 90° rotation
+            mask_2 = rotation == 2
+            v_rot[mask_2] = 1 - v_rot[mask_2]
+            theta[mask_2] = -theta[mask_2]
 
-            # Prepare output array
-            hinv = np.zeros_like(u)
-            
-            # Case 1: theta < XEPS
-            mask_small = np.abs(theta) < XEPS
-            hinv[mask_small] = u_rot[mask_small]
-            
-            # Case 2: theta < 75
-            mask_medium = (~mask_small) & (np.abs(theta) < 75)
-            if np.any(mask_medium):
-                u_med = u_rot[mask_medium]
-                v_med = v_rot[mask_medium]
-                theta_med = theta[mask_medium]
-                
-                term1 = u_med * np.power(v_med, theta_med + 1.0)
-                term2 = np.power(term1, -theta_med / (theta_med + 1.0))
-                term3 = 1.0 - np.power(v_med, -theta_med)
-                hinv[mask_medium] = np.power(term2 + term3, -1.0 / theta_med)
+            # 270° rotation
+            mask_3 = rotation == 3
+            u_rot[mask_3] = 1 - u_rot[mask_3]
+            theta[mask_3] = -theta[mask_3]
 
-            # Case 3: theta >= 75 (numerical inversion fallback)
-            mask_large = (~mask_small) & (~mask_medium)
-            if np.any(mask_large):
-                u_large = u_rot[mask_large]
-                v_large = v_rot[mask_large]
-                theta_large = theta[mask_large]
+        # Prepare output array
+        hinv = np.zeros_like(u)
 
-            hinv[mask_large] = _hinv_numerical(
-                u_large, v_large, theta_large, self.family_code, un=un
-            )
+        # Case 1: theta < XEPS
+        mask_small = np.abs(theta) < XEPS
+        hinv[mask_small] = u_rot[mask_small]
+
+        # Case 2: theta < 75
+        mask_medium = (~mask_small) & (np.abs(theta) < 75)
+        if np.any(mask_medium):
+            u_med = u_rot[mask_medium]
+            v_med = v_rot[mask_medium]
+            theta_med = theta[mask_medium]
+
+            term1 = u_med * np.power(v_med, theta_med + 1.0)
+            term2 = np.power(term1, -theta_med / (theta_med + 1.0))
+            term3 = 1.0 - np.power(v_med, -theta_med)
+            hinv[mask_medium] = np.power(term2 + term3, -1.0 / theta_med)
+
+        # Case 3: theta >= 75 (numerical inversion fallback)
+        mask_large = (~mask_small) & (~mask_medium)
+        if np.any(mask_large):
+            u_large = u_rot[mask_large]
+            v_large = v_rot[mask_large]
+            theta_large = theta[mask_large]
+
+        hinv[mask_large] = _hinv_numerical(
+            u_large, v_large, theta_large, self.family_code, un=un
+        )
 
         # Clip output for numerical stability
         # Ensure results are in [0,1] using masks
