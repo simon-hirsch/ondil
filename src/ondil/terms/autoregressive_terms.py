@@ -1,6 +1,6 @@
 import copy
+from dataclasses import dataclass, replace
 from typing import Literal
-from dataclasses import dataclass, replace, field
 
 import numpy as np
 

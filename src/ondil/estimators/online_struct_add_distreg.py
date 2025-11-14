@@ -9,9 +9,9 @@ from sklearn.utils.validation import _check_sample_weight, validate_data
 from .. import HAS_PANDAS, HAS_POLARS
 from ..base import Distribution, EstimationMethod, OndilEstimatorMixin
 from ..distributions import Normal
+from ..gram import init_forget_vector
 from ..scaler import OnlineScaler
 from ..terms.linear_terms import LinearTerm
-from ..gram import init_forget_vector
 
 if HAS_PANDAS:
     pass
