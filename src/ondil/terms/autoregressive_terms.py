@@ -119,7 +119,7 @@ class AutoregressiveTerm(Term):
         X_mat = make_lags(
             y=self._state.memory,
             lags=self.lags,
-        )[-X.shape[0] :, :]
+        )[-1:, :]
 
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
