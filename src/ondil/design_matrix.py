@@ -35,7 +35,7 @@ def make_lags(
         lags = np.linspace(1, lags, lags, dtype=int).tolist()
     n_lags = len(lags)
 
-    X = np.vstack([np.roll(y[:, None], i) for i in lags])
+    X = np.hstack([np.roll(y[:, None], i) for i in lags])
     X[np.triu_indices(n_lags, k=1)] = np.mean(y)
 
     return X
