@@ -40,7 +40,7 @@ class LinearTerm(Term):
     allow_online_updates: bool = True
 
     features: np.ndarray | list[int] | Literal["all"]
-    method: EstimationMethod | str
+    method: EstimationMethod | str = "ols"
     fit_intercept: bool = True
     forget: float = 0.0
     is_regularized: bool = False
@@ -48,8 +48,8 @@ class LinearTerm(Term):
 
     def __init__(
         self,
-        features: np.ndarray | list[int] | Literal["all"],
-        method: EstimationMethod,
+        features: np.ndarray | list[int] | Literal["all"] = "all",
+        method: EstimationMethod = "ols",
         fit_intercept: bool = True,
         forget: float = 0.0,
         is_regularized: bool = False,
@@ -170,7 +170,7 @@ class RegularizedLinearTermIC(Term):
 
     def __init__(
         self,
-        features: np.ndarray | list[int] | Literal["all"],
+        features: np.ndarray | list[int] | Literal["all"] = "all",
         method: EstimationMethod | str = "lasso",
         fit_intercept: bool = True,
         forget: float = 0.0,

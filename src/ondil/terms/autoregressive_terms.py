@@ -43,15 +43,13 @@ class AutoregressiveTerm(Term):
 
     def __init__(
         self,
-        features: np.ndarray | list[int] | Literal["all"],
-        method: EstimationMethod,
+        lags: np.ndarray | list[int] | int = 1,
+        method: EstimationMethod = "ols",
         fit_intercept: bool = True,
         forget: float = 0.0,
         is_regularized: bool = False,
         regularize_intercept: None | bool = None,
-        lags: np.ndarray | list[int] | int = 1,
     ):
-        self.features = features
         self.fit_intercept = fit_intercept
         self.method = method
         self.forget = forget
