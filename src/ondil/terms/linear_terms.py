@@ -48,12 +48,12 @@ class LinearTerm(Term):
             X_mat = subset_array(X, self.features)
 
         if self.is_regularized:
-            self._is_reguarlized = self.is_regularized
+            self._is_regularized = self.is_regularized
         else:
             n_features = X_mat.shape[1]
-            self._is_reguarlized = np.repeat(True, n_features)
+            self._is_regularized = np.repeat(True, n_features)
         if self.fit_intercept and not self.regularize_intercept:
-            self._is_reguarlized[0] = False
+            self._is_regularized[0] = False
 
         self._g = self._method.init_x_gram(
             X=X_mat,
@@ -69,7 +69,7 @@ class LinearTerm(Term):
         self.coef_ = self._method.fit_beta(
             x_gram=self._g,
             y_gram=self._h,
-            is_regularized=self._is_reguarlized,
+            is_regularized=self._is_regularized,
         )
 
         return self
@@ -135,12 +135,12 @@ class RegularizedLinearTermIC(Term):
             X_mat = subset_array(X, self.features)
 
         if self.is_regularized:
-            self._is_reguarlized = self.is_regularized
+            self._is_regularized = self.is_regularized
         else:
             n_features = X_mat.shape[1]
-            self._is_reguarlized = np.repeat(True, n_features)
+            self._is_regularized = np.repeat(True, n_features)
         if self.fit_intercept and not self.regularize_intercept:
-            self._is_reguarlized[0] = False
+            self._is_regularized[0] = False
 
         forget_weights = init_forget_vector(self.forget, y.shape[0])
 
@@ -158,7 +158,7 @@ class RegularizedLinearTermIC(Term):
         self.coef_path_ = self._method.fit_beta_path(
             x_gram=self._g,
             y_gram=self._h,
-            is_regularized=self._is_reguarlized,
+            is_regularized=self._is_regularized,
         )
 
         self.n_observations = y.shape[0]
