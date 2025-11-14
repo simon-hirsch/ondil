@@ -17,6 +17,30 @@ def make_intercept(n_observations: int) -> np.ndarray:
     return np.ones((n_observations, 1))
 
 
+def make_lags(
+    y: np.ndarray,
+    lags: np.ndarray | list[int] | int,
+) -> np.ndarray:
+    """Make lagged versions of y.
+
+    Args:
+        y (np.ndarray): Response variable $Y$
+        lags (np.ndarray | list[int] | int): Lags to create.
+
+    Returns:
+        np.ndarray: Lagged array.
+    """
+
+    if isinstance(lags, int):
+        lags = np.linspace(1, lags, lags, dtype=int).tolist()
+    n_lags = len(lags)
+
+    X = np.vstack([np.roll(y[:, None], i) for i in lags])
+    X[np.triu_indices(n_lags, k=1)] = np.mean(y)
+
+    return X
+
+
 def subset_array(X, features):
     """Subset array X by features.
 
