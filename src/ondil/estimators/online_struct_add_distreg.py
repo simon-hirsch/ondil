@@ -122,7 +122,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         step_decrease_counter = 0
         step = 1.0
         forget_weight = init_forget_vector(
-            n_obs=y.shape[0],
+            size=y.shape[0],
             forget=self.learning_rate,
         )
 
@@ -219,14 +219,21 @@ class OnlineStructuredAdditiveDistributionRegressor(
         y: np.ndarray,
         sample_weight: np.ndarray,
     ):
+        forget_weight = init_forget_vector(size=y.shape[0], forget=self.learning_rate)
         self._iterations_outer = np.zeros(
             shape=(self.max_outer_iterations, self.distribution.n_params)
         )
+        self._deviance_start = (
+            np.sum(
+                -2
+                * self.distribution.logpdf(y, self._fitted_values)
+                * sample_weight
+                * forget_weight
+            ),
+        )
         self._deviance_outer = np.full(
             shape=(self.max_outer_iterations + 1, self.distribution.n_params),
-            fill_value=np.sum(
-                -2 * self.distribution.logpdf(y, self._fitted_values) * sample_weight
-            ),
+            fill_value=self._deviance_start,
         )
         self._step_sizes = np.ones(
             shape=(self.max_outer_iterations, self.distribution.n_params)
