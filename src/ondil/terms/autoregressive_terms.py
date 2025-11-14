@@ -15,7 +15,7 @@ class ARTermState:
     g: np.ndarray | None
     h: np.ndarray | None
     coef_: np.ndarray | None
-    memory = np.ndarray | None
+    memory: np.ndarray | None
 
 
 class AutoregressiveTerm(Term):
@@ -143,13 +143,13 @@ class AutoregressiveTerm(Term):
             X_mat = add_intercept(X_mat)
 
         g = self._method.update_x_gram(
-            x_gram=self._state.g,
+            gram=self._state.g,
             X=X_mat,
             weights=sample_weight,
             forget=self.forget,
         )
         h = self._method.update_y_gram(
-            y_gram=self._state.h,
+            gram=self._state.h,
             X=X_mat,
             y=y,
             weights=sample_weight,
@@ -170,5 +170,4 @@ class AutoregressiveTerm(Term):
             coef_=coef_,
             memory=y_full[-np.max(self.lags) :],
         )
-
-        return
+        return new_instance
