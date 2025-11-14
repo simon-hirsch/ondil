@@ -6,7 +6,7 @@ import numpy as np
 
 from ..base import EstimationMethod, Term
 from ..design_matrix import add_intercept, make_lags
-from ..estimators.methods import get_estimation_method
+from ..methods import get_estimation_method
 
 
 @dataclass(frozen=True)
@@ -111,6 +111,20 @@ class AutoregressiveTerm(Term):
             memory=y[-np.max(self.lags) :],
         )
         return self
+
+    def predict(
+        self,
+        X: np.ndarray,  # for api compatibility; not used
+    ):
+        X_mat = make_lags(
+            y=self._state.memory,
+            lags=self.lags,
+        )[-X.shape[0] :, :]
+
+        if self.fit_intercept:
+            X_mat = add_intercept(X_mat)
+
+        return X_mat @ self._state.coef_
 
     def update(
         self,
