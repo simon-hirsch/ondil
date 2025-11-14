@@ -16,6 +16,7 @@ class ARTermState:
     h: np.ndarray | None
     coef_: np.ndarray | None
     memory: np.ndarray | None
+    zero_std_cols: np.ndarray | None
 
 
 class _AutoregressiveTerm(Term):
@@ -102,6 +103,15 @@ class _AutoregressiveTerm(Term):
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
 
+        # Remove the columns with zero standard deviation
+        # but keep the first one (intercept) if present
+        print(X_mat.std(axis=0))
+        zero_std_cols = np.where(np.isclose(X_mat.std(axis=0), 0))[0]
+        if len(zero_std_cols) > int(self.fit_intercept):
+            X_mat = np.delete(X_mat, zero_std_cols[int(self.fit_intercept) :], axis=1)
+
+        print(X_mat.std(axis=0), zero_std_cols, X_mat[:2, :])
+
         if self.is_regularized:
             is_regularized = self.is_regularized
         else:
@@ -136,6 +146,7 @@ class _AutoregressiveTerm(Term):
             h=h,
             coef_=coef_,
             memory=y[-np.max(self.lags) :],
+            zero_std_cols=zero_std_cols,
         )
         return new
 
@@ -150,6 +161,13 @@ class _AutoregressiveTerm(Term):
 
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
+
+        if len(self._state.zero_std_cols) > int(self.fit_intercept):
+            X_mat = np.delete(
+                X_mat,
+                self._state.zero_std_cols[int(self.fit_intercept) :],
+                axis=1,
+            )
 
         return X_mat @ self._state.coef_
 
@@ -173,6 +191,13 @@ class _AutoregressiveTerm(Term):
 
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
+
+        if len(self._state.zero_std_cols) > int(self.fit_intercept):
+            X_mat = np.delete(
+                X_mat,
+                self._state.zero_std_cols[int(self.fit_intercept) :],
+                axis=1,
+            )
 
         g = self._method.update_x_gram(
             gram=self._state.g,
