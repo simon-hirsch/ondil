@@ -18,8 +18,18 @@ class ARTermState:
     memory: np.ndarray | None
 
 
-class AutoregressiveTerm(Term):
+class _AutoregressiveTerm(Term):
     """Autoregressive term for time series modeling.
+
+    This is a rather generic base class which, in the fit and update methods, will
+    take the "y" values and create lagged versions of them to be used as predictors.
+
+    However, we usually do not want to use the lagged versions of the "y" values but
+    rather some values of the distributional parameters, e.g. the fitted mean or
+    the target values (since y is the working vector in distributional regression).
+
+    Therefore we use this class as a base class for the actual AutoregressiveTerm and
+    we only need to override the method that creates the lagged values.
 
     Parameters
     ----------
@@ -63,13 +73,31 @@ class AutoregressiveTerm(Term):
             raise ValueError("Path-based methods are not supported for LinearTerm.")
         return self
 
+    def _make_lags_and_memory(self, y, fitted_values, target_values):
+        # This method can be extended in the future to incorporate fitted_values
+        # and target_values if needed for more complex lag structures.
+
+        if hasattr(self, "_state") and self._state is not None:
+            memory = self._state.memory
+            y_full = np.concatenate([memory, y])
+        else:
+            y_full = y
+
+        return make_lags(y=y_full, lags=self.lags), y_full
+
     def fit(
         self,
         X: np.ndarray,  # for api compatibility; not used
         y: np.ndarray,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
-    ) -> "AutoregressiveTerm":
-        X_mat = make_lags(y=y, lags=self.lags)
+    ) -> "_AutoregressiveTerm":
+        X_mat, _ = self._make_lags_and_memory(
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+        )
 
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
@@ -101,14 +129,15 @@ class AutoregressiveTerm(Term):
 
         # not that max(self.lags) does not work if lags is an integer.
         # np.max converts it to an array first.
-        self._state = ARTermState(
+        new = copy.copy(self)
+        new._state = ARTermState(
             is_regularized=is_regularized,
             g=g,
             h=h,
             coef_=coef_,
             memory=y[-np.max(self.lags) :],
         )
-        return self
+        return new
 
     def predict(
         self,
@@ -128,16 +157,19 @@ class AutoregressiveTerm(Term):
         self,
         X: np.ndarray,  # for api compatibility; not used
         y: np.ndarray,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
-    ) -> "AutoregressiveTerm":
+    ) -> "_AutoregressiveTerm":
         if self._state is None:
             raise ValueError("Term must be fitted before it can be updated.")
 
-        y_full = np.concatenate([self._state.memory, y])
-        X_mat = make_lags(
-            y=y_full,
-            lags=self.lags,
-        )[-len(y) :, :]
+        X_mat, y_full = self._make_lags_and_memory(
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+        )
+        X_mat = X_mat[-y.shape[0] :, :]
 
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
@@ -171,3 +203,29 @@ class AutoregressiveTerm(Term):
             memory=y_full[-np.max(self.lags) :],
         )
         return new_instance
+
+
+class AutoregressiveThetaTerm(_AutoregressiveTerm):
+    """Autoregressive term using target values for lagged predictors."""
+
+    def _make_lags_and_memory(self, y, fitted_values, target_values):
+        if hasattr(self, "_state") and self._state is not None:
+            memory = self._state.memory
+            y_full = np.concatenate([memory, fitted_values])
+        else:
+            y_full = fitted_values
+
+        return make_lags(y=y_full, lags=self.lags), y_full
+
+
+class AutoregressiveTargetTerm(_AutoregressiveTerm):
+    """Autoregressive term using fitted values for lagged predictors."""
+
+    def _make_lags_and_memory(self, y, fitted_values, target_values):
+        if hasattr(self, "_state") and self._state is not None:
+            memory = self._state.memory
+            y_full = np.concatenate([memory, target_values])
+        else:
+            y_full = target_values
+
+        return make_lags(y=y_full, lags=self.lags), y_full

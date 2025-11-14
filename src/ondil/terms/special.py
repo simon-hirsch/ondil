@@ -27,6 +27,8 @@ class ScikitLearnEstimatorTerm(Term):
         X: np.ndarray,
         y: np.ndarray,
         sample_weight: np.ndarray = None,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
     ) -> "ScikitLearnEstimatorTerm":
         X_mat = subset_array(X, self.features)
 
@@ -46,7 +48,9 @@ class ScikitLearnEstimatorTerm(Term):
     def update(
         self,
         X: np.ndarray,
-        residuals: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
     ) -> "ScikitLearnEstimatorTerm":
         raise NotImplementedError(

@@ -1,9 +1,10 @@
 from .linear_terms import LinearTerm, RegularizedLinearTermIC
 from .special import ScikitLearnEstimatorTerm
-from .autoregressive_terms import AutoregressiveTerm
+from .autoregressive_terms import AutoregressiveThetaTerm, AutoregressiveTargetTerm
 
 __all__ = [
-    "AutoregressiveTerm",
+    "AutoregressiveThetaTerm",
+    "AutoregressiveTargetTerm",
     "LinearTerm",
     "RegularizedLinearTermIC",
     "ScikitLearnEstimatorTerm",
