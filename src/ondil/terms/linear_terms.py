@@ -196,6 +196,8 @@ class RegularizedLinearTermIC(Term):
         self,
         X: np.ndarray,
         y: np.ndarray,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
     ) -> "RegularizedLinearTermIC":
         if self.fit_intercept:
@@ -274,6 +276,8 @@ class RegularizedLinearTermIC(Term):
         self,
         X: np.ndarray,
         y: np.ndarray,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
     ) -> "RegularizedLinearTermIC":
         """Update the Term.

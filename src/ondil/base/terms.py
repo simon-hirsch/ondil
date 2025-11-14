@@ -19,6 +19,8 @@ class Term(ABC):
         self,
         X: np.ndarray,
         y: np.ndarray,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
     ) -> "Term":
         raise NotImplementedError("Not implemented")
@@ -34,7 +36,9 @@ class Term(ABC):
     def update(
         self,
         X: np.ndarray,
-        residuals: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
     ) -> "Term":
         raise NotImplementedError("Not implemented")
