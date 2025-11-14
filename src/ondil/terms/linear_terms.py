@@ -71,6 +71,8 @@ class LinearTerm(Term):
         self,
         X: np.ndarray,
         y: np.ndarray,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
     ) -> "LinearTerm":
         if self.fit_intercept:
@@ -126,6 +128,8 @@ class LinearTerm(Term):
         self,
         X: np.ndarray,
         y: np.ndarray,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
     ) -> "LinearTerm":
         if self.fit_intercept:
