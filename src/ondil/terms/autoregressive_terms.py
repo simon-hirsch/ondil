@@ -105,12 +105,9 @@ class _AutoregressiveTerm(Term):
 
         # Remove the columns with zero standard deviation
         # but keep the first one (intercept) if present
-        print(X_mat.std(axis=0))
         zero_std_cols = np.where(np.isclose(X_mat.std(axis=0), 0))[0]
         if len(zero_std_cols) > int(self.fit_intercept):
             X_mat = np.delete(X_mat, zero_std_cols[int(self.fit_intercept) :], axis=1)
-
-        print(X_mat.std(axis=0), zero_std_cols, X_mat[:2, :])
 
         if self.is_regularized:
             is_regularized = self.is_regularized
