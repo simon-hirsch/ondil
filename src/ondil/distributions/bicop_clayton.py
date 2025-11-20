@@ -406,6 +406,7 @@ def _hinv_numerical(
 
 
 def get_effective_rotation(theta_values: np.ndarray, family_code: int) -> np.ndarray:
+    
     """
     Vectorized version of get_effective_rotation().
     Accepts an array of theta_values and returns corresponding rotations.
