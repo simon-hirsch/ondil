@@ -176,7 +176,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
     ) -> Dict[int, np.ndarray]:
         raise NotImplementedError("Not implemented")
 
-    def hfunc(self, u: np.ndarray, v: np.ndarray, theta: Dict, un: int) -> np.ndarray:
+    def hfunc(self, u: np.ndarray, v: np.ndarray, theta: Dict, un: int, family_code = 2) -> np.ndarray:
         """
         Conditional distribution function h(u|v) for the bivariate t copula.
 
@@ -242,7 +242,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         return h.squeeze()
 
     def hinv(
-        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int
+        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code = 2
     ) -> np.ndarray:
         """
         Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.

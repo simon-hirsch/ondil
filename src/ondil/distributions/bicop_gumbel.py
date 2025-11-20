@@ -22,7 +22,7 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
         self,
         link: LinkFunction = Log(),
         param_link: LinkFunction = KendallsTauToParameterGumbel(),
-        family_code: int = 401,
+        family_code: int = 41,
     ):
         super().__init__(
             links={0: link},
@@ -420,23 +420,23 @@ def get_effective_rotation(theta_values: np.ndarray, family_code: int) -> np.nda
 
     rot = np.empty_like(theta_values, dtype=int)
 
-    if family_code == 401:
+    if family_code == 41:
         rot[:] = np.where(theta_values > 0, 0, 2)
-    elif family_code == 402:
+    elif family_code == 42:
         rot[:] = np.where(theta_values > 0, 0, 3)
-    elif family_code == 403:
+    elif family_code == 43:
         rot[:] = np.where(theta_values > 0, 1, 2)
-    elif family_code == 404:
+    elif family_code == 44:
         rot[:] = np.where(theta_values > 0, 1, 3)
     else:
         raise ValueError(
-            f"Unsupported family code: {family_code}. Supported codes: 401, 402, 403, 404."
+            f"Unsupported family code: {family_code}. Supported codes: 41, 42, 43, 44."
         )
 
     return rot
 
 
-def _log_likelihood(y, theta, family_code=401):
+def _log_likelihood(y, theta, family_code=41):
     """
     Log-likelihood for the Gumbel copula.
     """
@@ -494,7 +494,7 @@ def _log_likelihood(y, theta, family_code=401):
     return f.squeeze()
 
 
-def _derivative_1st(y, theta, family_code=401):
+def _derivative_1st(y, theta, family_code=41):
     """
     First derivative of the Gumbel copula log-likelihood with respect to theta.
     """
@@ -583,7 +583,7 @@ def _derivative_1st(y, theta, family_code=401):
     return deriv.squeeze()
 
 
-def _derivative_2nd(y, theta, family_code=401):
+def _derivative_2nd(y, theta, family_code=41):
     """
     Second derivative of the Gumbel copula log-likelihood with respect to theta.
     """

@@ -154,7 +154,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         return dim
 
     def hfunc(
-        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int
+        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code = 1
     ) -> np.ndarray:
         """
         Conditional distribution function h(u|v) for the bivariate normal copula.
@@ -203,7 +203,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         return h.squeeze()
 
     def hinv(
-        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int
+        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code = 1
     ) -> np.ndarray:
         """
         Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.

@@ -22,7 +22,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         self,
         link: LinkFunction = Log(),
         param_link: LinkFunction = KendallsTauToParameterClayton(),
-        family_code: int = 301,
+        family_code: int = 31,
     ):
         super().__init__(
             links={0: link},
@@ -257,7 +257,6 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         rotation = get_effective_rotation(theta, family_code)
         # Apply rotation transformations vectorized
         u_rot, v_rot = u.copy(), v.copy()
-
         # 180° rotation (survival)
         mask_1 = rotation == 1
         u_rot[mask_1] = 1 - u[mask_1]
@@ -309,10 +308,9 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
             u_large = u_rot[mask_large]
             v_large = v_rot[mask_large]
             theta_large = theta[mask_large]
-
-        hinv[mask_large] = _hinv_numerical(
-            u_large, v_large, theta_large, self.family_code, un=un
-        )
+            hinv[mask_large] = _hinv_numerical(
+                u_large, v_large, theta_large, self.family_code, un=un
+            )
 
         # Clip output for numerical stability
         # Ensure results are in [0,1] using masks
@@ -422,17 +420,17 @@ def get_effective_rotation(theta_values: np.ndarray, family_code: int) -> np.nda
     theta_values = np.asarray(theta_values)
     rot = np.empty_like(theta_values, dtype=int)
 
-    if family_code == 301:
+    if family_code == 31:
         rot[:] = np.where(theta_values > 0, 0, 2)
-    elif family_code == 302:
+    elif family_code == 32:
         rot[:] = np.where(theta_values > 0, 0, 3)
-    elif family_code == 303:
+    elif family_code == 33:
         rot[:] = np.where(theta_values > 0, 1, 2)
-    elif family_code == 304:
+    elif family_code == 34:
         rot[:] = np.where(theta_values > 0, 1, 3)
     else:
         raise ValueError(
-            f"Unsupported family code: {family_code}. Supported codes: 301, 302, 303, 304."
+            f"Unsupported family code: {family_code}. Supported codes: 31, 32, 33, 34."
         )
 
     return rot
