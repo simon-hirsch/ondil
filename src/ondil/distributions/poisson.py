@@ -46,6 +46,7 @@ class Poisson(ScipyMixin, Distribution):
     # Scipy equivalent and parameter mapping ondil -> scipy
     scipy_dist = st.poisson
     scipy_names = {"mu": "mu"}
+    is_discrete = True
 
     def __init__(
         self,
@@ -79,42 +80,3 @@ class Poisson(ScipyMixin, Distribution):
     def initial_values(self, y: np.ndarray) -> np.ndarray:
         initial_params = [np.mean(y)]
         return np.tile(initial_params, (y.shape[0], 1))
-
-    def pmf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """
-        Compute the probability mass function (PMF) for the given data points.
-
-        Args:
-            y (np.ndarray): An array of data points at which to evaluate the PMF.
-            theta (np.ndarray): An array of parameters for the distribution.
-
-        Returns:
-            np.ndarray: An array of PMF values corresponding to the data points in `y`.
-        """
-        return self.scipy_dist(**self.theta_to_scipy_params(theta)).pmf(y)
-
-    def pdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """
-        For discrete distributions, PDF delegates to PMF.
-
-        Args:
-            y (np.ndarray): An array of data points.
-            theta (np.ndarray): An array of parameters for the distribution.
-
-        Returns:
-            np.ndarray: An array of PMF values (same as pmf method).
-        """
-        return self.pmf(y, theta)
-
-    def logpdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """
-        For discrete distributions, log PDF delegates to log PMF.
-
-        Args:
-            y (np.ndarray): An array of data points.
-            theta (np.ndarray): An array of parameters for the distribution.
-
-        Returns:
-            np.ndarray: An array of log PMF values (same as logpmf method).
-        """
-        return self.logpmf(y, theta)
