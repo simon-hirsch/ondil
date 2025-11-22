@@ -6,8 +6,8 @@ import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Identity, Log
-from ..types import ParameterShapes
 from ..robust_math import robust_log
+from ..types import ParameterShapes
 
 
 class SkewNormal(ScipyMixin, Distribution):
