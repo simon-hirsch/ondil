@@ -35,10 +35,11 @@ def test_skew_normal_distribution():
 
     estimator = OnlineDistributionalRegression(
         distribution=dist,
-        equation={0: np.array([0, 2]), 1: np.array([0, 2])},
+        equation={0: np.array([0, 2]), 1: np.array([0, 2]), 2: np.array([0, 2])},
         method="ols",
         scale_inputs=False,
         fit_intercept=True,
+        verbose=3,
     )
     estimator.fit(X=X, y=y)
     assert np.allclose(estimator.beta[0], coef_R_mu, atol=0.01), (

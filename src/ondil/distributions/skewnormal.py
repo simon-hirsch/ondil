@@ -7,6 +7,7 @@ import scipy.stats as st
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Identity, Log
 from ..types import ParameterShapes
+from ..robust_math import robust_log
 
 
 class SkewNormal(ScipyMixin, Distribution):
@@ -90,7 +91,7 @@ class SkewNormal(ScipyMixin, Distribution):
         # dldm <- -(exp(lpdf - lcdf)) * nu/sigma + sign(z) * (abs(z)^(2 - 1))/sigma
 
         lpdf = (1 - (1 / 2)) * np.log(2) - s - sp.gammaln(1 / 2) - np.log(2)
-        lcdf = np.log(0.5 * (1 + st.gamma(a=0.5, scale=1).cdf(s) * np.sign(w)))
+        lcdf = robust_log(0.5 * (1 + st.gamma(a=0.5, scale=1).cdf(s) * np.sign(w)))
 
         if param == 0:
             # dL/dmu
@@ -133,5 +134,8 @@ class SkewNormal(ScipyMixin, Distribution):
         - sigma = std of y
         - nu = 0 (no skewness initially)
         """
-        initial_params = [np.mean(y), np.std(y, ddof=1), 0.0]
-        return np.tile(initial_params, (y.shape[0], 1))
+        return np.vstack([
+            (y + np.mean(y)) / 2,
+            np.full_like(y, np.std(y, ddof=1) / 4),
+            np.full_like(y, 0.1),
+        ]).T
