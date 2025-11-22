@@ -1,8 +1,8 @@
 from typing import Tuple
 
 import numpy as np
-import scipy.stats as st
 import scipy.special as sp
+import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Identity, Log

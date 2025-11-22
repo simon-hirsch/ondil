@@ -1,10 +1,8 @@
 import numpy as np
+import rpy2.robjects as robjects
 
 from ondil.distributions import SkewNormal
 from ondil.estimators import OnlineDistributionalRegression
-
-import rpy2.robjects as robjects
-
 
 file = "tests/data/mtcars.csv"
 mtcars = np.genfromtxt(file, delimiter=",", skip_header=1)[:, 1:]
