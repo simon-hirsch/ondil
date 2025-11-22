@@ -95,6 +95,7 @@ def test_distribution_functions(distribution):
         if key in function_mapping:
             assert np.allclose(function_mapping[key](), R_list.rx2(key), atol=atol), (
                 f"Function {key} doesn't match for {distribution.__class__.__name__} \n"
-                f"Got: {function_mapping[key]().round(2)} for Python \n"
-                f"Got: {np.asarray(R_list.rx2(key)).round(2)} for R"
+                f"Got: {function_mapping[key]().round(3)} for Python \n"
+                f"Got: {np.asarray(R_list.rx2(key)).round(3)} for R \n"
+                f"Difference: {(function_mapping[key]() - R_list.rx2(key)).round(3)}"
             )
