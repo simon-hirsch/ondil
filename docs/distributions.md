@@ -40,6 +40,7 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 | [`BetaInflatedZero`](#ondil.distributions.BetaInflatedZero)           | Zero Inflated Beta distribution        | -                       |
 | [`ZeroAdjustedGamma`](#ondil.distributions.ZeroAdjustedGamma)         | Zero Adjusted Gamma distribution       | -                       |
 | [`PowerExponential`](#ondil.distributions.PowerExponential)           | Power Exponential distribution         | -                       |
+| [`Poisson`](#ondil.distributions.Poisson)                             | Poisson distribution                   | `scipy.stats.poisson`   |
 
 | Distribution                                                                                                      | Description                                              | Scale Matrix Parameterization           | Formula                                                                         |
 | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------- |
@@ -93,6 +94,8 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 ::: ondil.distributions.ZeroAdjustedGamma
 
 ::: ondil.distributions.BetaInflatedZero
+
+::: ondil.distributions.Poisson
 
 ## Multivariate Distributions
 
