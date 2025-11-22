@@ -494,7 +494,7 @@ class OnlineDistributionalRegression(
                 theta[:, param] = self.distribution.link_inverse(
                     prediction_path[:, i], param=param
                 )
-                ll[i] = np.sum(f * self.distribution.logpdf(y, theta))
+                ll[i] = np.sum(f * self.distribution.loglikelihood(y, theta))
 
             ic = InformationCriterion(
                 n_observations=self.n_training_[param],
@@ -582,7 +582,7 @@ class OnlineDistributionalRegression(
                 theta[:, param] = self.distribution.link_inverse(
                     prediction_path[:, i], param=param
                 )
-                ll[i] = np.sum(w * f * self.distribution.logpdf(y, theta))
+                ll[i] = np.sum(w * f * self.distribution.loglikelihood(y, theta))
             ll = ll + (1 - self._forget[param]) ** y.shape[0] * model_selection_data
 
             ic = InformationCriterion(
@@ -884,7 +884,7 @@ class OnlineDistributionalRegression(
 
     def _outer_update(self, X, y, w):
         ## for new observations:
-        global_di = np.sum(-2 * self.distribution.logpdf(y, self._fv) * w)
+        global_di = np.sum(-2 * self.distribution.loglikelihood(y, self._fv) * w)
         global_dev = (1 - self._forget[0]) ** y.shape[0] * self._global_dev + global_di
         global_dev_old = global_dev + 1000
         it_outer = 0
@@ -935,7 +935,7 @@ class OnlineDistributionalRegression(
         return global_dev, it_outer
 
     def _outer_fit(self, X, y, w):
-        global_di = -2 * self.distribution.logpdf(y, self._fv)
+        global_di = -2 * self.distribution.loglikelihood(y, self._fv)
         global_dev = np.sum(w * global_di)
         global_dev_old = global_dev + 1000
         it_outer = 0
@@ -992,7 +992,7 @@ class OnlineDistributionalRegression(
         param,
         dv,
     ):
-        dv_start = np.sum(-2 * self.distribution.logpdf(y, self._fv) * w)
+        dv_start = np.sum(-2 * self.distribution.loglikelihood(y, self._fv) * w)
         dv_iterations = np.repeat(dv_start, self.max_it_inner + 1)
         fv_it = copy.copy(self._fv)
         fv_it_new = copy.copy(self._fv)
@@ -1111,7 +1111,7 @@ class OnlineDistributionalRegression(
             fv_it_new[:, param] = self.distribution.link_inverse(
                 prediction_it, param=param
             )
-            dv_it = np.sum(-2 * self.distribution.logpdf(y, fv_it_new) * w)
+            dv_it = np.sum(-2 * self.distribution.loglikelihood(y, fv_it_new) * w)
             dv_old = dv_iterations[it_inner]
             dv_increasing = dv_it > dv_old
 
@@ -1202,12 +1202,12 @@ class OnlineDistributionalRegression(
         dv,
         param,
     ):
-        # di = -2 * self.distribution.logpdf(y, self._fv )
+        # di = -2 * self.distribution.loglikelihood(y, self._fv )
         # dv = (1 - self._forget[0]) * self._global_dev + np.sum(di * w)
         # olddv = dv + 1
 
         dv_start = (
-            np.sum(-2 * self.distribution.logpdf(y, self._fv) * w)
+            np.sum(-2 * self.distribution.loglikelihood(y, self._fv) * w)
             + (1 - self._forget[0]) ** y.shape[0]
             * self._global_dev  # global dev is previous observation / fit
         )
@@ -1310,7 +1310,7 @@ class OnlineDistributionalRegression(
                 prediction_it, param=param
             )
             dv_it = (
-                np.sum(-2 * self.distribution.logpdf(y, fv_it_new) * w)
+                np.sum(-2 * self.distribution.loglikelihood(y, fv_it_new) * w)
                 + (1 - self._forget[0]) ** y.shape[0] * self._global_dev
             )
             dv_old = dv_iterations[it_inner]
@@ -1351,7 +1351,7 @@ class OnlineDistributionalRegression(
                 dv_iterations[(it_inner + 1) :] = dv_it
 
             # olddv = dv
-            # di = -2 * self.distribution.logpdf(y, self._fv )
+            # di = -2 * self.distribution.loglikelihood(y, self._fv )
             # dv = np.sum(di * w)
 
         # Assign to class variables
