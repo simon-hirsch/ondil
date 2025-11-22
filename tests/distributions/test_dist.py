@@ -14,7 +14,10 @@ SPECIAL_TOLERANCE_DISTRIBUTIONS = {
     "SkewT": 1e-5,
 }
 
-SPECIAL_BOUNDS_DISTRIBUTIONS = {"PowerExponential": (-1e4, 1e4)}
+SPECIAL_BOUNDS_DISTRIBUTIONS = {
+    "PowerExponential": (-1e4, 1e4),
+    "Weibull": (1e-3, 100),
+}
 
 
 @pytest.mark.parametrize(

@@ -40,6 +40,8 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 | [`BetaInflatedZero`](#ondil.distributions.BetaInflatedZero)           | Zero Inflated Beta distribution        | -                       |
 | [`ZeroAdjustedGamma`](#ondil.distributions.ZeroAdjustedGamma)         | Zero Adjusted Gamma distribution       | -                       |
 | [`PowerExponential`](#ondil.distributions.PowerExponential)           | Power Exponential distribution         | -                       |
+| [`Weibull`](#ondil.distributions.Weibull)                               | Weibull distribution                   | `scipy.stats.weibull_min`|
+
 | [`Poisson`](#ondil.distributions.Poisson)                             | Poisson distribution                   | `scipy.stats.poisson`   |
 
 | Distribution                                                                                                      | Description                                              | Scale Matrix Parameterization           | Formula                                                                         |
@@ -59,6 +61,10 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 
 ::: ondil.distributions.NormalMeanVariance
 
+::: ondil.distributions.LogNormal
+
+::: ondil.distributions.LogNormalMedian
+
 ::: ondil.distributions.StudentT
 
 ::: ondil.distributions.SkewT
@@ -69,9 +75,9 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 
 ::: ondil.distributions.Gamma
 
-::: ondil.distributions.LogNormal
+::: ondil.distributions.InverseGamma
 
-::: ondil.distributions.LogNormalMedian
+::: ondil.distributions.ZeroAdjustedGamma
 
 ::: ondil.distributions.Logistic
 
@@ -83,17 +89,15 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 
 ::: ondil.distributions.Beta
 
-::: ondil.distributions.Gumbel
-
 ::: ondil.distributions.BetaInflated
+
+::: ondil.distributions.BetaInflatedZero
+
+::: ondil.distributions.Gumbel
 
 ::: ondil.distributions.ReverseGumbel
 
-::: ondil.distributions.InverseGamma
-
-::: ondil.distributions.ZeroAdjustedGamma
-
-::: ondil.distributions.BetaInflatedZero
+::: ondil.distributions.Weibull
 
 ::: ondil.distributions.Poisson
 

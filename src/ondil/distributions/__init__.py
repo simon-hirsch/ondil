@@ -22,6 +22,7 @@ from .powerexponential import PowerExponential
 from .reversegumbel import ReverseGumbel
 from .skew_t import SkewT, SkewTMeanStd
 from .studentt import StudentT
+from .weibull import Weibull
 from .zeroadjustedgamma import ZeroAdjustedGamma
 
 __all__ = [
@@ -52,4 +53,5 @@ __all__ = [
     "MultivariateStudentTInverseModifiedCholesky",
     "BetaInflatedZero",
     "ZeroAdjustedGamma",
+    "Weibull",
 ]
