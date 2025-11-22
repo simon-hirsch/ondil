@@ -70,12 +70,18 @@ def test_distribution_functions(distribution):
     # Execute the R code to obtain the results
     R_list = robjects.r(code)
 
-    # Map R function names to Python method calls
-    function_mapping = {
-        "cdf": lambda: distribution.cdf(x, theta=theta),
-        "pdf": lambda: distribution.pdf(x, theta=theta),
-        "ppf": lambda: distribution.ppf(prob_grid, theta=theta),
-    }
+    if distribution.is_discrete:
+        function_mapping = {
+            "cdf": lambda: distribution.cdf(x, theta=theta),
+            "pdf": lambda: distribution.pmf(x, theta=theta),
+            "ppf": lambda: distribution.ppf(prob_grid, theta=theta),
+        }
+    else:
+        function_mapping = {
+            "cdf": lambda: distribution.cdf(x, theta=theta),
+            "pdf": lambda: distribution.pdf(x, theta=theta),
+            "ppf": lambda: distribution.ppf(prob_grid, theta=theta),
+        }
 
     # Compare R and Python functions - only for available functions
     available_functions = R_list.names
