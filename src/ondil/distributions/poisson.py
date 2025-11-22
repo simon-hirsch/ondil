@@ -78,5 +78,4 @@ class Poisson(ScipyMixin, Distribution):
         return np.zeros_like(y)
 
     def initial_values(self, y: np.ndarray) -> np.ndarray:
-        initial_params = [np.mean(y)]
-        return np.tile(initial_params, (y.shape[0], 1))
+        return (y + y.mean() / 2).reshape(-1, 1)
