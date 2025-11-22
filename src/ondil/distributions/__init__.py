@@ -22,6 +22,7 @@ from .reversegumbel import ReverseGumbel
 from .skew_t import SkewT, SkewTMeanStd
 from .skewnormal import SkewNormal
 from .studentt import StudentT
+from .weibull import Weibull
 from .zeroadjustedgamma import ZeroAdjustedGamma
 
 __all__ = [
@@ -52,4 +53,5 @@ __all__ = [
     "MultivariateStudentTInverseModifiedCholesky",
     "BetaInflatedZero",
     "ZeroAdjustedGamma",
+    "Weibull",
 ]

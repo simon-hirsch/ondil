@@ -16,7 +16,10 @@ SPECIAL_TOLERANCE_DISTRIBUTIONS = {
 }
 
 SPECIAL_BOUNDS_DISTRIBUTIONS = {
+    
     "PowerExponential": (-1e4, 1e4),
+    "Weibull": (1e-3, 100),
+,
 }
 
 
