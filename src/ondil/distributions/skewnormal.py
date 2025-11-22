@@ -2,6 +2,7 @@ from typing import Tuple
 
 import numpy as np
 import scipy.stats as st
+import scipy.special as sp
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Identity, Log
@@ -78,84 +79,51 @@ class SkewNormal(ScipyMixin, Distribution):
         mu, sigma, nu = self.theta_to_params(theta)
 
         z = (y - mu) / sigma
-        nuz = nu * z
+        w = nu * z
+        s = (np.abs(w) ** 2) / 2
 
-        # Calculate phi(nu*z) / Phi(nu*z) ratio
-        phi_nuz = st.norm.pdf(nuz)
-        Phi_nuz = st.norm.cdf(nuz)
-        # Avoid division by zero
-        ratio = np.where(Phi_nuz > 1e-300, phi_nuz / Phi_nuz, 0.0)
+        # z <- (y - mu)/sigma
+        # w <- nu * z
+        # s <- ((abs(w))^2)/2
+        # lpdf <- (1 - (1/2)) * log(2) - s - lgamma(1/2) - log(2)
+        # lcdf <- log(0.5 * (1 + pgamma(s, shape = 1/2, scale = 1) * sign(w)))
+        # dldm <- -(exp(lpdf - lcdf)) * nu/sigma + sign(z) * (abs(z)^(2 - 1))/sigma
+
+        lpdf = (1 - (1 / 2)) * np.log(2) - s - sp.gammaln(1 / 2) - np.log(2)
+        lcdf = np.log(0.5 * (1 + st.gamma(a=0.5, scale=1).cdf(s) * np.sign(w)))
 
         if param == 0:
             # dL/dmu
-            return z / sigma - (nu / sigma) * ratio
+            return (
+                -np.exp(lpdf - lcdf) * nu / sigma
+                + np.sign(z) * (np.abs(z) ** (2 - 1)) / sigma
+            )
 
         if param == 1:
             # dL/dsigma
-            return -1 / sigma + (z**2) / sigma - (nu * z / sigma) * ratio
+            return (
+                -(np.exp(lpdf - lcdf)) * nu * z / sigma + ((np.abs(z) ** 2) - 1) / sigma
+            )
 
         if param == 2:
-            # dL/dnu
-            return z * ratio
+            return (np.exp(lpdf - lcdf)) * w / nu
 
     def dl2_dp2(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
-        mu, sigma, nu = self.theta_to_params(theta)
-
-        z = (y - mu) / sigma
-        nuz = nu * z
-
-        # Calculate phi(nu*z) / Phi(nu*z) ratio and derivative
-        phi_nuz = st.norm.pdf(nuz)
-        Phi_nuz = st.norm.cdf(nuz)
-        ratio = np.where(Phi_nuz > 1e-300, phi_nuz / Phi_nuz, 0.0)
-
-        if param == 0:
-            # d2L/dmu2
-            dl_dmu = z / sigma - (nu / sigma) * ratio
-            return -(dl_dmu**2)
-
-        if param == 1:
-            # d2L/dsigma2
-            dl_dsigma = -1 / sigma + (z**2) / sigma - (nu * z / sigma) * ratio
-            return -(dl_dsigma**2)
-
-        if param == 2:
-            # d2L/dnu2
-            dl_dnu = z * ratio
-            return -(dl_dnu**2)
+        first_deriv = self.dl1_dp1(y, theta, param)
+        # Pseudo second derivative
+        # d2L/dparam^2
+        return -first_deriv * first_deriv
 
     def dl2_dpp(
         self, y: np.ndarray, theta: np.ndarray, params: Tuple[int, int] = (0, 1)
     ) -> np.ndarray:
         self._validate_dl2_dpp_inputs(y, theta, params)
-        mu, sigma, nu = self.theta_to_params(theta)
-
-        z = (y - mu) / sigma
-        nuz = nu * z
-
-        # Calculate phi(nu*z) / Phi(nu*z) ratio
-        phi_nuz = st.norm.pdf(nuz)
-        Phi_nuz = st.norm.cdf(nuz)
-        ratio = np.where(Phi_nuz > 1e-300, phi_nuz / Phi_nuz, 0.0)
-
-        if sorted(params) == [0, 1]:
-            # d2L/dmu dsigma
-            dl_dmu = z / sigma - (nu / sigma) * ratio
-            dl_dsigma = -1 / sigma + (z**2) / sigma - (nu * z / sigma) * ratio
-            return -(dl_dmu * dl_dsigma)
-
-        if sorted(params) == [0, 2]:
-            # d2L/dmu dnu
-            dl_dmu = z / sigma - (nu / sigma) * ratio
-            dl_dnu = z * ratio
-            return -(dl_dmu * dl_dnu)
-
-        if sorted(params) == [1, 2]:
-            # d2L/dsigma dnu
-            dl_dsigma = -1 / sigma + (z**2) / sigma - (nu * z / sigma) * ratio
-            dl_dnu = z * ratio
-            return -(dl_dsigma * dl_dnu)
+        first_deriv_param1 = self.dl1_dp1(y, theta, params[0])
+        first_deriv_param2 = self.dl1_dp1(y, theta, params[1])
+        # Pseudo second derivative
+        # d2L/dparam1 dparam2
+        return -first_deriv_param1 * first_deriv_param2
 
     def initial_values(self, y: np.ndarray) -> np.ndarray:
         """Calculate initial values for the GAMLSS fit.
