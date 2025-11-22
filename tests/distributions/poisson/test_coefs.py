@@ -41,4 +41,3 @@ def test_possion_distribution():
             coef_R_mu.round(3), estimator.beta[0].round(3)
         )
     )
-    # assert np.allclose(estimator.beta[1], coef_R_sg, atol=0.01)
