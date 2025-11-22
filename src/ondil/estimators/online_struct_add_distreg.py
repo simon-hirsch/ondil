@@ -273,7 +273,9 @@ class OnlineStructuredAdditiveDistributionRegressor(
                     result.inner_iteration + 1
                 )
 
-                if result.deviance < self._deviance_outer[idx]:
+                if (result.deviance <= self._deviance_outer[idx]) or (
+                    outer_iteration == 0
+                ):
                     # TODO: only take terms if we improve on the deviance
                     # Implement this properly
                     self._fitted_values[:, param] = result.fitted_values
