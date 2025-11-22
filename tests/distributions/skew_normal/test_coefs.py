@@ -13,7 +13,7 @@ y = mtcars[:, 0]
 X = mtcars[:, 1:]
 
 
-def test_normal_distribution():
+def test_skew_normal_distribution():
     dist = SkewNormal()
     code = f"""
     library(gamlss)
