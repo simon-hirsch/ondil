@@ -25,7 +25,11 @@ class Distribution(ABC):
 
     @property
     def is_discrete(self) -> bool:
+<<<<<<< HEAD
         r"""Whether the distribution is discrete or continuous."""
+=======
+        """Whether the distribution is discrete or continuous."""
+>>>>>>> origin/main
         return False
 
     @property
@@ -274,7 +278,11 @@ class Distribution(ABC):
         self._raise_not_implemented(method_for_discrete=False)
 
     def loglikelihood(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
+<<<<<<< HEAD
         r"""Compute the log-likelihood for the given data points.
+=======
+        """Compute the log-likelihood for the given data points.
+>>>>>>> origin/main
 
         Args:
             y (np.ndarray): An array of data points at which to evaluate the log-likelihood.
