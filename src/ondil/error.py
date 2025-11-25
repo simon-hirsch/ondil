@@ -1,5 +1,5 @@
 class OutOfSupportError(ValueError):
-    """Exception raised for values that are out of support."""
+    r"""Exception raised for values that are out of support."""
 
     def __init__(self, message="This value is out of support."):
         self.message = message
@@ -7,7 +7,7 @@ class OutOfSupportError(ValueError):
 
 
 def check_matplotlib(has_mpl: bool) -> None:
-    """Check if matplotlib is available."""
+    r"""Check if matplotlib is available."""
     if not has_mpl:
         raise ImportError(
             "Matplotlib is required for plotting. "

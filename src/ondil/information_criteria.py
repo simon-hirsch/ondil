@@ -4,7 +4,7 @@ import numpy as np
 
 
 class InformationCriterion:
-    """Calculate the information criteria.
+    r"""Calculate the information criteria.
 
     +---------+--------------------------------------+--------------------------+
     | `ic`    | Information Criterion                | Formula                  |
@@ -22,7 +22,7 @@ class InformationCriterion:
         Compute the chosen criterion from residual sum of squares.
     from_ll(log_likelihood)
         Compute the chosen criterion directly from a log-likelihood value.
-    """
+    r"""
 
     def __init__(
         self,
@@ -30,7 +30,7 @@ class InformationCriterion:
         n_parameters: Union[int, np.ndarray],
         criterion: Literal["aic", "bic", "hqc", "aicc", "max"] = "aic",
     ):
-        """
+        r"""
         Args:
             n_observations (int or array-like): Number of observations used in the model.
             n_parameters (int or array-like): Number of estimated parameters in the model.
@@ -39,7 +39,7 @@ class InformationCriterion:
 
         Raises:
             ValueError: If the criterion is not recognized.
-        """
+        r"""
         # validate criterion early
         if criterion not in ("aic", "aicc", "bic", "hqc", "max"):
             raise ValueError(f"Criterion '{criterion}' not recognized.")
@@ -48,7 +48,7 @@ class InformationCriterion:
         self.criterion = criterion
 
     def from_rss(self, rss: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
-        """
+        r"""
         Compute the specified information criterion from the residual sum of squares (RSS).
 
         The Gaussian log-likelihood is estimated as:
@@ -59,7 +59,7 @@ class InformationCriterion:
 
         Returns:
             ic (float or array-like): The information criterion value (AIC, AICC, BIC, HQC, or Max).
-        """
+        r"""
         # Gaussian log‐likelihood: ll = -n/2*log(rss/n) + constant
         # https://en.wikipedia.org/wiki/Akaike_information_criterion#Comparison_with_least_squares
         constant_term = -self.n_observations / 2 * (1 + np.log(2 * np.pi))
@@ -71,7 +71,7 @@ class InformationCriterion:
     def from_ll(
         self, log_likelihood: Union[float, np.ndarray]
     ) -> Union[float, np.ndarray]:
-        """
+        r"""
         Compute the specified information criterion directly from log-likelihood.
 
         Args:

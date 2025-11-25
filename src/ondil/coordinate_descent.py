@@ -6,7 +6,7 @@ import numpy as np
 
 @nb.njit()
 def soft_threshold(value: float, threshold: float):
-    """The soft thresholding function.
+    r"""The soft thresholding function.
 
     For value \(x\) and threshold \(\\lambda\), the soft thresholding function \(S(x, \\lambda)\) is
     defined as:
@@ -19,7 +19,7 @@ def soft_threshold(value: float, threshold: float):
 
     Returns:
         out (float): The thresholded value
-    """
+    r"""
     return np.sign(value) * np.maximum(np.abs(value) - threshold, 0)
 
 
@@ -41,7 +41,7 @@ def online_coordinate_descent(
     tolerance: float = 1e-4,
     max_iterations: int = 1000,
 ) -> Tuple[np.ndarray, int]:
-    """The parameter update cycle of the online coordinate descent.
+    r"""The parameter update cycle of the online coordinate descent.
 
     Args:
         x_gram (np.ndarray): X-Gramian $$X^TX$$
@@ -57,7 +57,7 @@ def online_coordinate_descent(
 
     Returns:
         Tuple[np.ndarray, int]: Converged $$ \\beta $$
-    """
+    r"""
     i = 0
     J = beta.shape[0]
     JJ = np.arange(J)
@@ -113,7 +113,7 @@ def online_coordinate_descent_path(
     tolerance: float = 1e-4,
     max_iterations: int = 1000,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Run coordinate descent on a grid of regularization values.
+    r"""Run coordinate descent on a grid of regularization values.
 
     Args:
         x_gram (np.ndarray): X-Gramian $$X^TX$$

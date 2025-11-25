@@ -51,7 +51,7 @@ class Beta(ScipyMixin, Distribution):
     Args:
         loc_link (LinkFunction, optional): The link function for $\mu$. Defaults to  LOGIT
         scale_link (LinkFunction, optional): The link function for $\sigma$. Defaults to LOGIT
-    """
+    r"""
 
     corresponding_gamlss: str = "BE"
 
@@ -79,7 +79,7 @@ class Beta(ScipyMixin, Distribution):
         super().__init__(links={0: loc_link, 1: scale_link})
 
     def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
-        """Map GAMLSS Parameters to scipy parameters.
+        r"""Map GAMLSS Parameters to scipy parameters.
 
         Args:
             theta (np.ndarray): parameters

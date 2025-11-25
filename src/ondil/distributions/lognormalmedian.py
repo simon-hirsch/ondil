@@ -9,7 +9,7 @@ from ..types import ParameterShapes
 
 
 class LogNormalMedian(ScipyMixin, Distribution):
-    """
+    r"""
     The Log-Normal distribution with median and standard deviation parameterization in the log-space.
 
     The probability density function of the distribution is defined as:

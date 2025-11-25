@@ -37,7 +37,7 @@ def online_mean_update(
     forget: float,
     n_seen: int,
 ) -> float:
-    """Update the average with a new value or an array of values using an online mean update.
+    r"""Update the average with a new value or an array of values using an online mean update.
 
     Args:
         avg (float): The current average.

@@ -23,7 +23,7 @@ class InverseSoftPlus(LinkFunction):
     converges towards a linear behaviour.
 
     The softplus is the smooth approximation of $\max(x, 0)$.
-    """
+    r"""
 
     link_support = (np.nextafter(0, 1), np.inf)
 
@@ -51,7 +51,7 @@ class InverseSoftPlus(LinkFunction):
 class InverseSoftPlusShiftValue(LinkFunction):
     r"""
     The Inverse SoftPlus function shifted to a value \(v\).
-    """
+    r"""
 
     def __init__(self, value: float):
         self.value = value

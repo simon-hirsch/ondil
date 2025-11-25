@@ -24,7 +24,7 @@ class OnlineLasso(OnlineLinearModel):
         max_iterations: int = 1000,
         selection: Literal["cyclic", "random"] = "cyclic",
     ):
-        """Online LASSO estimator class.
+        r"""Online LASSO estimator class.
 
         This class initializes the online linear regression fitted using LASSO. The estimator object provides three main methods,
         ``estimator.fit(X, y)``, ``estimator.update(X, y)`` and ``estimator.predict(X)``.

@@ -10,7 +10,7 @@ from ..types import ParameterShapes
 
 
 class StudentT(ScipyMixin, Distribution):
-    """Corresponds to GAMLSS TF() and scipy.stats.t()"""
+    r"""Corresponds to GAMLSS TF() and scipy.stats.t()"""
 
     corresponding_gamlss: str = "TF"
 

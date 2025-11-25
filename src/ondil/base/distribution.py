@@ -20,55 +20,55 @@ class Distribution(ABC):
 
     @property
     def corresponding_gamlss(self) -> str | None:
-        """The name of the corresponding implementation in 'gamlss.dist' R package."""
+        r"""The name of the corresponding implementation in 'gamlss.dist' R package."""
         return None
 
     @property
     @abstractmethod
     def parameter_names(self) -> dict:
-        """Parameter name for each column of theta."""
+        r"""Parameter name for each column of theta."""
         pass
 
     @property
     @abstractmethod
     def parameter_shape(self) -> dict:
-        """Parameter name for each column of theta."""
+        r"""Parameter name for each column of theta."""
         pass
 
     @property
     def n_params(self) -> int:
-        """Each subclass must define 'n_params'."""
+        r"""Each subclass must define 'n_params'."""
         return len(self.parameter_names)
 
     def theta_to_params(self, theta: np.ndarray) -> Tuple[np.ndarray, ...]:
-        """Take the fitted values and return tuple of vectors for distribution parameters."""
+        r"""Take the fitted values and return tuple of vectors for distribution parameters."""
         return tuple(theta[:, i] for i in range(self.n_params))
 
     @property
     @abstractmethod
     def distribution_support(self) -> Tuple[float, float]:
-        """The support of the distribution."""
+        r"""The support of the distribution."""
         pass
 
     @property
     @abstractmethod
     def parameter_support(self) -> dict:
-        """The support of each parameter of the distribution."""
+        r"""The support of each parameter of the distribution."""
         pass
 
     @abstractmethod
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int) -> np.ndarray:
-        """Take the first derivative of the likelihood function with respect to the param."""
+        r"""Take the first derivative of the likelihood function with respect to the param."""
 
     @abstractmethod
     def dl2_dp2(self, y: np.ndarray, theta: np.ndarray, param: int) -> np.ndarray:
-        """Take the second derivative of the likelihood function with respect to the param."""
+        r"""Take the second derivative of the likelihood function with respect to the param."""
 
     @abstractmethod
     def dl2_dpp(
         self, y: np.ndarray, theta: np.ndarray, params: Tuple[int, int]
     ) -> np.ndarray:
-        """Take the first derivative of the likelihood function with respect to both parameters."""
+        r"""Take the first derivative of the likelihood function with respect to both parameters."""
 
     def _validate_links(self):
         for param, link in self.links.items():
@@ -114,7 +114,7 @@ class Distribution(ABC):
         y: np.ndarray,
         param: int = 0,
     ) -> np.ndarray:
-        """Apply the link function for param on y."""
+        r"""Apply the link function for param on y."""
         return self.links[param].link(y)
 
     def link_inverse(
@@ -122,7 +122,7 @@ class Distribution(ABC):
         y: np.ndarray,
         param: int = 0,
     ) -> np.ndarray:
-        """Apply the inverse of the link function for param on y."""
+        r"""Apply the inverse of the link function for param on y."""
         return self.links[param].inverse(y)
 
     def link_function_derivative(
@@ -130,7 +130,7 @@ class Distribution(ABC):
         y: np.ndarray,
         param: int = 0,
     ) -> np.ndarray:
-        """Apply the derivative of the link function for param on y."""
+        r"""Apply the derivative of the link function for param on y."""
         return self.links[param].link_derivative(y)
 
     def link_inverse_derivative(
@@ -138,7 +138,7 @@ class Distribution(ABC):
         y: np.ndarray,
         param: int = 0,
     ) -> np.ndarray:
-        """Apply the derivative of the inverse link function for param on y."""
+        r"""Apply the derivative of the inverse link function for param on y."""
         return self.links[param].inverse_derivative(y)
 
     def link_function_second_derivative(
@@ -146,17 +146,17 @@ class Distribution(ABC):
         y: np.ndarray,
         param: int = 0,
     ) -> np.ndarray:
-        """Apply the second derivative of the link function for param on y."""
+        r"""Apply the second derivative of the link function for param on y."""
         return self.links[param].link_second_derivative(y)
 
     @abstractmethod
     def initial_values(
         self, y: np.ndarray, param: int = 0, axis: Optional[int | None] = None
     ) -> np.ndarray:
-        """Calculate the initial values for the GAMLSS fit."""
+        r"""Calculate the initial values for the GAMLSS fit."""
 
     def quantile(self, q: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """
+        r"""
         Compute the quantile function for the given data.
 
         This is a alias for the `ppf` method.
@@ -167,7 +167,7 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: The quantiles corresponding to the given probabilities.
-        """
+        r"""
         return self.ppf(q, theta)
 
     @abstractmethod
@@ -177,11 +177,11 @@ class Distribution(ABC):
         theta: np.ndarray,
         param: int,
     ) -> np.ndarray:
-        """Calculate the conditional initial values for the GAMLSS fit."""
+        r"""Calculate the conditional initial values for the GAMLSS fit."""
 
     @abstractmethod
     def cdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """
+        r"""
         Compute the cumulative distribution function (CDF) for the given data.
 
         Args:
@@ -190,11 +190,11 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: The CDF evaluated at the given data points.
-        """
+        r"""
 
     @abstractmethod
     def pdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """
+        r"""
         Compute the probability density function (PDF) for the given data points.
 
         Args:
@@ -203,11 +203,11 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: An array of PDF values corresponding to the data points in `y`.
-        """
+        r"""
 
     @abstractmethod
     def pmf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """
+        r"""
         Compute the probability mass function (PMF) for the given data points.
 
         Args:
@@ -216,11 +216,11 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: An array of PMF values corresponding to the data points in `y`.
-        """
+        r"""
 
     @abstractmethod
     def ppf(self, q: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """
+        r"""
         Percent Point Function (Inverse of CDF).
 
         Args:
@@ -229,11 +229,11 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: The quantile corresponding to the given probabilities.
-        """
+        r"""
 
     @abstractmethod
     def rvs(self, size: int, theta: np.ndarray) -> np.ndarray:
-        """
+        r"""
         Generate random variates of given size and parameters.
 
         Args:
@@ -242,7 +242,7 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: A 2D array of random variates with shape (theta.shape[0], size).
-        """
+        r"""
 
     @abstractmethod
     def logpmf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -258,7 +258,7 @@ class Distribution(ABC):
 
     @abstractmethod
     def logcdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """Compute the log of the cumulative distribution function (CDF) for the given data points.
+        r"""Compute the log of the cumulative distribution function (CDF) for the given data points.
 
         Args:
             y (np.ndarray): An array of data points at which to evaluate the log CDF.
@@ -266,7 +266,7 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: An array of log CDF values corresponding to the data points in `y`.
-        """
+        r"""
 
 
 class MultivariateDistributionMixin(ABC):
@@ -296,23 +296,23 @@ class ScipyMixin(ABC):
     @property
     @abstractmethod
     def parameter_names(self) -> dict:
-        """Parameter name for each column of theta."""
+        r"""Parameter name for each column of theta."""
         pass
 
     @property
     @abstractmethod
     def scipy_dist(self) -> st.rv_continuous:
-        """The names of the parameters in the scipy.stats distribution and the corresponding column in theta."""
+        r"""The names of the parameters in the scipy.stats distribution and the corresponding column in theta."""
         pass
 
     @property
     @abstractmethod
     def scipy_names(self) -> Tuple[str]:
-        """The names of the parameters in the scipy.stats distribution and the corresponding column in theta."""
+        r"""The names of the parameters in the scipy.stats distribution and the corresponding column in theta."""
         pass
 
     def theta_to_scipy_params(self, theta: np.ndarray) -> Dict[str, np.ndarray]:
-        """Maps $\\theta$ to the `scipy` parameters.
+        r"""Maps $\\theta$ to the `scipy` parameters.
 
         Args:
             theta (np.ndarray): $\\theta$ as estimated by `OnlineDistributionalRegression()` estimator
@@ -322,7 +322,7 @@ class ScipyMixin(ABC):
 
         Returns:
             dict: Dictionary that can be unrolled into scipy distribution class as in `st.some_dist(**return_value)`
-        """
+        r"""
         if not self.scipy_names:
             raise ValueError(
                 f"{self.__class__.__name__} has no scipy_names defined. To use theta_to_scipy_params Please define them in the subclass. Or override this method in the subclass if there is no 1:1 mapping between theta columns and scipy params."
@@ -348,7 +348,7 @@ class ScipyMixin(ABC):
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).ppf(q)
 
     def logpmf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """Compute the log of the probability mass function (PMF) for the given data points.
+        r"""Compute the log of the probability mass function (PMF) for the given data points.
 
         Args:
             y (np.ndarray): An array of data points at which to evaluate the log PMF.
@@ -356,11 +356,11 @@ class ScipyMixin(ABC):
 
         Returns:
             np.ndarray: An array of log PMF values corresponding to the data points in `y`.
-        """
+        r"""
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).logpmf(y)
 
     def logpdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """Compute the log of the probability density function (PDF) for the given data points.
+        r"""Compute the log of the probability density function (PDF) for the given data points.
 
         Args:
             y (np.ndarray): An array of data points at which to evaluate the log PDF.
@@ -368,11 +368,11 @@ class ScipyMixin(ABC):
 
         Returns:
             np.ndarray: An array of log PDF values corresponding to the data points in `y`.
-        """
+        r"""
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).logpdf(y)
 
     def logcdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        """Compute the log of the cumulative distribution function (CDF) for the given data points.
+        r"""Compute the log of the cumulative distribution function (CDF) for the given data points.
 
         Args:
             y (np.ndarray): An array of data points at which to evaluate the log CDF.
@@ -380,7 +380,7 @@ class ScipyMixin(ABC):
 
         Returns:
             np.ndarray: An array of log CDF values corresponding to the data points in `y`.
-        """
+        r"""
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).logcdf(y)
 
     def rvs(self, size: int, theta: np.ndarray) -> np.ndarray:
@@ -391,7 +391,7 @@ class ScipyMixin(ABC):
         )
 
     def mean(self, theta: np.ndarray) -> np.ndarray:
-        """Compute the mean of the distribution for the given parameters.
+        r"""Compute the mean of the distribution for the given parameters.
 
         Args:
             theta (np.ndarray): An array of parameters for the distribution.

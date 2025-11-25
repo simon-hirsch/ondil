@@ -4,7 +4,7 @@ import numpy as np
 
 @nb.njit()
 def init_forget_vector(forget: float, size: int) -> np.ndarray:
-    """Initialise an exponentially discounted vector of weights.
+    r"""Initialise an exponentially discounted vector of weights.
 
     Recursively initialise a vector of exponentially discounted weights of `size` N.
 
@@ -23,7 +23,7 @@ def init_forget_vector(forget: float, size: int) -> np.ndarray:
 
     Returns:
         np.ndarray: Vector of exponentially discounted weights.
-    """
+    r"""
     gamma = 1 - forget
     if gamma == 1:
         out = np.ones(size)
@@ -37,7 +37,7 @@ def init_forget_vector(forget: float, size: int) -> np.ndarray:
 
 @nb.njit()
 def init_gram(X: np.ndarray, w: np.ndarray, forget: float = 0) -> np.ndarray:
-    """Initialise the Gramian Matrix.
+    r"""Initialise the Gramian Matrix.
 
     The Gramian Matrix is defined as
     $$
@@ -56,7 +56,7 @@ def init_gram(X: np.ndarray, w: np.ndarray, forget: float = 0) -> np.ndarray:
 
     Returns:
         np.ndarray: Gramian Matrix.
-    """
+    r"""
     f = init_forget_vector(forget, X.shape[0])
     gram = (X * np.expand_dims((w * f) ** 0.5, -1)).T @ (
         X * np.expand_dims((w * f) ** 0.5, -1)
@@ -68,7 +68,7 @@ def init_gram(X: np.ndarray, w: np.ndarray, forget: float = 0) -> np.ndarray:
 def init_y_gram(
     X: np.ndarray, y: np.ndarray, w: np.ndarray, forget: float = 0
 ) -> np.ndarray:
-    """Initialise the y-Gramian Matrix.
+    r"""Initialise the y-Gramian Matrix.
 
     The Gramian Matrix is defined as $$
     H = X^T \\Gamma WY
@@ -86,7 +86,7 @@ def init_y_gram(
 
     Returns:
         np.ndarray: y-Gramian Matrix.
-    """
+    r"""
     f = init_forget_vector(forget, X.shape[0])
     gram = np.expand_dims(
         (X * np.expand_dims((w * f) ** 0.5, -1)).T @ (y * (w * f) ** 0.5), axis=-1
@@ -96,7 +96,7 @@ def init_y_gram(
 
 @nb.njit()
 def init_inverted_gram(X: np.ndarray, w: np.ndarray, forget: float = 0) -> np.ndarray:
-    """Initialise the inverted Gramian Matrix.
+    r"""Initialise the inverted Gramian Matrix.
 
     The inverted Gramian Matrix is defined as $$
     G = (X^T \Gamma WX)^{-1}
@@ -117,7 +117,7 @@ def init_inverted_gram(X: np.ndarray, w: np.ndarray, forget: float = 0) -> np.nd
     Raises:
         ValueError: If the matrix is not invertible (if rank(X.T @ X) < X.shape[0]).
 
-    """
+    r"""
     gram = init_gram(X=X, w=w, forget=forget)
     rank = np.linalg.matrix_rank(gram)
     if rank == gram.shape[0]:
@@ -135,7 +135,7 @@ def init_inverted_gram(X: np.ndarray, w: np.ndarray, forget: float = 0) -> np.nd
 def update_gram(
     gram: np.ndarray, X: np.ndarray, forget: float = 0, w: float = 1
 ) -> np.ndarray:
-    """Update the Gramian Matrix.
+    r"""Update the Gramian Matrix.
 
     !!! numba "Numba"
         This function uses `numba` just-in-time-compilation.
@@ -148,7 +148,7 @@ def update_gram(
 
     Returns:
         np.ndarray: Updated Gramian Matrix.
-    """
+    r"""
     if X.shape[0] == 1:
         # Single Step Update
         new_gram = (1 - forget) * gram + w * np.outer(X, X)
@@ -165,7 +165,7 @@ def update_gram(
 def update_y_gram(
     gram: np.ndarray, X: np.ndarray, y: np.ndarray, forget: float = 0, w: float = 1
 ) -> np.ndarray:
-    """Update the Y-Gramian Matrix.
+    r"""Update the Y-Gramian Matrix.
 
     !!! numba "Numba"
         This function uses `numba` just-in-time-compilation.
@@ -179,7 +179,7 @@ def update_y_gram(
 
     Returns:
         np.ndarray: Updated Gramian Matrix.
-    """
+    r"""
     if X.shape[0] == 1:
         # Single Update
         new_gram = (1 - forget) * gram + w * np.outer(X, y)
@@ -197,7 +197,7 @@ def update_y_gram(
 def _update_inverted_gram(
     gram: np.ndarray, X: np.ndarray, forget: float = 0, w: float = 1
 ) -> np.ndarray:
-    """Update the inverted Gramian for one step"""
+    r"""Update the inverted Gramian for one step"""
     gamma = 1 - forget
     new_gram = (1 / gamma) * (
         gram - ((w * gram @ np.outer(X, X) @ gram) / (gamma + w * X @ gram @ X.T))
@@ -208,7 +208,7 @@ def _update_inverted_gram(
 def update_inverted_gram(
     gram: np.ndarray, X: np.ndarray, forget: float = 0, w: float = 1
 ) -> np.ndarray:
-    """Update the inverted Gramian Matrix.
+    r"""Update the inverted Gramian Matrix.
 
     !!! numba "Numba"
         This function uses `numba` just-in-time-compilation.

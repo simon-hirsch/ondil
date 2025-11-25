@@ -11,7 +11,7 @@ class Log(LinkFunction):
     The log-link function.
 
     The log-link function is defined as \(g(x) = \log(x)\).
-    """
+    r"""
 
     link_support = (np.nextafter(0, 1), np.inf)
 
@@ -42,7 +42,7 @@ class LogShiftValue(LinkFunction):
     to ensure that certain distribution paramters don't fall below lower
     bounds, e.g. ensuring that the degrees of freedom of a Student's t distribtuion
     don't fall below 2, hence ensuring that the variance exists.
-    """
+    r"""
 
     def __init__(self, value: float):
         self.value = value
@@ -75,7 +75,7 @@ class LogShiftTwo(LogShiftValue):
     to ensure that certain distribution paramters don't fall below lower
     bounds, e.g. ensuring that the degrees of freedom of a Student's t distribtuion
     don't fall below 2, hence ensuring that the variance exists.
-    """
+    r"""
 
     def __init__(self):
         super().__init__(2)

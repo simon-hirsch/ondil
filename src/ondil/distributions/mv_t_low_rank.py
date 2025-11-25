@@ -11,7 +11,7 @@ from ..types import ParameterShapes
 
 
 class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribution):
-    """
+    r"""
     The multivariate \\( t \\)-distribution using a low-rank approximation (LRA) of the precision (inverse scale) matrix.
 
     The PDF of the multivariate \\( t \\)-distribution is given by:
@@ -24,7 +24,7 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
     $$
 
     where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the location parameter, \\( D \\) is a diagonal matrix, \\( V \\) is a low-rank matrix, and \\( \\nu \\) is the degrees of freedom.
-    """
+    r"""
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "D", 2: "V", 3: "nu"}
@@ -90,7 +90,7 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
     def set_theta_element(
         self, theta: Dict, value: np.ndarray, param: int, k: int
     ) -> Dict:
-        """Sets an element of theta for parameter param and place k.
+        r"""Sets an element of theta for parameter param and place k.
 
         !!! Note
             This will mutate `theta`!

@@ -6,7 +6,7 @@ from .elasticnet import ElasticNetPath
 
 
 class LassoPath(ElasticNetPath):
-    """
+    r"""
     Path-based lasso estimation.
 
     The lasso method runs coordinate descent along a (geometric) decreasing grid of regularization strengths (lambdas).
@@ -26,7 +26,7 @@ class LassoPath(ElasticNetPath):
     after the first coordinate-wise update for each regularization strength, only non-zero coefficients are updated.
 
     We use `numba` to speed up the coordinate descent algorithm.
-    """
+    r"""
 
     def __init__(
         self,
@@ -45,7 +45,7 @@ class LassoPath(ElasticNetPath):
         tolerance: float = 1e-4,
         max_iterations: int = 1000,
     ):
-        """
+        r"""
         Initializes the lasso method with the specified parameters.
 
         Args:

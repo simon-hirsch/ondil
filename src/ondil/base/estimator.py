@@ -7,7 +7,7 @@ from sklearn.utils.validation import check_is_fitted
 class OndilEstimatorMixin(ABC):
     @property
     def is_fitted(self) -> bool:
-        """Has the estimator been fitted."""
+        r"""Has the estimator been fitted."""
         return hasattr(self, "n_observations_")
 
     @property
@@ -20,21 +20,21 @@ class OndilEstimatorMixin(ABC):
         message: str,
         level: int = 0,
     ) -> None:
-        """Print a message if the verbosity level is sufficient.
+        r"""Print a message if the verbosity level is sufficient.
 
         Message will be printed if level <= self.verbose.
 
         Args:
             message (str): Message to print.
             level (int, optional): Verbosity level. Defaults to 0.
-        """
+        r"""
         if level <= self.verbose:
             print(f"[{self.__class__.__name__}]", message)
 
     def partial_fit(
         self, X: np.ndarray, y: np.ndarray, sample_weight: np.ndarray | None = None
     ):
-        """
+        r"""
         Align ondil with the scikit-learn API for partial fitting.
 
         The first partial fit will call `fit`, and subsequent calls will call `update`.
@@ -53,7 +53,7 @@ class OndilEstimatorMixin(ABC):
         self : Estimator
             The fitted estimator.
 
-        """
+        r"""
         if self.is_fitted:
             self.update(X=X, y=y, sample_weight=sample_weight)
         else:
@@ -68,7 +68,7 @@ class Estimator(ABC):
 
     @property
     def is_fitted(self) -> bool:
-        """Has the estimator been fitted."""
+        r"""Has the estimator been fitted."""
         return self.n_observations > 0
 
     @property

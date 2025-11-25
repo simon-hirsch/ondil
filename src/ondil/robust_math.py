@@ -9,13 +9,13 @@ LOG_LARGE_NUMBER = np.log(LARGE_NUMBER)
 
 @nb.vectorize(["float64(float64)", "float32(float32)"])
 def robust_log(x: np.ndarray) -> np.ndarray:
-    """
+    r"""
     A robust log function that handles negative and zero values.
 
     This function returns the logarithm of the input array, replacing
     negative and zero values with a small positive number to avoid
     undefined logarithm values.
-    """
+    r"""
     if x > SMALL_NUMBER:
         return np.log(x)
     else:
@@ -24,9 +24,9 @@ def robust_log(x: np.ndarray) -> np.ndarray:
 
 @nb.vectorize(["float64(float64)", "float32(float32)"])
 def robust_exp(x: np.ndarray) -> np.ndarray:
-    """
+    r"""
     A robust exponential function that handles large values.
-    """
+    r"""
 
     if x > LOG_LARGE_NUMBER:
         return LARGE_NUMBER
@@ -64,7 +64,7 @@ def robust_softplus_inverse(value):
 
 @nb.vectorize(["float32(float32, float32)", "float64(float64, float64)"])
 def zero_safe_division(a, b):
-    """Return the max float value for the current precision at the a / b if
+    r"""Return the max float value for the current precision at the a / b if
     b becomes 0. Returns
 
     Args:

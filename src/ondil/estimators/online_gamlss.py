@@ -32,7 +32,7 @@ if HAS_POLARS:
 class OnlineDistributionalRegression(
     OndilEstimatorMixin, RegressorMixin, BaseEstimator
 ):
-    """The online/incremental GAMLSS class."""
+    r"""The online/incremental GAMLSS class."""
 
     _parameter_constraints = {
         "forget": [Interval(numbers.Real, 0.0, 1.0, closed="left")],
@@ -88,7 +88,7 @@ class OnlineDistributionalRegression(
         rel_tol_inner: float = 1e-5,
         min_it_outer: int = 1,
     ) -> "OnlineDistributionalRegression":
-        """The `OnlineDistributionalRegression()` provides the fit, update and predict methods for linear parametric GAMLSS models.
+        r"""The `OnlineDistributionalRegression()` provides the fit, update and predict methods for linear parametric GAMLSS models.
 
         For a response variable $Y$ which is distributed according to the distribution $\mathcal{F}(\\theta)$
         with the distribution parameters $\\theta$, we model:
@@ -178,7 +178,7 @@ class OnlineDistributionalRegression(
         Returns:
             OnlineDistributionalRegression: The OnlineDistributionalRegression instance.
 
-        """
+        r"""
         self.distribution = distribution
         self.equation = equation
         self.forget = forget
@@ -290,7 +290,7 @@ class OnlineDistributionalRegression(
         return attribute
 
     def _process_equation(self, equation: Dict):
-        """Preprocess the equation object and validate inputs."""
+        r"""Preprocess the equation object and validate inputs."""
         if equation is None:
             warnings.warn(
                 f"[{self.__class__.__name__}] "
@@ -333,18 +333,18 @@ class OnlineDistributionalRegression(
 
     @staticmethod
     def _make_intercept(n_observations: int) -> np.ndarray:
-        """Make the intercept series as N x 1 array.
+        r"""Make the intercept series as N x 1 array.
 
         Args:
             y (np.ndarray): Response variable $Y$
 
         Returns:
             np.ndarray: Intercept array.
-        """
+        r"""
         return np.ones((n_observations, 1))
 
     def _is_intercept_only(self, param: int):
-        """Check in the equation whether we model only as intercept"""
+        r"""Check in the equation whether we model only as intercept"""
         if isinstance(self._equation[param], str):
             return self._equation[param] == "intercept"
         else:
@@ -429,7 +429,7 @@ class OnlineDistributionalRegression(
         beta_path: np.ndarray,
         param: int,
     ) -> tuple[np.ndarray, np.ndarray, int]:
-        """
+        r"""
         Fit and select a model for a specific distribution parameter.
 
         Selects the best model along a regularization path by evaluating an information criterion
@@ -467,7 +467,7 @@ class OnlineDistributionalRegression(
         - If "local_rss", the model is selected based on the weighted residual sum of squares.
         - If "global_ll", the model is selected based on the global log-likelihood.
         The function uses an information criterion (e.g., AIC, BIC) to select the best model.
-        """
+        r"""
         f = init_forget_vector(self._forget[param], y.shape[0])
         n_nonzero_coef = np.count_nonzero(beta_path, axis=1)
         n_nonzero_coef_other = self._count_nonzero_coef(exclude=param)
@@ -518,7 +518,7 @@ class OnlineDistributionalRegression(
         model_selection_data: Any,
         param: int,
     ):
-        """Update and select a model for a specific distribution parameter.
+        r"""Update and select a model for a specific distribution parameter.
 
         Parameters
         ----------
@@ -547,7 +547,7 @@ class OnlineDistributionalRegression(
         best_ic : int
             Index of the best model according to the information criterion.
 
-        """
+        r"""
         f = init_forget_vector(self._forget[param], y.shape[0])
         n_nonzero_coef = np.count_nonzero(beta_path, axis=1)
         prediction_path = X @ beta_path.T
@@ -597,7 +597,7 @@ class OnlineDistributionalRegression(
         return beta, model_selection_data_new, best_ic
 
     def _validate_inputs(self, X: np.ndarray, y: np.ndarray):
-        """Validate the input matrices X and y.
+        r"""Validate the input matrices X and y.
 
         Args:
             X (np.ndarray): Input matrix $X$
@@ -606,7 +606,7 @@ class OnlineDistributionalRegression(
         Raises:
             OutOfSupportError: If the values of $y$ are below the range of the distribution.
             OutOfSupportError: If the values of $y$ are beyond the range of the distribution.
-        """
+        r"""
         if np.any(y < self.distribution.distribution_support[0]):
             raise OutOfSupportError(
                 message=(
@@ -640,7 +640,7 @@ class OnlineDistributionalRegression(
         y: np.ndarray,
         sample_weight: Optional[np.ndarray] = None,
     ) -> "OnlineDistributionalRegression":
-        """Fit the online GAMLSS model.
+        r"""Fit the online GAMLSS model.
 
         This method initializes the model with the given covariate data matrix $X$ and response variable $Y$.
 
@@ -655,7 +655,7 @@ class OnlineDistributionalRegression(
         Raises:
             ValueError: If the equation is not specified correctly.
             OutOfSupportError: If the values of $y$ are below or above the distribution's support.
-        """
+        r"""
 
         self._prepare_estimator()
 
@@ -777,7 +777,7 @@ class OnlineDistributionalRegression(
         y: np.ndarray,
         sample_weight: Optional[np.ndarray] = None,
     ):
-        """Update the fit for the online GAMLSS Model.
+        r"""Update the fit for the online GAMLSS Model.
 
         Args:
             X (np.ndarray): Covariate data matrix $X$.
@@ -1376,7 +1376,7 @@ class OnlineDistributionalRegression(
         return dv_it
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """Predict the mean of the response distribution.
+        r"""Predict the mean of the response distribution.
 
         Args:
             X (np.ndarray): Covariate matrix $X$. Shape should be (n_samples, n_features).
@@ -1385,12 +1385,12 @@ class OnlineDistributionalRegression(
 
         Returns:
             Predictions (np.ndarray): Predictions
-        """
+        r"""
         theta = self.predict_distribution_parameters(X)
         return self.distribution.mean(theta)
 
     def predict_median(self, X: np.ndarray):
-        """Predict the median of the distribution.
+        r"""Predict the median of the distribution.
 
         Args:
             X (np.ndarray): Covariate matrix $X$. Shape should be (n_samples, n_features).
@@ -1399,7 +1399,7 @@ class OnlineDistributionalRegression(
 
         Returns:
             Predictions (np.ndarray): Predicted median of the distribution. Shape will be (n_samples,).
-        """
+        r"""
         theta = self.predict_distribution_parameters(X)
         return self.distribution.median(theta)
 
@@ -1409,7 +1409,7 @@ class OnlineDistributionalRegression(
         what: str = "response",
         return_contributions: bool = False,
     ) -> np.ndarray:
-        """Predict the distibution parameters given input data.
+        r"""Predict the distibution parameters given input data.
 
         Args:
             X (np.ndarray): Design matrix.
@@ -1421,7 +1421,7 @@ class OnlineDistributionalRegression(
 
         Returns:
             Predictions (np.ndarray): Predicted values for the distribution of shape (n_samples, n_params) where n_params is the number of distribution parameters.
-        """
+        r"""
         check_is_fitted(self)
         X = validate_data(self, X=X, reset=False, dtype=[np.float64, np.float32])
 
@@ -1459,7 +1459,7 @@ class OnlineDistributionalRegression(
         X: np.ndarray,
         quantile: float | np.ndarray,
     ) -> np.ndarray:
-        """Predict the quantile(s) of the distribution.
+        r"""Predict the quantile(s) of the distribution.
 
         Args:
             X (np.ndarray): Covariate matrix $X$. Shape should be (n_samples, n_features).
@@ -1467,7 +1467,7 @@ class OnlineDistributionalRegression(
 
         Returns:
             np.ndarray: Predicted quantile(s) of the distribution. Shape will be (n_samples, n_quantiles).
-        """
+        r"""
         check_is_fitted(self)
         X = validate_data(self, X=X, reset=False, dtype=[np.float64, np.float32])
 
@@ -1486,7 +1486,7 @@ class OnlineDistributionalRegression(
         it_outer: int = 1,
         it_inner: int = 1,
     ):
-        """Get debug information for a specific variable, parameter, outer iteration and inner iteration.
+        r"""Get debug information for a specific variable, parameter, outer iteration and inner iteration.
 
         We currently support the following variables:
 

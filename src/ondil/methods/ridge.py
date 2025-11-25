@@ -8,7 +8,7 @@ from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
 
 
 class Ridge(EstimationMethod):
-    """Single-lambda Ridge Estimation.
+    r"""Single-lambda Ridge Estimation.
 
     The ridge method runs coordinate descent for a single lambda.
 
@@ -21,7 +21,7 @@ class Ridge(EstimationMethod):
     after the first coordinate-wise update for each regularization strength, only non-zero coefficients are updated.
 
     We use `numba` to speed up the coordinate descent algorithm.
-    """
+    r"""
 
     def __init__(
         self,
@@ -33,7 +33,7 @@ class Ridge(EstimationMethod):
         tolerance: float = 1e-4,
         max_iterations: int = 1000,
     ):
-        """
+        r"""
         Initializes the Ridge method with the specified parameters.
 
         Args:

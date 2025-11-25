@@ -8,7 +8,7 @@ from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
 
 
 class ElasticNetPath(EstimationMethod):
-    """
+    r"""
     Path-based elastic net estimation.
 
     The elastic net method runs coordinate descent along a (geometric) decreasing grid of regularization strengths (lambdas).
@@ -31,7 +31,7 @@ class ElasticNetPath(EstimationMethod):
 
     We use `numba` to speed up the coordinate descent algorithm.
 
-    """
+    r"""
 
     def __init__(
         self,
@@ -51,7 +51,7 @@ class ElasticNetPath(EstimationMethod):
         tolerance: float = 1e-4,
         max_iterations: int = 1000,
     ):
-        """
+        r"""
         Initializes the ElasticNet method with the specified parameters.
 
         Args:

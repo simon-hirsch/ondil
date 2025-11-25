@@ -21,7 +21,7 @@ from .mv_normal_modchol import (
 class MultivariateStudentTInverseModifiedCholesky(
     MultivariateDistributionMixin, Distribution
 ):
-    """
+    r"""
     Multivariate Student's t distribution with modified Cholesky decomposition.
 
     The PDF of the multivariate \\( t \\)-distribution with precision matrix parameterized as \\( T^T D T \\) is:
@@ -33,7 +33,7 @@ class MultivariateStudentTInverseModifiedCholesky(
     \\left(1 + \\frac{1}{\\nu} (y - \\mu)^T T^T D T (y - \\mu)\\right)^{-\\frac{\\nu + k}{2}}
     $$
     where \\( k \\) is the dimensionality, \\( \\mu \\) is the location, \\( D \\) is a diagonal matrix, \\( T \\) is a lower triangular matrix, and \\( \\nu \\) is the degrees of freedom.
-    """
+    r"""
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "D", 2: "T", 3: "dof"}
@@ -62,7 +62,7 @@ class MultivariateStudentTInverseModifiedCholesky(
         dof_guesstimate: float = 10,
         use_gaussian_for_location: bool = False,
     ):
-        """
+        r"""
         Initializes the distribution with specified link functions and parameters.
         Args:
             loc_link (LinkFunction, optional): Link function for the location parameter. Defaults to Identity().
@@ -76,7 +76,7 @@ class MultivariateStudentTInverseModifiedCholesky(
             dof_independence (float): Large value to represent independence in degrees of freedom.
             use_gaussian_for_location (bool): Indicates if a Gaussian is used for the location parameter.
             _regularization_allowed (dict): Specifies which parameters allow regularization.
-        """
+        r"""
         super().__init__(
             links={
                 0: loc_link,
@@ -119,7 +119,7 @@ class MultivariateStudentTInverseModifiedCholesky(
     def set_theta_element(
         self, theta: Dict, value: np.ndarray, param: int, k: int
     ) -> Dict:
-        """Sets an element of theta for parameter param and place k.
+        r"""Sets an element of theta for parameter param and place k.
 
         !!! Note
             This will mutate `theta`!
@@ -132,7 +132,7 @@ class MultivariateStudentTInverseModifiedCholesky(
 
         Returns:
             Dict: Theta where element (param, k) is set to value.
-        """
+        r"""
         if param in (0, 3):
             theta[param][:, k] = value
         if param == 1:
@@ -323,7 +323,7 @@ class MultivariateStudentTInverseModifiedCholesky(
     def param_conditional_likelihood(
         self, y: np.ndarray, theta: Dict, eta: np.ndarray, param: int
     ) -> np.ndarray:
-        """Calulate the log-likelihood for (flat) eta for parameter (param)
+        r"""Calulate the log-likelihood for (flat) eta for parameter (param)
         and theta for all other parameters.
 
         Args:

@@ -41,7 +41,7 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
         method: EstimationMethod | str = "ols",
         ic: Literal["aic", "bic", "hqc", "max"] = "bic",
     ):
-        """The basic linear model for many different estimation techniques.
+        r"""The basic linear model for many different estimation techniques.
 
         Args:
             forget (float, optional): Exponential discounting of old observations. Defaults to 0.
@@ -52,7 +52,7 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
             ic (Literal["aic", "bic", "hqc", "max"], optional): The information criteria for model selection. Defaults to "bic".
         Raises:
             ValueError: Will raise if you try to regularize the intercept, but not fit it.
-        """
+        r"""
 
         self.forget = forget
         self.method = method
@@ -103,13 +103,13 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
         y: np.ndarray,
         sample_weight: Optional[np.ndarray] = None,
     ) -> "OnlineLinearModel":
-        """Initial fit of the online regression model.
+        r"""Initial fit of the online regression model.
 
         Args:
             X (np.ndarray): The design matrix $X$.
             y (np.ndarray): The response vector $y$.
             sample_weight (Optional[np.ndarray], optional): The sample weights. Defaults to None.
-        """
+        r"""
 
         self._prepare_fit()
         X, y = validate_data(self, X=X, y=y, reset=True, dtype=[np.float64, np.float32])
@@ -180,13 +180,13 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
         y: np.ndarray,
         sample_weight: Optional[np.ndarray] = None,
     ) -> None:
-        """Update the regression model.
+        r"""Update the regression model.
 
         Args:
             X (np.ndarray): The new row of the design matrix $X$. Needs to be of shape 1 x n_features or n_obs_new x n_features.
             y (np.ndarray): The new observation of $y$. Needs to be the same shape as `X` or a single observation.
             sample_weight (Optional[np.ndarray], optional): The weight for the new observations. `None` implies all observations have weight 1. Defaults to None.
-        """
+        r"""
 
         X, y = validate_data(
             self, X=X, y=y, reset=False, dtype=[np.float64, np.float32]
@@ -238,7 +238,7 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
         return self
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
-        """Calculate the coefficient of determination $R^2$.
+        r"""Calculate the coefficient of determination $R^2$.
 
         Args:
             X (np.ndarray): The design matrix $X$.
@@ -246,7 +246,7 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
 
         Returns:
             float: The coefficient of determination $R^2$.
-        """
+        r"""
         check_is_fitted(self)
         X, y = validate_data(
             self, X=X, y=y, reset=False, dtype=[np.float64, np.float32]
@@ -259,14 +259,14 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
         return 1 - ss_residuals / ss_total
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """Predict using the optimal IC selection.
+        r"""Predict using the optimal IC selection.
 
         Args:
             X (np.ndarray): The design matrix $X$.
 
         Returns:
             np.ndarray: The predictions for the optimal IC.
-        """
+        r"""
         check_is_fitted(self)
         X = validate_data(self, X=X, reset=False, dtype=[np.float64, np.float32])
 
@@ -276,7 +276,7 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
         return prediction
 
     def predict_path(self, X: np.ndarray) -> np.ndarray:
-        """Predict the full regularization path.
+        r"""Predict the full regularization path.
 
         Args:
             X (np.ndarray): The design matrix $X$.

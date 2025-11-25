@@ -16,7 +16,7 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
     # Precision Matrix OMEGA
     # Cholesky Factor inv(chol(SIGMA))
     # Lower diagonal matrix
-    """
+    r"""
     The multivariate \\( t \\)-distribution parameterized by the inverse Cholesky factor of the precision (inverse scale) matrix.
 
     The PDF of the multivariate \\( t \\)-distribution is given by:
@@ -29,7 +29,7 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
     $$
 
     where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the location parameter, \\( L \\) is the inverse Cholesky factor of the precision matrix (so the precision is \\( L L^T \\)), and \\( \\nu \\) is the degrees of freedom.
-    """
+    r"""
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "sigma", 2: "nu"}
@@ -92,7 +92,7 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
 
     @staticmethod
     def set_theta_element(theta: Dict, value: np.ndarray, param: int, k: int) -> Dict:
-        """Sets an element of theta for parameter param and place k.
+        r"""Sets an element of theta for parameter param and place k.
 
         !!! Note
             This will mutate `theta`!

@@ -9,7 +9,7 @@ from ..types import ParameterShapes
 
 
 class Normal(ScipyMixin, Distribution):
-    """
+    r"""
     The Normal distribution with mean and standard deviation parameterization.
 
     The probability density function of the distribution is defined as:
@@ -23,7 +23,7 @@ class Normal(ScipyMixin, Distribution):
     where $y$ is the observed data, $\\mu = \\theta_0$ is the location parameter and $\\sigma = \\theta_1$ is the scale parameter.
 
     This distribution corresponds to the NO() distribution in GAMLSS.
-    """
+    r"""
 
     corresponding_gamlss: str = "NO"
     parameter_names = {0: "mu", 1: "sigma"}
@@ -45,12 +45,12 @@ class Normal(ScipyMixin, Distribution):
         loc_link: LinkFunction = Identity(),
         scale_link: LinkFunction = Log(),
     ) -> None:
-        """Initialize the Normal.
+        r"""Initialize the Normal.
 
         Args:
             loc_link (LinkFunction, optional): Location link. Defaults to Identity().
             scale_link (LinkFunction, optional): Scale link. Defaults to Log().
-        """
+        r"""
         super().__init__(
             links={
                 0: loc_link,
@@ -92,7 +92,7 @@ class Normal(ScipyMixin, Distribution):
 
 
 class NormalMeanVariance(ScipyMixin, Distribution):
-    """
+    r"""
     The Normal distribution with mean and variance parameterization.
 
     The probability density function of the distribution is defined as:
@@ -104,7 +104,7 @@ class NormalMeanVariance(ScipyMixin, Distribution):
         f(y | \\theta_0, \\theta_1) = \\frac{1}{\\sqrt{2\\pi\\theta_1}} \exp\\left(-\\frac{(y - \\theta_0)^2}{2\\theta_1}\\right).
     $$
     where $y$ is the observed data, $\\mu = \\theta_0$ is the location parameter and $\\sigma^2 = \\theta_1$ is the scale parameter.
-    """
+    r"""
 
     corresponding_gamlss: str = "NO2"
     parameter_names = {0: "mu", 1: "sigma"}
@@ -126,12 +126,12 @@ class NormalMeanVariance(ScipyMixin, Distribution):
         loc_link: LinkFunction = Identity(),
         scale_link: LinkFunction = Log(),
     ) -> None:
-        """Initialize the NormalMeanVariance.
+        r"""Initialize the NormalMeanVariance.
 
         Args:
             loc_link (LinkFunction, optional): Location link. Defaults to Identity().
             scale_link (LinkFunction, optional): Scale link. Defaults to Log().
-        """
+        r"""
         super().__init__(
             links={
                 0: loc_link,
@@ -140,7 +140,7 @@ class NormalMeanVariance(ScipyMixin, Distribution):
         )
 
     def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
-        """Map GAMLSS Parameters to scipy parameters.
+        r"""Map GAMLSS Parameters to scipy parameters.
 
         Args:
             theta (np.ndarray): parameters

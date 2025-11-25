@@ -10,7 +10,7 @@ from ..types import ParameterShapes
 
 
 class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distribution):
-    """
+    r"""
     The multivariate normal (Gaussian) distribution parameterized by a low-rank precision matrix.
 
     The PDF of the multivariate normal distribution is given by:
@@ -21,7 +21,7 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
     $$
 
     where \( k \) is the dimensionality of the data, \( \\mu \) is the location parameter, \( D \) is a diagonal matrix, and \( V \) is a low-rank matrix such that the precision is \( D + V V^T \).
-    """
+    r"""
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "diag_matrix", 2: "low_rank_matrix"}
@@ -81,7 +81,7 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
     def set_theta_element(
         self, theta: Dict, value: np.ndarray, param: int, k: int
     ) -> Dict:
-        """Sets an element of theta for parameter param and place k.
+        r"""Sets an element of theta for parameter param and place k.
 
         !!! Note
             This will mutate `theta`!
@@ -94,7 +94,7 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
 
         Returns:
             Dict: Theta where element (param, k) is set to value.
-        """
+        r"""
         if param == 0:
             theta[param][:, k] = value
         if (param == 1) | (param == 2):
@@ -110,14 +110,14 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
         return loc, mat_d, mat_v
 
     def theta_to_scipy(self, theta: Dict[int, np.ndarray]) -> Dict[str, np.ndarray]:
-        """Map theta to `scipy` distribution parameters for the multivariate normal distribution.
+        r"""Map theta to `scipy` distribution parameters for the multivariate normal distribution.
 
         Args:
             theta (Dict[int, np.ndarray]): Fitted / predicted theta.
 
         Returns:
             Dict[str, np.ndarray]: Mapped predicted
-        """
+        r"""
         out = {
             "mean": theta[0],
             "cov": np.linalg.inv(theta[1] + theta[2] @ theta[2].swapaxes(-1, -2)),
@@ -299,7 +299,7 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
 
 
 def _loglikelihood_gaussian_lowrank(y, mu, mat_d, mat_v):
-    """Fast evaluation of the batched log likelihood."""
+    r"""Fast evaluation of the batched log likelihood."""
     # k = y.shape[1]
     # cov = np.linalg.inv(mat_d + mat_v @ np.swapaxes(mat_v, -2, -1))
     # part1 = - k/2 * np.log(2 * np.pi)

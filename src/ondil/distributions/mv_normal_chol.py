@@ -18,7 +18,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
     # The cross derivatives are defined on (L^-1).T
     # The transpose is important!!
 
-    """
+    r"""
     The multivariate normal (Gaussian) distribution parameterized by the inverse Cholesky factor of the precision (inverse scale) matrix.
 
     The PDF of the multivariate normal distribution is given by:
@@ -29,7 +29,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
     $$
 
     where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the location parameter, and \\( L \\) is the inverse Cholesky factor of the precision matrix (so the precision is \\( L L^T \\)).
-    """
+    r"""
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "sigma"}
@@ -79,7 +79,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
 
     @staticmethod
     def set_theta_element(theta: Dict, value: np.ndarray, param: int, k: int) -> Dict:
-        """Sets an element of theta for parameter param and place k.
+        r"""Sets an element of theta for parameter param and place k.
 
         !!! Note
             This will mutate `theta`!
@@ -92,7 +92,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
 
         Returns:
             Dict: Theta where element (param, k) is set to value.
-        """
+        r"""
         if param == 0:
             theta[param][:, k] = value
         if param == 1:
@@ -122,7 +122,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
             return theta
 
     def dl1_dp1(self, y: np.ndarray, theta: Dict, param: int = 0):
-        """Return the first derivatives wrt to the parameter.
+        r"""Return the first derivatives wrt to the parameter.
 
         !!! Note
             We expect the fitted L^-1)^T to be handed in matrix/cube form, i.e of shape n x d x d.
@@ -135,7 +135,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
 
         Returns:
             derivative (np.ndarray): The 1st derivatives.
-        """
+        r"""
         fitted_loc, fitted_inv_tr_chol = self.theta_to_params(theta)
 
         if param == 0:
@@ -152,7 +152,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
     def dl2_dp2(
         self, y: np.ndarray, theta: Dict, param: int = 0, clip=False
     ) -> np.ndarray:
-        """Return the second derivatives wrt to the parameter.
+        r"""Return the second derivatives wrt to the parameter.
 
         !!! Note
             We expect the fitted L^-1)^T to be handed in matrix/cube form, i.e of shape n x d x d.
@@ -165,7 +165,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
 
         Returns:
             derivative (np.ndarray): The 2nd derivatives.
-        """
+        r"""
         fitted_loc, fitted_inv_tr_chol = self.theta_to_params(theta)
 
         if param == 0:
@@ -315,7 +315,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
     def param_conditional_likelihood(
         self, y: np.ndarray, theta: Dict, eta: np.ndarray, param: int
     ) -> np.ndarray:
-        """Calulate the log-likelihood for (flat) eta for parameter (param)
+        r"""Calulate the log-likelihood for (flat) eta for parameter (param)
         and theta for all other parameters.
 
         Args:

@@ -7,9 +7,9 @@ from ..types import ParameterShapes
 
 
 class MatrixDiag(LinkFunction):
-    """
+    r"""
     Wraps a link functions to be applied only on the diagonal of a square matrix.
-    """
+    r"""
 
     valid_shapes = [ParameterShapes.DIAGONAL_MATRIX]
 
@@ -90,7 +90,7 @@ class MatrixDiag(LinkFunction):
 
 
 class MatrixDiagTriu(LinkFunction):
-    """
+    r"""
     Wraps two link functions to be applied on the diagonal and the upper diagonal of a square matrix.
     """
 

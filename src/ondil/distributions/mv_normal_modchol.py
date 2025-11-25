@@ -16,7 +16,7 @@ from ..types import ParameterShapes
 class MultivariateNormalInverseModifiedCholesky(
     MultivariateDistributionMixin, Distribution
 ):
-    """
+    r"""
     The multivariate normal (Gaussian) distribution parameterized by the modified Cholesky decomposition of the precision (inverse scale) matrix.
 
     In the modified Cholesky decomposition, the precision matrix \\( \\Omega \\) is written as:
@@ -32,7 +32,7 @@ class MultivariateNormalInverseModifiedCholesky(
     \\exp\\left(-\\frac{1}{2} (y - \\mu)^T T^T D T (y - \\mu)\\right)
     $$
     where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the mean vector, \\( T \\) and \\( D \\) are the modified Cholesky factors of the precision matrix.
-    """
+    r"""
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "D", 2: "T"}
@@ -94,7 +94,7 @@ class MultivariateNormalInverseModifiedCholesky(
     def set_theta_element(
         self, theta: Dict, value: np.ndarray, param: int, k: int
     ) -> Dict:
-        """Sets an element of theta for parameter param and place k.
+        r"""Sets an element of theta for parameter param and place k.
 
         !!! Note
             This will mutate `theta`!
@@ -107,7 +107,7 @@ class MultivariateNormalInverseModifiedCholesky(
 
         Returns:
             Dict: Theta where element (param, k) is set to value.
-        """
+        r"""
         if param == 0:
             theta[param][:, k] = value
         if param == 1:
@@ -282,7 +282,7 @@ class MultivariateNormalInverseModifiedCholesky(
     def param_conditional_likelihood(
         self, y: np.ndarray, theta: Dict, eta: np.ndarray, param: int
     ) -> np.ndarray:
-        """Calulate the log-likelihood for (flat) eta for parameter (param)
+        r"""Calulate the log-likelihood for (flat) eta for parameter (param)
         and theta for all other parameters.
 
         Args:

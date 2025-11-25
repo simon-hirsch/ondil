@@ -2,13 +2,13 @@ import numpy as np
 
 
 def ensure_atleast_bivariate(y: np.ndarray) -> None:
-    """Validates that the response variable is a multivariate array with at least two dimensions.
+    r"""Validates that the response variable is a multivariate array with at least two dimensions.
 
     Args:
         y (np.ndarray): The response variable to validate.
     Raises:
         ValueError: If `y` does not have at least two dimensions and has less than two columns.
-    """
+    r"""
     if y.shape[1] < 2:
         raise ValueError(
             "Multivariate response must have at least two dimensions. "
@@ -17,7 +17,7 @@ def ensure_atleast_bivariate(y: np.ndarray) -> None:
 
 
 def validate_response_support(estimator, y: np.ndarray) -> None:
-    """Validates that the response values are within the distribution support of the estimator.
+    r"""Validates that the response values are within the distribution support of the estimator.
 
     Args:
         estimator: The estimator with a distribution that defines the support.
