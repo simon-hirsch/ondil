@@ -16,7 +16,6 @@ class ARTermState:
     h: np.ndarray | None
     coef_: np.ndarray | None
     memory: np.ndarray | None
-    zero_std_cols: np.ndarray | None
 
 
 class _AutoregressiveTerm(Term):
@@ -74,40 +73,23 @@ class _AutoregressiveTerm(Term):
             raise ValueError("Path-based methods are not supported for LinearTerm.")
         return self
 
-    def _make_lags_and_memory(self, y, fitted_values, target_values):
-        # This method can be extended in the future to incorporate fitted_values
-        # and target_values if needed for more complex lag structures.
-
-        if hasattr(self, "_state") and self._state is not None:
-            memory = self._state.memory
-            y_full = np.concatenate([memory, y])
-        else:
-            y_full = y
-
-        return make_lags(y=y_full, lags=self.lags), y_full
-
     def fit(
         self,
         X: np.ndarray,  # for api compatibility; not used
         y: np.ndarray,
         fitted_values: np.ndarray = None,
         target_values: np.ndarray = None,
+        distribution=None,
         sample_weight: np.ndarray = None,
     ) -> "_AutoregressiveTerm":
-        X_mat, _ = self._make_lags_and_memory(
+        X_mat, memory = self.make_design_matrix_in_sample_during_fit(
+            X=X,
             y=y,
             fitted_values=fitted_values,
             target_values=target_values,
         )
-
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
-
-        # Remove the columns with zero standard deviation
-        # but keep the first one (intercept) if present
-        zero_std_cols = np.where(np.isclose(X_mat.std(axis=0), 0))[0]
-        if len(zero_std_cols) > int(self.fit_intercept):
-            X_mat = np.delete(X_mat, zero_std_cols[int(self.fit_intercept) :], axis=1)
+        self.find_zero_variance_columns(X_mat)
+        X_mat = self.remove_zero_variance_columns(X_mat)
 
         if self.is_regularized:
             is_regularized = self.is_regularized
@@ -142,30 +124,66 @@ class _AutoregressiveTerm(Term):
             g=g,
             h=h,
             coef_=coef_,
-            memory=y[-np.max(self.lags) :],
-            zero_std_cols=zero_std_cols,
+            memory=memory,
         )
         return new
 
-    def predict(
+    def predict_in_sample_during_fit(
         self,
-        X: np.ndarray,  # for api compatibility; not used
+        X: np.ndarray,
+        y: np.ndarray = None,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
+    ) -> np.ndarray:
+        X_mat, _ = self.make_design_matrix_in_sample_during_fit(
+            X=X,
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+        )
+        X_mat = self.remove_zero_variance_columns(X_mat)
+        return X_mat @ self._state.coef_
+
+    def predict_in_sample_during_update(
+        self,
+        X: np.ndarray,
+        y: np.ndarray = None,
+        fitted_values: np.ndarray = None,
+        target_values: np.ndarray = None,
     ):
+        X_mat, _ = self.make_design_matrix_in_sample_during_update(
+            X=X,
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+        )
+        X_mat = self.remove_zero_variance_columns(X_mat)
+        return X_mat @ self._state.coef_
+
+    def make_design_matrix_out_of_sample(
+        self,
+        X,
+    ):
+        if X.shape[0] > 1:
+            raise ValueError(
+                "Out-of-sample prediction for autoregressive terms can only be done "
+                "one step ahead.",
+            )
         X_mat = make_lags(
             y=self._state.memory,
             lags=self.lags,
-        )[-1:, :]
-
+        )
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
+        return X_mat[[-1], :]
 
-        if len(self._state.zero_std_cols) > int(self.fit_intercept):
-            X_mat = np.delete(
-                X_mat,
-                self._state.zero_std_cols[int(self.fit_intercept) :],
-                axis=1,
-            )
-
+    # TODO: Can this go to the base class?
+    def predict_out_of_sample(
+        self,
+        X: np.ndarray,  # for api compatibility; not used
+    ):
+        X_mat = self.make_design_matrix_out_of_sample(X=X)
+        X_mat = self.remove_zero_variance_columns(X_mat)
         return X_mat @ self._state.coef_
 
     def update(
@@ -174,27 +192,19 @@ class _AutoregressiveTerm(Term):
         y: np.ndarray,
         fitted_values: np.ndarray = None,
         target_values: np.ndarray = None,
+        distribution=None,
         sample_weight: np.ndarray = None,
     ) -> "_AutoregressiveTerm":
         if self._state is None:
             raise ValueError("Term must be fitted before it can be updated.")
 
-        X_mat, y_full = self._make_lags_and_memory(
+        X_mat, memory = self.make_design_matrix_in_sample_during_update(
+            X=X,
             y=y,
             fitted_values=fitted_values,
             target_values=target_values,
         )
-        X_mat = X_mat[-y.shape[0] :, :]
-
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
-
-        if len(self._state.zero_std_cols) > int(self.fit_intercept):
-            X_mat = np.delete(
-                X_mat,
-                self._state.zero_std_cols[int(self.fit_intercept) :],
-                axis=1,
-            )
+        X_mat = self.remove_zero_variance_columns(X_mat)
 
         g = self._method.update_x_gram(
             gram=self._state.g,
@@ -222,7 +232,7 @@ class _AutoregressiveTerm(Term):
             g=g,
             h=h,
             coef_=coef_,
-            memory=y_full[-np.max(self.lags) :],
+            memory=memory,
         )
         return new_instance
 
@@ -230,24 +240,133 @@ class _AutoregressiveTerm(Term):
 class AutoregressiveThetaTerm(_AutoregressiveTerm):
     """Autoregressive term using target values for lagged predictors."""
 
-    def _make_lags_and_memory(self, y, fitted_values, target_values):
-        if hasattr(self, "_state") and self._state is not None:
-            memory = self._state.memory
-            y_full = np.concatenate([memory, fitted_values])
-        else:
-            y_full = fitted_values
+    def __init__(
+        self,
+        lags: np.ndarray | list[int] | int = 1,
+        method: EstimationMethod = "ols",
+        fit_intercept: bool = True,
+        forget: float = 0.0,
+        is_regularized: bool = False,
+        regularize_intercept: None | bool = None,
+        param: int = 0,
+    ):
+        super().__init__(
+            lags=lags,
+            method=method,
+            fit_intercept=fit_intercept,
+            forget=forget,
+            is_regularized=is_regularized,
+            regularize_intercept=regularize_intercept,
+        )
+        self.param = param
 
-        return make_lags(y=y_full, lags=self.lags), y_full
+    def make_design_matrix_in_sample_during_fit(
+        self,
+        X,
+        y,
+        fitted_values,
+        target_values,
+        distribution=None,
+    ):
+        X_mat = make_lags(y=fitted_values[:, self.param], lags=self.lags)
+        if self.fit_intercept:
+            X_mat = add_intercept(X_mat)
+        return X_mat, fitted_values[-np.max(self.lags), self.param]
+
+    def make_design_matrix_in_sample_during_update(
+        self,
+        X,
+        y,
+        fitted_values,
+        target_values,
+        distribution=None,
+    ):
+        lagged_value = np.concatenate((
+            self._state.memory,
+            fitted_values[:, self.param],
+        ))
+
+        X_mat = make_lags(
+            y=lagged_value,
+            lags=self.lags,
+        )
+        if self.fit_intercept:
+            X_mat = add_intercept(X_mat)
+        return X_mat[-y.shape[0] :, :], lagged_value[-np.max(self.lags), self.param]
 
 
 class AutoregressiveTargetTerm(_AutoregressiveTerm):
     """Autoregressive term using fitted values for lagged predictors."""
 
-    def _make_lags_and_memory(self, y, fitted_values, target_values):
-        if hasattr(self, "_state") and self._state is not None:
-            memory = self._state.memory
-            y_full = np.concatenate([memory, target_values])
-        else:
-            y_full = target_values
+    def make_design_matrix_in_sample_during_fit(
+        self,
+        X,
+        y,
+        fitted_values,
+        target_values,
+    ):
+        X_mat = make_lags(y=target_values, lags=self.lags)
+        if self.fit_intercept:
+            X_mat = add_intercept(X_mat)
+        return X_mat, target_values[-np.max(self.lags) :]
 
-        return make_lags(y=y_full, lags=self.lags), y_full
+    def make_design_matrix_in_sample_during_update(
+        self,
+        X,
+        y,
+        fitted_values,
+        target_values,
+        distribution=None,
+    ):
+        lagged_value = np.concatenate((
+            self._state.memory,
+            target_values,
+        ))
+
+        X_mat = make_lags(
+            y=lagged_value,
+            lags=self.lags,
+        )
+        if self.fit_intercept:
+            X_mat = add_intercept(X_mat)
+        return X_mat[-y.shape[0] :, :], lagged_value[-np.max(self.lags) :]
+
+
+class AutoregressiveSquaredResidualTerm(_AutoregressiveTerm):
+    """Autoregressive term using fitted values for lagged predictors."""
+
+    def make_design_matrix_in_sample_during_fit(
+        self,
+        X,
+        y,
+        fitted_values,
+        target_values,
+        distribution=None,
+    ):
+        squared_residuals = (target_values - fitted_values[:, 0]) ** 2
+        X_mat = make_lags(y=squared_residuals, lags=self.lags)
+        if self.fit_intercept:
+            X_mat = add_intercept(X_mat)
+        return X_mat, squared_residuals[-np.max(self.lags) :]
+
+    def make_design_matrix_in_sample_during_update(
+        self,
+        X,
+        y,
+        fitted_values,
+        target_values,
+        distribution=None,
+    ):
+        squared_residuals = (target_values - fitted_values[:, 0]) ** 2
+        lagged_value = np.concatenate((
+            self._state.memory,
+            squared_residuals,
+        ))
+
+        X_mat = make_lags(
+            y=lagged_value,
+            lags=self.lags,
+        )
+        if self.fit_intercept:
+            X_mat = add_intercept(X_mat)
+        return X_mat[-y.shape[0] :, :], lagged_value[-np.max(self.lags) :]

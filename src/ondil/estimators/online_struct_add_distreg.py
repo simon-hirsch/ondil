@@ -125,12 +125,26 @@ class OnlineStructuredAdditiveDistributionRegressor(
             size=y.shape[0],
             forget=self.learning_rate,
         )
-
-        deviance_start = -2 * np.sum(
-            self.distribution.logpdf(y, self._fitted_values)
-            * sample_weight
-            * forget_weight
-        )
+        # Start values might be overly optimistic
+        # Therefore we can have an increasing deviance in the first iteration
+        # But then we want to keep the fitted values
+        # So we compare against the starting deviance
+        # based on CONSTANT initial values
+        if outer_iteration == 0:
+            deviance_start = -2 * np.sum(
+                self.distribution.logpdf(
+                    y=y,
+                    theta=self.distribution.constant_initial_values(y),
+                )
+                * sample_weight
+                * forget_weight
+            )
+        else:
+            deviance_start = -2 * np.sum(
+                self.distribution.logpdf(y, self._fitted_values)
+                * sample_weight
+                * forget_weight
+            )
         deviance_iteration = np.repeat(deviance_start, self.max_inner_iterations + 1)
         fitted_values_iteration = self._fitted_values.copy()
 
@@ -156,17 +170,24 @@ class OnlineStructuredAdditiveDistributionRegressor(
                     term.fit(
                         X=X,
                         y=working_vector_term,
-                        fitted_values=fitted_values_iteration[:, param],
+                        fitted_values=fitted_values_iteration,
                         target_values=y,
                         sample_weight=sample_weight * estimation_weight,
                     )
                 )
-                eta_iteration += step * terms[t].predict(X=X)
+                eta_iteration += (
+                    step
+                    * terms[t].predict_in_sample_during_fit(
+                        X=X,
+                        y=working_vector_term,  # weird, TODO: remove this from the predict method
+                        fitted_values=fitted_values_iteration,
+                        target_values=y,
+                    )
+                )
 
             # Line search could be implemented here
             # For now we just do a simple step size adjustment
             eta_iteration += (1 - step) * eta_start
-
             fitted_values_iteration[:, param] = self.distribution.link_inverse(
                 eta_iteration, param=param
             )
@@ -385,7 +406,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         for param in range(self.distribution.n_params):
             eta = np.zeros(shape=(X.shape[0],), dtype=X.dtype)
             for term in self.terms_[param]:
-                eta += term.predict(X=X_scaled)
+                eta += term.predict_out_of_sample(X=X_scaled)
             fitted_values[:, param] = self.distribution.link_inverse(eta, param=param)
 
         return fitted_values
@@ -527,7 +548,15 @@ class OnlineStructuredAdditiveDistributionRegressor(
                         sample_weight=sample_weight * estimation_weight,
                     )
                 )
-                eta_iteration += step * terms[t].predict(X=X)
+                eta_iteration += (
+                    step
+                    * terms[t].predict_in_sample_during_update(
+                        X=X,
+                        y=working_vector_term,  # weird, TODO: remove this from the predict method
+                        fitted_values=fitted_values_iteration,
+                        target_values=y,
+                    )
+                )
 
             eta_iteration += (1 - step) * eta_start
 

@@ -38,7 +38,7 @@ class ScikitLearnEstimatorTerm(Term):
             self.sklearn_estimator.fit(X_mat, y)
         return self
 
-    def predict(
+    def predict_out_of_sample(
         self,
         X: np.ndarray,
     ) -> np.ndarray:

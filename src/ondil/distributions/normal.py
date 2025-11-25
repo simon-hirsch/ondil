@@ -86,16 +86,17 @@ class Normal(ScipyMixin, Distribution):
         if sorted(params) == [0, 1]:
             return np.zeros_like(y)
 
+    def constant_initial_values(self, y: np.ndarray) -> np.ndarray:
+        theta = [np.mean(y), np.std(y, ddof=1)]
+        theta = np.tile(theta, (y.shape[0], 1))
+        return theta
+
     def initial_values(self, y: np.ndarray) -> np.ndarray:
-        initial_params = [np.mean(y), np.std(y, ddof=1)]
-        initial_params = np.tile(initial_params, (y.shape[0], 1))
-
-        initial_params = np.vstack((
+        theta = np.vstack((
             (y + y.mean()) / 2,
-            (np.abs(y) + np.std(y, ddof=1)) / 2,
+            (np.abs(y - np.mean(y)) + np.std(y, ddof=1)),
         )).T
-
-        return initial_params
+        return theta
 
 
 class NormalMeanVariance(ScipyMixin, Distribution):
@@ -188,6 +189,16 @@ class NormalMeanVariance(ScipyMixin, Distribution):
         if sorted(params) == [0, 1]:
             return np.zeros_like(y)
 
+    def constant_initial_values(self, y: np.ndarray) -> np.ndarray:
+        initial_theta = [np.mean(y), np.var(y, ddof=1)]
+        initial_theta = np.tile(initial_theta, (y.shape[0], 1))
+        return initial_theta
+
     def initial_values(self, y: np.ndarray) -> np.ndarray:
-        initial_params = [np.mean(y), np.var(y, ddof=1)]
-        return np.tile(initial_params, (y.shape[0], 1))
+        optimism = 0.25
+        initial_theta = np.vstack((
+            optimism * y + (1 - optimism) * np.mean(y),
+            optimism
+            * (np.abs(y - np.mean(y)) ** 2 + (1 - optimism) * np.var(y, ddof=1)),
+        )).T
+        return initial_theta
