@@ -1,5 +1,7 @@
 # Author: Simon Hirsch
-# A real basic test to check that the import does not fail.
+# License: GPL-3.0
+import warnings
+import pytest
 
 
 def test_import():
@@ -11,3 +13,11 @@ def test_import():
         failed = True
 
     assert not failed, "Import failed with Exception."
+
+
+def test_no_syntaxwarnings_on_import():
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always", SyntaxWarning)
+        import ondil  # noqa
+
+    assert not any(issubclass(warn.category, SyntaxWarning) for warn in w), w
