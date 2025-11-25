@@ -80,6 +80,9 @@ class LinearTerm(Term):
         else:
             X_mat = subset_array(X, self.features)
 
+        self.find_zero_variance_columns(X_mat)
+        X_mat = self.remove_zero_variance_columns(X_mat)
+
         if self.is_regularized:
             is_regularized = self.is_regularized
         else:
@@ -113,7 +116,7 @@ class LinearTerm(Term):
         )
         return self
 
-    def predict(
+    def predict_out_of_sample(
         self,
         X: np.ndarray,
     ) -> np.ndarray:
@@ -122,6 +125,7 @@ class LinearTerm(Term):
         else:
             X_mat = subset_array(X, self.features)
 
+        X_mat = self.remove_zero_variance_columns(X_mat)
         return X_mat @ self._state.coef_
 
     def update(
@@ -136,6 +140,8 @@ class LinearTerm(Term):
             X_mat = add_intercept(subset_array(X, self.features))
         else:
             X_mat = subset_array(X, self.features)
+
+        X_mat = self.remove_zero_variance_columns(X_mat)
 
         g = self._method.update_x_gram(
             gram=self._state.g,
@@ -208,6 +214,9 @@ class RegularizedLinearTermIC(Term):
         else:
             X_mat = subset_array(X, self.features)
 
+        self.find_zero_variance_columns(X_mat)
+        X_mat = self.remove_zero_variance_columns(X_mat)
+
         if self.is_regularized:
             is_regularized = self.is_regularized
         else:
@@ -264,7 +273,7 @@ class RegularizedLinearTermIC(Term):
         )
         return self
 
-    def predict(
+    def predict_out_of_sample(
         self,
         X: np.ndarray,
     ) -> np.ndarray:
@@ -273,6 +282,7 @@ class RegularizedLinearTermIC(Term):
         else:
             X_mat = subset_array(X, self.features)
 
+        X_mat = self.remove_zero_variance_columns(X_mat)
         return X_mat @ self._state.coef_
 
     def update(
@@ -282,6 +292,7 @@ class RegularizedLinearTermIC(Term):
         fitted_values: np.ndarray = None,
         target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
+        distribution=None,
     ) -> "RegularizedLinearTermIC":
         """Update the Term.
 
@@ -299,6 +310,8 @@ class RegularizedLinearTermIC(Term):
             X_mat = add_intercept(subset_array(X, self.features))
         else:
             X_mat = subset_array(X, self.features)
+
+        X_mat = self.remove_zero_variance_columns(X_mat)
 
         g = self._method.update_x_gram(
             gram=self._state.g,
