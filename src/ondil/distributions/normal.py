@@ -88,7 +88,14 @@ class Normal(ScipyMixin, Distribution):
 
     def initial_values(self, y: np.ndarray) -> np.ndarray:
         initial_params = [np.mean(y), np.std(y, ddof=1)]
-        return np.tile(initial_params, (y.shape[0], 1))
+        initial_params = np.tile(initial_params, (y.shape[0], 1))
+
+        initial_params = np.vstack((
+            (y + y.mean()) / 2,
+            (np.abs(y) + np.std(y, ddof=1)) / 2,
+        )).T
+
+        return initial_params
 
 
 class NormalMeanVariance(ScipyMixin, Distribution):
