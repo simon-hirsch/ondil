@@ -10,7 +10,7 @@ from ..types import ParameterShapes
 
 
 class InverseGamma(ScipyMixin, Distribution):
-    """
+    r"""
     The Inverse Gamma distribution as parameterized in GAMLSS:
 
     The distribution has two parameters:

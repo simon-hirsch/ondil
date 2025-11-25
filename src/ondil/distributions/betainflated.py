@@ -10,7 +10,7 @@ from ..types import ParameterShapes
 
 
 class BetaInflated(Distribution):
-    """The Beta Inflated Distribution for GAMLSS.
+    r"""The Beta Inflated Distribution for GAMLSS.
     
     The distribution function is defined as in GAMLSS as:
     $$

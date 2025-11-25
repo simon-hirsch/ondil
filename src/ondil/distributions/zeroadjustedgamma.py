@@ -10,7 +10,7 @@ from ..types import ParameterShapes
 
 
 class ZeroAdjustedGamma(Distribution):
-    """The Zero Adjusted Gamma Distribution for GAMLSS.
+    r"""The Zero Adjusted Gamma Distribution for GAMLSS.
     
     The zero adjusted gamma distribution is a mixture of a discrete value 0 with
     probability \\nu, and a gamma GA(\\mu; \\sigma) distribution on the positive real line (0, \\infty)

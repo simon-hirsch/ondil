@@ -9,7 +9,7 @@ from ..types import ParameterShapes
 
 
 class Logistic(ScipyMixin, Distribution):
-    """
+    r"""
     The Logistic distribution with location and scale parameterization.
 
     The probability density function is:
