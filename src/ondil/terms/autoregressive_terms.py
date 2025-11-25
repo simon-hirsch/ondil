@@ -357,6 +357,11 @@ class AutoregressiveSquaredResidualTerm(_AutoregressiveTerm):
         distribution=None,
     ):
         squared_residuals = (target_values - fitted_values[:, 0]) ** 2
+        # print("fitted_values:", fitted_values)
+        # print("target_values:", target_values)
+        # print("squared_residuals:", squared_residuals)
+        # print("y:", y)
+        # print("memory:", self._state.memory)
         lagged_value = np.concatenate((
             self._state.memory,
             squared_residuals,
