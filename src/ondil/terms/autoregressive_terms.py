@@ -79,7 +79,6 @@ class _AutoregressiveTerm(Term):
         y: np.ndarray,
         fitted_values: np.ndarray = None,
         target_values: np.ndarray = None,
-        distribution=None,
         sample_weight: np.ndarray = None,
     ) -> "_AutoregressiveTerm":
         X_mat, memory = self.make_design_matrix_in_sample_during_fit(
