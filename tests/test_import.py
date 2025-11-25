@@ -1,7 +1,6 @@
 # Author: Simon Hirsch
 # License: GPL-3.0
 import warnings
-import pytest
 
 
 def test_import():
