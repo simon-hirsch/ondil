@@ -1,7 +1,7 @@
 from .autoregressive_terms import (
+    AutoregressiveSquaredResidualTerm,
     AutoregressiveTargetTerm,
     AutoregressiveThetaTerm,
-    AutoregressiveSquaredResidualTerm,
 )
 from .linear_terms import LinearTerm, RegularizedLinearTermIC
 from .special import ScikitLearnEstimatorTerm
