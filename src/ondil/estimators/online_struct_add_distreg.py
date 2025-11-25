@@ -543,7 +543,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                     term.update(
                         X=X,
                         y=working_vector_term,
-                        fitted_values=fitted_values_iteration[:, param],
+                        fitted_values=fitted_values_iteration,
                         target_values=y,
                         sample_weight=sample_weight * estimation_weight,
                     )
