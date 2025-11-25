@@ -33,7 +33,7 @@ class MultivariateStudentTInverseModifiedCholesky(
     \\left(1 + \\frac{1}{\\nu} (y - \\mu)^T T^T D T (y - \\mu)\\right)^{-\\frac{\\nu + k}{2}}
     $$
     where \\( k \\) is the dimensionality, \\( \\mu \\) is the location, \\( D \\) is a diagonal matrix, \\( T \\) is a lower triangular matrix, and \\( \\nu \\) is the degrees of freedom.
-    r"""
+    """
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "D", 2: "T", 3: "dof"}
@@ -76,7 +76,7 @@ class MultivariateStudentTInverseModifiedCholesky(
             dof_independence (float): Large value to represent independence in degrees of freedom.
             use_gaussian_for_location (bool): Indicates if a Gaussian is used for the location parameter.
             _regularization_allowed (dict): Specifies which parameters allow regularization.
-        r"""
+        """
         super().__init__(
             links={
                 0: loc_link,
@@ -132,7 +132,7 @@ class MultivariateStudentTInverseModifiedCholesky(
 
         Returns:
             Dict: Theta where element (param, k) is set to value.
-        r"""
+        """
         if param in (0, 3):
             theta[param][:, k] = value
         if param == 1:

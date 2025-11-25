@@ -19,7 +19,7 @@ def soft_threshold(value: float, threshold: float):
 
     Returns:
         out (float): The thresholded value
-    r"""
+    """
     return np.sign(value) * np.maximum(np.abs(value) - threshold, 0)
 
 
@@ -57,7 +57,7 @@ def online_coordinate_descent(
 
     Returns:
         Tuple[np.ndarray, int]: Converged $$ \\beta $$
-    r"""
+    """
     i = 0
     J = beta.shape[0]
     JJ = np.arange(J)

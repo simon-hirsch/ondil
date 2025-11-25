@@ -32,7 +32,7 @@ class MultivariateNormalInverseModifiedCholesky(
     \\exp\\left(-\\frac{1}{2} (y - \\mu)^T T^T D T (y - \\mu)\\right)
     $$
     where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the mean vector, \\( T \\) and \\( D \\) are the modified Cholesky factors of the precision matrix.
-    r"""
+    """
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "D", 2: "T"}
@@ -107,7 +107,7 @@ class MultivariateNormalInverseModifiedCholesky(
 
         Returns:
             Dict: Theta where element (param, k) is set to value.
-        r"""
+        """
         if param == 0:
             theta[param][:, k] = value
         if param == 1:

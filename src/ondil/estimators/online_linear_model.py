@@ -52,7 +52,7 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
             ic (Literal["aic", "bic", "hqc", "max"], optional): The information criteria for model selection. Defaults to "bic".
         Raises:
             ValueError: Will raise if you try to regularize the intercept, but not fit it.
-        r"""
+        """
 
         self.forget = forget
         self.method = method
@@ -109,7 +109,7 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
             X (np.ndarray): The design matrix $X$.
             y (np.ndarray): The response vector $y$.
             sample_weight (Optional[np.ndarray], optional): The sample weights. Defaults to None.
-        r"""
+        """
 
         self._prepare_fit()
         X, y = validate_data(self, X=X, y=y, reset=True, dtype=[np.float64, np.float32])
@@ -186,7 +186,7 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
             X (np.ndarray): The new row of the design matrix $X$. Needs to be of shape 1 x n_features or n_obs_new x n_features.
             y (np.ndarray): The new observation of $y$. Needs to be the same shape as `X` or a single observation.
             sample_weight (Optional[np.ndarray], optional): The weight for the new observations. `None` implies all observations have weight 1. Defaults to None.
-        r"""
+        """
 
         X, y = validate_data(
             self, X=X, y=y, reset=False, dtype=[np.float64, np.float32]
@@ -246,7 +246,7 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
 
         Returns:
             float: The coefficient of determination $R^2$.
-        r"""
+        """
         check_is_fitted(self)
         X, y = validate_data(
             self, X=X, y=y, reset=False, dtype=[np.float64, np.float32]
@@ -266,7 +266,7 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
 
         Returns:
             np.ndarray: The predictions for the optimal IC.
-        r"""
+        """
         check_is_fitted(self)
         X = validate_data(self, X=X, reset=False, dtype=[np.float64, np.float32])
 

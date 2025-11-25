@@ -42,7 +42,7 @@ class Gamma(ScipyMixin, Distribution):
     Args:
         loc_link (LinkFunction, optional): The link function for $\mu$. Defaults to Log().
         scale_link (LinkFunction, optional): The link function for $\sigma$. Defaults to Log().
-    r"""
+    """
 
     corresponding_gamlss: str = "GA"
 

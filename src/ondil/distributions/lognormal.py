@@ -33,7 +33,7 @@ class LogNormal(ScipyMixin, Distribution):
         however the rvs method still uses the scipy.stats implementation which is not
         numerically stable for large values of $\\theta_0$.
 
-    r"""
+    """
 
     corresponding_gamlss: str = "LOGNO"
     parameter_names = {0: "mu", 1: "sigma"}
@@ -100,7 +100,7 @@ class LogNormal(ScipyMixin, Distribution):
     def pdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         r"""
         Probability density function of the Log-Normal distribution.
-        r"""
+        """
         mu, sigma = self.theta_to_params(theta)
         return (
             1
@@ -111,14 +111,14 @@ class LogNormal(ScipyMixin, Distribution):
     def cdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         r"""
         Cumulative distribution function of the Log-Normal distribution.
-        r"""
+        """
         mu, sigma = self.theta_to_params(theta)
         return st.norm.cdf((np.log(y) - mu) / sigma)
 
     def ppf(self, p: np.ndarray, theta: np.ndarray) -> np.ndarray:
         r"""
         Percent-point function (quantile function) of the Log-Normal distribution.
-        r"""
+        """
         mu, sigma = self.theta_to_params(theta)
         return np.exp(mu + sigma * st.norm.ppf(p))
 

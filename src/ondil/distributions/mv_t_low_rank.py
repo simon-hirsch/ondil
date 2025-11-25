@@ -24,7 +24,7 @@ class MultivariateStudentTInverseLowRank(MultivariateDistributionMixin, Distribu
     $$
 
     where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the location parameter, \\( D \\) is a diagonal matrix, \\( V \\) is a low-rank matrix, and \\( \\nu \\) is the degrees of freedom.
-    r"""
+    """
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "D", 2: "V", 3: "nu"}

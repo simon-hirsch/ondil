@@ -21,7 +21,7 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
     $$
 
     where \( k \) is the dimensionality of the data, \( \\mu \) is the location parameter, \( D \) is a diagonal matrix, and \( V \) is a low-rank matrix such that the precision is \( D + V V^T \).
-    r"""
+    """
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "diag_matrix", 2: "low_rank_matrix"}
@@ -94,7 +94,7 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
 
         Returns:
             Dict: Theta where element (param, k) is set to value.
-        r"""
+        """
         if param == 0:
             theta[param][:, k] = value
         if (param == 1) | (param == 2):
@@ -117,7 +117,7 @@ class MultivariateNormalInverseLowRank(MultivariateDistributionMixin, Distributi
 
         Returns:
             Dict[str, np.ndarray]: Mapped predicted
-        r"""
+        """
         out = {
             "mean": theta[0],
             "cov": np.linalg.inv(theta[1] + theta[2] @ theta[2].swapaxes(-1, -2)),

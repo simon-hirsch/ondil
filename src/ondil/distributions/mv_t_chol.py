@@ -29,7 +29,7 @@ class MultivariateStudentTInverseCholesky(MultivariateDistributionMixin, Distrib
     $$
 
     where \\( k \\) is the dimensionality of the data, \\( \\mu \\) is the location parameter, \\( L \\) is the inverse Cholesky factor of the precision matrix (so the precision is \\( L L^T \\)), and \\( \\nu \\) is the degrees of freedom.
-    r"""
+    """
 
     corresponding_gamlss: str = None
     parameter_names = {0: "mu", 1: "sigma", 2: "nu"}

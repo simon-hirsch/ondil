@@ -15,7 +15,7 @@ def robust_log(x: np.ndarray) -> np.ndarray:
     This function returns the logarithm of the input array, replacing
     negative and zero values with a small positive number to avoid
     undefined logarithm values.
-    r"""
+    """
     if x > SMALL_NUMBER:
         return np.log(x)
     else:
@@ -26,7 +26,7 @@ def robust_log(x: np.ndarray) -> np.ndarray:
 def robust_exp(x: np.ndarray) -> np.ndarray:
     r"""
     A robust exponential function that handles large values.
-    r"""
+    """
 
     if x > LOG_LARGE_NUMBER:
         return LARGE_NUMBER

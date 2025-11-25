@@ -27,7 +27,7 @@ class OndilEstimatorMixin(ABC):
         Args:
             message (str): Message to print.
             level (int, optional): Verbosity level. Defaults to 0.
-        r"""
+        """
         if level <= self.verbose:
             print(f"[{self.__class__.__name__}]", message)
 
@@ -53,7 +53,7 @@ class OndilEstimatorMixin(ABC):
         self : Estimator
             The fitted estimator.
 
-        r"""
+        """
         if self.is_fitted:
             self.update(X=X, y=y, sample_weight=sample_weight)
         else:

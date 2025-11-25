@@ -51,7 +51,7 @@ class Beta(ScipyMixin, Distribution):
     Args:
         loc_link (LinkFunction, optional): The link function for $\mu$. Defaults to  LOGIT
         scale_link (LinkFunction, optional): The link function for $\sigma$. Defaults to LOGIT
-    r"""
+    """
 
     corresponding_gamlss: str = "BE"
 

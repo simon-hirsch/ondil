@@ -8,7 +8,7 @@ def ensure_atleast_bivariate(y: np.ndarray) -> None:
         y (np.ndarray): The response variable to validate.
     Raises:
         ValueError: If `y` does not have at least two dimensions and has less than two columns.
-    r"""
+    """
     if y.shape[1] < 2:
         raise ValueError(
             "Multivariate response must have at least two dimensions. "

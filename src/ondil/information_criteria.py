@@ -22,7 +22,7 @@ class InformationCriterion:
         Compute the chosen criterion from residual sum of squares.
     from_ll(log_likelihood)
         Compute the chosen criterion directly from a log-likelihood value.
-    r"""
+    """
 
     def __init__(
         self,
@@ -39,7 +39,7 @@ class InformationCriterion:
 
         Raises:
             ValueError: If the criterion is not recognized.
-        r"""
+        """
         # validate criterion early
         if criterion not in ("aic", "aicc", "bic", "hqc", "max"):
             raise ValueError(f"Criterion '{criterion}' not recognized.")
@@ -59,7 +59,7 @@ class InformationCriterion:
 
         Returns:
             ic (float or array-like): The information criterion value (AIC, AICC, BIC, HQC, or Max).
-        r"""
+        """
         # Gaussian log‐likelihood: ll = -n/2*log(rss/n) + constant
         # https://en.wikipedia.org/wiki/Akaike_information_criterion#Comparison_with_least_squares
         constant_term = -self.n_observations / 2 * (1 + np.log(2 * np.pi))

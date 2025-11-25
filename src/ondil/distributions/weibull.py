@@ -28,7 +28,7 @@ class Weibull(ScipyMixin, Distribution):
     Args:
         scale_link (LinkFunction, optional): The link function for $\\mu$. Defaults to Log().
         shape_link (LinkFunction, optional): The link function for $\\sigma$. Defaults to Log().
-    r"""
+    """
 
     corresponding_gamlss: str = "WEI"
     parameter_names = {0: "mu", 1: "sigma"}

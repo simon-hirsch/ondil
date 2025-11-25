@@ -23,7 +23,7 @@ def init_forget_vector(forget: float, size: int) -> np.ndarray:
 
     Returns:
         np.ndarray: Vector of exponentially discounted weights.
-    r"""
+    """
     gamma = 1 - forget
     if gamma == 1:
         out = np.ones(size)
@@ -56,7 +56,7 @@ def init_gram(X: np.ndarray, w: np.ndarray, forget: float = 0) -> np.ndarray:
 
     Returns:
         np.ndarray: Gramian Matrix.
-    r"""
+    """
     f = init_forget_vector(forget, X.shape[0])
     gram = (X * np.expand_dims((w * f) ** 0.5, -1)).T @ (
         X * np.expand_dims((w * f) ** 0.5, -1)
@@ -86,7 +86,7 @@ def init_y_gram(
 
     Returns:
         np.ndarray: y-Gramian Matrix.
-    r"""
+    """
     f = init_forget_vector(forget, X.shape[0])
     gram = np.expand_dims(
         (X * np.expand_dims((w * f) ** 0.5, -1)).T @ (y * (w * f) ** 0.5), axis=-1
@@ -117,7 +117,7 @@ def init_inverted_gram(X: np.ndarray, w: np.ndarray, forget: float = 0) -> np.nd
     Raises:
         ValueError: If the matrix is not invertible (if rank(X.T @ X) < X.shape[0]).
 
-    r"""
+    """
     gram = init_gram(X=X, w=w, forget=forget)
     rank = np.linalg.matrix_rank(gram)
     if rank == gram.shape[0]:
@@ -148,7 +148,7 @@ def update_gram(
 
     Returns:
         np.ndarray: Updated Gramian Matrix.
-    r"""
+    """
     if X.shape[0] == 1:
         # Single Step Update
         new_gram = (1 - forget) * gram + w * np.outer(X, X)
@@ -179,7 +179,7 @@ def update_y_gram(
 
     Returns:
         np.ndarray: Updated Gramian Matrix.
-    r"""
+    """
     if X.shape[0] == 1:
         # Single Update
         new_gram = (1 - forget) * gram + w * np.outer(X, y)

@@ -33,7 +33,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
                 `False` implies no variables will be scaled.
                 An `np.ndarray` of type `bool` or `int` implies that the columns `X[:, to_scale]` will be scaled, all other columns will not be scaled.
                 Defaults to True.
-        r"""
+        """
         self.forget = forget
         self.to_scale = to_scale
 
@@ -78,7 +78,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
             X (np.ndarray): Matrix of covariates X.
             y (None, optional): Not used, present for compatibility with sklearn API. Defaults to None.
             sample_weight (np.ndarray, optional): Weights for each sample. Defaults to None (uniform weights).
-        r"""
+        """
 
         X = validate_data(
             self,
@@ -118,7 +118,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
             X (np.ndarray): New data for X.
             y (None, optional): Not used, present for compatibility with sklearn API. Defaults to None.
             sample_weight (np.ndarray, optional): Weights for each sample. Defaults to None (uniform weights).
-        r"""
+        """
         check_is_fitted(self, ["mean_", "var_"])
         X = validate_data(
             self,
@@ -167,7 +167,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
 
         Returns:
             np.ndarray: Scaled X matrix.
-        r"""
+        """
         check_is_fitted(self, ["mean_", "var_"])
         X = validate_data(
             self,

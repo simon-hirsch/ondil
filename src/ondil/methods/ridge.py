@@ -21,7 +21,7 @@ class Ridge(EstimationMethod):
     after the first coordinate-wise update for each regularization strength, only non-zero coefficients are updated.
 
     We use `numba` to speed up the coordinate descent algorithm.
-    r"""
+    """
 
     def __init__(
         self,

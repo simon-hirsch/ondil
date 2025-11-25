@@ -31,7 +31,7 @@ class ElasticNetPath(EstimationMethod):
 
     We use `numba` to speed up the coordinate descent algorithm.
 
-    r"""
+    """
 
     def __init__(
         self,

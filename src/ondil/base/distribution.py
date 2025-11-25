@@ -24,6 +24,11 @@ class Distribution(ABC):
         return None
 
     @property
+    def is_discrete(self) -> bool:
+        r"""Whether the distribution is discrete or continuous."""
+        return False
+
+    @property
     @abstractmethod
     def parameter_names(self) -> dict:
         r"""Parameter name for each column of theta."""
@@ -167,8 +172,18 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: The quantiles corresponding to the given probabilities.
-        r"""
+        """
         return self.ppf(q, theta)
+
+    def _raise_not_implemented(self, method_for_discrete: bool = True) -> None:
+        if self.is_discrete and (not method_for_discrete):
+            raise NotImplementedError(
+                "This method is not implemented for discrete distributions."
+            )
+        if (not self.is_discrete) and method_for_discrete:
+            raise NotImplementedError(
+                "This method is not implemented for continuous distributions."
+            )
 
     @abstractmethod
     def calculate_conditional_initial_values(
@@ -190,7 +205,7 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: The CDF evaluated at the given data points.
-        r"""
+        """
 
     @abstractmethod
     def pdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -203,7 +218,8 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: An array of PDF values corresponding to the data points in `y`.
-        r"""
+        """
+        self._raise_not_implemented(method_for_discrete=False)
 
     @abstractmethod
     def pmf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -216,7 +232,8 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: An array of PMF values corresponding to the data points in `y`.
-        r"""
+        """
+        self._raise_not_implemented(method_for_discrete=True)
 
     @abstractmethod
     def ppf(self, q: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -229,7 +246,7 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: The quantile corresponding to the given probabilities.
-        r"""
+        """
 
     @abstractmethod
     def rvs(self, size: int, theta: np.ndarray) -> np.ndarray:
@@ -242,31 +259,33 @@ class Distribution(ABC):
 
         Returns:
             np.ndarray: A 2D array of random variates with shape (theta.shape[0], size).
-        r"""
+        """
 
     @abstractmethod
     def logpmf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        raise NotImplementedError(
-            "Log PMF is not implemented for continuous distributions."
-        )
+        self._raise_not_implemented(method_for_discrete=True)
 
     @abstractmethod
     def logpdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        raise NotImplementedError(
-            "Log PDF is not implemented for discrete distributions."
-        )
+        self._raise_not_implemented(method_for_discrete=False)
 
     @abstractmethod
     def logcdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        r"""Compute the log of the cumulative distribution function (CDF) for the given data points.
+        self._raise_not_implemented(method_for_discrete=False)
+
+    def loglikelihood(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
+        r"""Compute the log-likelihood for the given data points.
 
         Args:
-            y (np.ndarray): An array of data points at which to evaluate the log CDF.
+            y (np.ndarray): An array of data points at which to evaluate the log-likelihood.
             theta (np.ndarray): An array of parameters for the distribution.
-
         Returns:
-            np.ndarray: An array of log CDF values corresponding to the data points in `y`.
-        r"""
+            np.ndarray: An array of log-likelihood values corresponding to the data points in `y`.
+        """
+        if self.is_discrete:
+            return self.logpmf(y, theta)
+        else:
+            return self.logpdf(y, theta)
 
 
 class MultivariateDistributionMixin(ABC):
@@ -322,7 +341,7 @@ class ScipyMixin(ABC):
 
         Returns:
             dict: Dictionary that can be unrolled into scipy distribution class as in `st.some_dist(**return_value)`
-        r"""
+        """
         if not self.scipy_names:
             raise ValueError(
                 f"{self.__class__.__name__} has no scipy_names defined. To use theta_to_scipy_params Please define them in the subclass. Or override this method in the subclass if there is no 1:1 mapping between theta columns and scipy params."
@@ -334,17 +353,19 @@ class ScipyMixin(ABC):
         return params
 
     def cdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
+        super().cdf(y, theta)
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).cdf(y)
 
     def pdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
+        super().pdf(y, theta)
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).pdf(y)
 
     def pmf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
-        raise NotImplementedError(
-            "PMF is not implemented for continuous distributions."
-        )
+        super().pmf(y, theta)
+        return self.scipy_dist(**self.theta_to_scipy_params(theta)).pmf(y)
 
     def ppf(self, q: np.ndarray, theta: np.ndarray) -> np.ndarray:
+        super().ppf(q, theta)
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).ppf(q)
 
     def logpmf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -356,7 +377,8 @@ class ScipyMixin(ABC):
 
         Returns:
             np.ndarray: An array of log PMF values corresponding to the data points in `y`.
-        r"""
+        """
+        super().cdf(y, theta)
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).logpmf(y)
 
     def logpdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -368,7 +390,8 @@ class ScipyMixin(ABC):
 
         Returns:
             np.ndarray: An array of log PDF values corresponding to the data points in `y`.
-        r"""
+        """
+        super().logpdf(y, theta)
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).logpdf(y)
 
     def logcdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -380,7 +403,8 @@ class ScipyMixin(ABC):
 
         Returns:
             np.ndarray: An array of log CDF values corresponding to the data points in `y`.
-        r"""
+        """
+        super().logcdf(y, theta)
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).logcdf(y)
 
     def rvs(self, size: int, theta: np.ndarray) -> np.ndarray:

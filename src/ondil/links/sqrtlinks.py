@@ -10,7 +10,7 @@ class Sqrt(LinkFunction):
     r"""The square root Link function.
 
     The square root link function is defined as $$g(x) = \sqrt(x)$$.
-    r"""
+    """
 
     link_support = (np.nextafter(0, 1), np.inf)
 
@@ -41,7 +41,7 @@ class SqrtShiftValue(LinkFunction):
     to ensure that certain distribution paramters don't fall below lower
     bounds, e.g. ensuring that the degrees of freedom of a Student's t distribtuion
     don't fall below 2, hence ensuring that the variance exists.
-    r"""
+    """
 
     def __init__(self, value: float):
         self.value = value

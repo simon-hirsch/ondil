@@ -47,7 +47,7 @@ def indices_along_diagonal(D: int) -> List:
 
     Returns:
         List: List of indices
-    r"""
+    """
     K = []
     for i in range(D):
         K.append(i)
@@ -223,7 +223,7 @@ class MultivariateOnlineDistributionalRegressionPath(
             abs_tol_inner (float, optional): Absolute tolerance for convergence in inner loop. Defaults to 1e-3.
             rel_tol_outer (float, optional): Relative tolerance for convergence in outer loop. Defaults to 1e-3.
             abs_tol_outer (float, optional): Absolute tolerance for convergence in outer loop. Defaults to 1e-3.
-        r"""
+        """
 
         self.distribution = distribution
         self.forget = forget
@@ -361,7 +361,7 @@ class MultivariateOnlineDistributionalRegressionPath(
 
         Returns:
             np.ndarray: Matrix or intercept array.
-        r"""
+        """
         if x is None:
             return make_intercept(n_observations=n_observations)
         elif add_intercept[param]:
@@ -568,7 +568,7 @@ class MultivariateOnlineDistributionalRegressionPath(
 
         Returns:
             estimator: Returns the fitted estimator.
-        r"""
+        """
 
         X, y = validate_data(
             self,
@@ -1212,7 +1212,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         Update the model selection.
 
         Returns the optimal IC's index.
-        r"""
+        """
         weights_forget = init_forget_vector(
             self.learning_rate,
             self.n_observations_step_,
@@ -1293,7 +1293,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         X : np.ndarray, optional
             The input data. If None, will use a default value of ones.
 
-        r"""
+        """
 
         check_is_fitted(self)
         X = validate_data(self, X=X, reset=False, dtype=[np.float64, np.float32])
@@ -1332,7 +1332,7 @@ class MultivariateOnlineDistributionalRegressionPath(
 
         Returns:
             Dict[int, np.ndarray]: Return the predicted distribution parameters as a dictionary.
-        r"""
+        """
 
         check_is_fitted(self)
         X = validate_data(
@@ -1378,7 +1378,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         Returns:
             Dict[int, np.ndarray]: Return the predicted distribution parameters for all AD-R steps as a dictionary. The structure is
             {adr_step: {param: np.ndarray}} where `adr_step` is the AD-R step index and `param` is the distribution parameter index.
-        r"""
+        """
 
         check_is_fitted(self)
         X = validate_data(self, X=X, reset=False, dtype=[np.float64, np.float32])
@@ -1432,7 +1432,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         self : Estimator
             The fitted estimator.
 
-        r"""
+        """
         if self.is_fitted:
             self.update(X=X, y=y)
         else:

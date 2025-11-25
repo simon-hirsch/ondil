@@ -9,7 +9,7 @@ from ..types import ParameterShapes
 class MatrixDiag(LinkFunction):
     r"""
     Wraps a link functions to be applied only on the diagonal of a square matrix.
-    r"""
+    """
 
     valid_shapes = [ParameterShapes.DIAGONAL_MATRIX]
 
