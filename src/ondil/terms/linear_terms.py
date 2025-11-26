@@ -4,7 +4,7 @@ from typing import Literal
 
 import numpy as np
 
-from ..base import EstimationMethod, Term
+from ..base import EstimationMethod, Term, Distribution
 from ..design_matrix import add_intercept, subset_array
 from ..gram import init_forget_vector
 from ..information_criteria import InformationCriterion
@@ -67,19 +67,27 @@ class LinearTerm(Term):
             raise ValueError("Path-based methods are not supported for LinearTerm.")
         return self
 
-    def fit(
+    def make_design_matrix(
         self,
-        X: np.ndarray,
-        y: np.ndarray,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
-        sample_weight: np.ndarray = None,
-    ) -> "LinearTerm":
+        X: np.ndarray | None = None,
+        target_values: np.ndarray | None = None,
+    ):
         if self.fit_intercept:
             X_mat = add_intercept(subset_array(X, self.features))
         else:
             X_mat = subset_array(X, self.features)
+        return X_mat
 
+    def fit(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
+    ) -> "LinearTerm":
+        X_mat = self.make_design_matrix(X, target_values=target_values)
         self.find_zero_variance_columns(X_mat)
         X_mat = self.remove_zero_variance_columns(X_mat)
 
@@ -119,12 +127,9 @@ class LinearTerm(Term):
     def predict_out_of_sample(
         self,
         X: np.ndarray,
+        distribution: Distribution,
     ) -> np.ndarray:
-        if self.fit_intercept:
-            X_mat = add_intercept(subset_array(X, self.features))
-        else:
-            X_mat = subset_array(X, self.features)
-
+        X_mat = self.make_design_matrix(X=X, target_values=None)
         X_mat = self.remove_zero_variance_columns(X_mat)
         return X_mat @ self._state.coef_
 
@@ -132,15 +137,12 @@ class LinearTerm(Term):
         self,
         X: np.ndarray,
         y: np.ndarray,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
-        sample_weight: np.ndarray = None,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
     ) -> "LinearTerm":
-        if self.fit_intercept:
-            X_mat = add_intercept(subset_array(X, self.features))
-        else:
-            X_mat = subset_array(X, self.features)
-
+        X_mat = self.make_design_matrix(X, target_values=target_values)
         X_mat = self.remove_zero_variance_columns(X_mat)
 
         g = self._method.update_x_gram(
@@ -170,6 +172,27 @@ class LinearTerm(Term):
             coef_=coef_,
         )
         return new_instance
+
+
+class InterceptTerm(LinearTerm):
+    """Intercept term for structured additive distributional regression."""
+
+    def __init__(self, forget=0.0):
+        super().__init__(features=[], forget=forget, fit_intercept=True, method="ols")
+
+    def make_design_matrix(
+        self,
+        X: np.ndarray | None,
+        target_values: np.ndarray | None = None,
+    ):
+        if X is not None:
+            n_samples = X.shape[0]
+        elif target_values is not None:
+            n_samples = target_values.shape[0]
+        else:
+            n_samples = 1
+
+        return np.ones((n_samples, 1))
 
 
 class RegularizedLinearTermIC(Term):
@@ -205,9 +228,10 @@ class RegularizedLinearTermIC(Term):
         self,
         X: np.ndarray,
         y: np.ndarray,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
-        sample_weight: np.ndarray = None,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
     ) -> "RegularizedLinearTermIC":
         if self.fit_intercept:
             X_mat = add_intercept(subset_array(X, self.features))
@@ -276,6 +300,7 @@ class RegularizedLinearTermIC(Term):
     def predict_out_of_sample(
         self,
         X: np.ndarray,
+        distribution: Distribution,
     ) -> np.ndarray:
         if self.fit_intercept:
             X_mat = add_intercept(subset_array(X, self.features))
@@ -289,10 +314,10 @@ class RegularizedLinearTermIC(Term):
         self,
         X: np.ndarray,
         y: np.ndarray,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
-        sample_weight: np.ndarray = None,
-        distribution=None,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
     ) -> "RegularizedLinearTermIC":
         """Update the Term.
 
