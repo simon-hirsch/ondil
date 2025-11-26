@@ -18,7 +18,7 @@ class ARTermState:
     memory: np.ndarray | None
 
 
-class _AutoregressiveTerm(Term):
+class TimeSeriesTerm(Term):
     """Autoregressive term for time series modeling.
 
     This is a rather generic base class which, in the fit and update methods, will
@@ -80,7 +80,7 @@ class _AutoregressiveTerm(Term):
         fitted_values: np.ndarray = None,
         target_values: np.ndarray = None,
         sample_weight: np.ndarray = None,
-    ) -> "_AutoregressiveTerm":
+    ) -> "TimeSeriesTerm":
         X_mat, memory = self.make_design_matrix_in_sample_during_fit(
             X=X,
             y=y,
@@ -193,7 +193,7 @@ class _AutoregressiveTerm(Term):
         target_values: np.ndarray = None,
         distribution=None,
         sample_weight: np.ndarray = None,
-    ) -> "_AutoregressiveTerm":
+    ) -> "TimeSeriesTerm":
         if self._state is None:
             raise ValueError("Term must be fitted before it can be updated.")
 
@@ -236,7 +236,7 @@ class _AutoregressiveTerm(Term):
         return new_instance
 
 
-class AutoregressiveThetaTerm(_AutoregressiveTerm):
+class AutoregressiveThetaTerm(TimeSeriesTerm):
     """Autoregressive term using target values for lagged predictors."""
 
     def __init__(
@@ -294,7 +294,7 @@ class AutoregressiveThetaTerm(_AutoregressiveTerm):
         return X_mat[-y.shape[0] :, :], lagged_value[-np.max(self.lags), self.param]
 
 
-class AutoregressiveTargetTerm(_AutoregressiveTerm):
+class AutoregressiveTargetTerm(TimeSeriesTerm):
     """Autoregressive term using fitted values for lagged predictors."""
 
     def make_design_matrix_in_sample_during_fit(
@@ -331,7 +331,7 @@ class AutoregressiveTargetTerm(_AutoregressiveTerm):
         return X_mat[-y.shape[0] :, :], lagged_value[-np.max(self.lags) :]
 
 
-class AutoregressiveSquaredResidualTerm(_AutoregressiveTerm):
+class AutoregressiveSquaredResidualTerm(TimeSeriesTerm):
     """Autoregressive term using fitted values for lagged predictors."""
 
     def make_design_matrix_in_sample_during_fit(
