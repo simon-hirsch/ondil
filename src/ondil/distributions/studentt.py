@@ -126,7 +126,7 @@ class StudentT(ScipyMixin, Distribution):
         dynamic_values = np.zeros_like(constant_values)
         dynamic_values[:, 0] = y  # mu
         dynamic_values[:, 1] = np.abs(y - np.mean(y))  # sigma
-        dynamic_values[:, 2] = np.abs(y - np.mean(y)) / np.std(y)  # nu
+        dynamic_values[:, 2] = np.abs(y - np.mean(y)) / constant_values[:, 1]  # nu
         return (
             self.start_value_optimism * constant_values
             + (1 - self.start_value_optimism) * dynamic_values
