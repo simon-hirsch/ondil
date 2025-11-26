@@ -62,7 +62,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         distribution: Distribution = Normal(),
         terms: Optional[Dict[str, Any]] = None,
         scale_inputs: bool = True,
-        verbose: int = 0.0,
+        verbose: int = 0,
         learning_rate: float = 0.0,
         max_outer_iterations: int = 10,
         max_inner_iterations: int = 10,
