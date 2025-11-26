@@ -45,13 +45,6 @@ class TimeSeriesTerm(Term):
 
     allow_online_updates: bool = True
 
-    features: np.ndarray | list[int] | Literal["all"]
-    method: EstimationMethod | str
-    fit_intercept: bool = True
-    forget: float = 0.0
-    is_regularized: bool = False
-    regularize_intercept: None | bool = None
-
     def __init__(
         self,
         lags: np.ndarray | list[int] | int = 1,
@@ -257,7 +250,7 @@ class TimeSeriesTerm(Term):
 
 
 class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
-    allow_online_updates: bool = False
+    allow_online_updates: bool = True
 
     def __init__(
         self,
