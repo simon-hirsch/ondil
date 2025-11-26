@@ -2,7 +2,7 @@ from typing import Literal
 
 import numpy as np
 
-from ..base import Term, Distribution
+from ..base import Distribution, Term
 from ..design_matrix import subset_array
 
 
