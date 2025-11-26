@@ -266,7 +266,7 @@ class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
         super()._prepare_term()
         # I don't think this is necessary
         # Since we don't want to initialize the terms individually, but borrow
-        # design matrices from the joint term.
+        # the methods to create design matrices from the individual terms.
         # self.terms = [term._prepare_term() for term in self.terms]
         self.lags = [np.max(term.lags) for term in self.terms]
         return self
