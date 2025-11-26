@@ -261,16 +261,6 @@ class SkewTMeanStd(ScipyMixin, Distribution):
     def logpdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         return np.log(self.pdf(y, theta))
 
-    def logpmf(self, y, theta):
-        raise NotImplementedError(
-            "LogPMF is not implemented for SkewTMeanStd distribution."
-        )
-
-    def pmf(self, y, theta):
-        raise NotImplementedError(
-            "PMF is not implemented for SkewTMeanStd distribution."
-        )
-
     def _get_terms_deriv(self, theta):
         mu, sigma, nu, tau = self.theta_to_params(theta)
         m1 = (2 * tau ** (1 / 2) * (nu**2 - 1)) / (
@@ -282,9 +272,18 @@ class SkewTMeanStd(ScipyMixin, Distribution):
         sigma1 = sigma / s1
         return m1, m2, s1, mu1, sigma1
 
-    def initial_values(self, y: np.ndarray) -> np.ndarray:
+    def constant_initial_values(self, y: np.ndarray) -> np.ndarray:
         initial_params = [np.mean(y), np.std(y, ddof=1), 1, 10]
         return np.tile(initial_params, (y.shape[0], 1))
+
+    def initial_values(self, y: np.ndarray) -> np.ndarray:
+        constant_values = self.constant_initial_values(y=y)
+        dynamic_values = np.zeros_like(constant_values)
+        dynamic_values[:, 0] = y  # mu
+        dynamic_values[:, 1] = np.abs(y - np.mean(y))  # sigma
+        dynamic_values[:, 2] = np.abs(y - np.median(y)) / constant_values[:, 1]  # tau
+        dynamic_values[:, 3] = np.abs(y - np.mean(y)) / constant_values[:, 1]  # nu
+        return dynamic_values
 
     def dl1_dp1(self, y, theta, param):
         self._validate_dln_dpn_inputs(y, theta, param)
