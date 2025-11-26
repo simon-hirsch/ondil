@@ -172,6 +172,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                         y=working_vector_term,
                         fitted_values=fitted_values_iteration,
                         target_values=y,
+                        distribution=self.distribution,
                         sample_weight=sample_weight * estimation_weight,
                     )
                 )
@@ -182,6 +183,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                         y=working_vector_term,  # weird, TODO: remove this from the predict method
                         fitted_values=fitted_values_iteration,
                         target_values=y,
+                        distribution=self.distribution,
                     )
                 )
 
@@ -406,7 +408,10 @@ class OnlineStructuredAdditiveDistributionRegressor(
         for param in range(self.distribution.n_params):
             eta = np.zeros(shape=(X.shape[0],), dtype=X.dtype)
             for term in self.terms_[param]:
-                eta += term.predict_out_of_sample(X=X_scaled)
+                eta += term.predict_out_of_sample(
+                    X=X_scaled,
+                    distribution=self.distribution,
+                )
             fitted_values[:, param] = self.distribution.link_inverse(eta, param=param)
 
         return fitted_values
@@ -549,6 +554,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                         y=working_vector_term,
                         fitted_values=fitted_values_iteration,
                         target_values=y,
+                        distribution=self.distribution,
                         sample_weight=sample_weight * estimation_weight,
                     )
                 )
@@ -559,6 +565,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                         y=working_vector_term,  # weird, TODO: remove this from the predict method
                         fitted_values=fitted_values_iteration,
                         target_values=y,
+                        distribution=self.distribution,
                     )
                 )
 

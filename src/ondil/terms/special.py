@@ -2,7 +2,7 @@ from typing import Literal
 
 import numpy as np
 
-from ..base import Term
+from ..base import Term, Distribution
 from ..design_matrix import subset_array
 
 
@@ -26,9 +26,10 @@ class ScikitLearnEstimatorTerm(Term):
         self,
         X: np.ndarray,
         y: np.ndarray,
-        sample_weight: np.ndarray = None,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
+        sample_weight: np.ndarray,
+        fitted_values: np.ndarray,
+        distribution: Distribution,
+        target_values: np.ndarray,
     ) -> "ScikitLearnEstimatorTerm":
         X_mat = subset_array(X, self.features)
 
@@ -41,6 +42,7 @@ class ScikitLearnEstimatorTerm(Term):
     def predict_out_of_sample(
         self,
         X: np.ndarray,
+        distribution: Distribution,
     ) -> np.ndarray:
         X_mat = subset_array(X, self.features)
         return self.sklearn_estimator.predict(X_mat)
@@ -49,9 +51,10 @@ class ScikitLearnEstimatorTerm(Term):
         self,
         X: np.ndarray,
         y: np.ndarray,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
-        sample_weight: np.ndarray = None,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
     ) -> "ScikitLearnEstimatorTerm":
         raise NotImplementedError(
             "Online updates are not supported for ScikitLearnEstimatorTerm."
