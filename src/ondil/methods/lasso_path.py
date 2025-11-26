@@ -6,7 +6,7 @@ from .elasticnet import ElasticNetPath
 
 
 class LassoPath(ElasticNetPath):
-    """
+    r"""
     Path-based lasso estimation.
 
     The lasso method runs coordinate descent along a (geometric) decreasing grid of regularization strengths (lambdas).

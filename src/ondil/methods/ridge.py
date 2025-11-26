@@ -8,7 +8,7 @@ from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
 
 
 class Ridge(EstimationMethod):
-    """Single-lambda Ridge Estimation.
+    r"""Single-lambda Ridge Estimation.
 
     The ridge method runs coordinate descent for a single lambda.
 

@@ -9,7 +9,7 @@ from ..types import ParameterShapes
 
 
 class Weibull(ScipyMixin, Distribution):
-    """The Weibull distribution parameterized by scale (mu) and shape (sigma).
+    r"""The Weibull distribution parameterized by scale (mu) and shape (sigma).
 
     The probability density function is defined as:
     $$

@@ -8,7 +8,7 @@ from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
 
 
 class ElasticNetPath(EstimationMethod):
-    """
+    r"""
     Path-based elastic net estimation.
 
     The elastic net method runs coordinate descent along a (geometric) decreasing grid of regularization strengths (lambdas).

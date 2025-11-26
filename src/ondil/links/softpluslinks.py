@@ -12,7 +12,7 @@ from ..robust_math import (
 
 
 class InverseSoftPlus(LinkFunction):
-    """
+    r"""
     The softplus is defined as $$
         \operatorname{SoftPlus(x)} = \log(1 + \exp(x))
     $$ and hence the inverse is defined as $$
@@ -49,7 +49,7 @@ class InverseSoftPlus(LinkFunction):
 
 
 class InverseSoftPlusShiftValue(LinkFunction):
-    """
+    r"""
     The Inverse SoftPlus function shifted to a value \(v\).
     """
 
@@ -80,7 +80,7 @@ class InverseSoftPlusShiftValue(LinkFunction):
 
 
 class InverseSoftPlusShiftTwo(InverseSoftPlusShiftValue):
-    """
+    r"""
     The Inverse SoftPlus function shifted to 2.
     """
 
