@@ -4,7 +4,7 @@ from typing import Literal
 
 import numpy as np
 
-from ..base import EstimationMethod, Term, Distribution
+from ..base import Distribution, EstimationMethod, Term
 from ..design_matrix import add_intercept, make_lags
 from ..methods import get_estimation_method
 

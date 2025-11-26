@@ -4,7 +4,7 @@ from typing import Literal
 
 import numpy as np
 
-from ..base import EstimationMethod, Term, Distribution
+from ..base import Distribution, EstimationMethod, Term
 from ..design_matrix import add_intercept, subset_array
 from ..gram import init_forget_vector
 from ..information_criteria import InformationCriterion
