@@ -40,7 +40,7 @@ class Term(ABC):
         self,
         X: np.ndarray,
     ) -> np.ndarray:
-        """Remove columns with variance 0from the design matrix X.
+        """Remove zero-variance columns from the design matrix X.
 
         Args:
             X (np.ndarray): The design matrix.
