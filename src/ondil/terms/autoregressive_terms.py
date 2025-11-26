@@ -4,7 +4,7 @@ from typing import Literal
 
 import numpy as np
 
-from ..base import EstimationMethod, Term
+from ..base import EstimationMethod, Term, Distribution
 from ..design_matrix import add_intercept, make_lags
 from ..methods import get_estimation_method
 
@@ -77,15 +77,17 @@ class TimeSeriesTerm(Term):
         self,
         X: np.ndarray,  # for api compatibility; not used
         y: np.ndarray,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
-        sample_weight: np.ndarray = None,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
     ) -> "TimeSeriesTerm":
         X_mat, memory = self.make_design_matrix_in_sample_during_fit(
             X=X,
             y=y,
             fitted_values=fitted_values,
             target_values=target_values,
+            distribution=distribution,
         )
         self.find_zero_variance_columns(X_mat)
         X_mat = self.remove_zero_variance_columns(X_mat)
@@ -130,15 +132,17 @@ class TimeSeriesTerm(Term):
     def predict_in_sample_during_fit(
         self,
         X: np.ndarray,
-        y: np.ndarray = None,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
     ) -> np.ndarray:
         X_mat, _ = self.make_design_matrix_in_sample_during_fit(
             X=X,
             y=y,
             fitted_values=fitted_values,
             target_values=target_values,
+            distribution=distribution,
         )
         X_mat = self.remove_zero_variance_columns(X_mat)
         return X_mat @ self._state.coef_
@@ -146,15 +150,17 @@ class TimeSeriesTerm(Term):
     def predict_in_sample_during_update(
         self,
         X: np.ndarray,
-        y: np.ndarray = None,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
     ):
         X_mat, _ = self.make_design_matrix_in_sample_during_update(
             X=X,
             y=y,
             fitted_values=fitted_values,
             target_values=target_values,
+            distribution=distribution,
         )
         X_mat = self.remove_zero_variance_columns(X_mat)
         return X_mat @ self._state.coef_
@@ -162,6 +168,7 @@ class TimeSeriesTerm(Term):
     def make_design_matrix_out_of_sample(
         self,
         X,
+        distribution: Distribution,
     ):
         if X.shape[0] > 1:
             raise ValueError(
@@ -180,8 +187,9 @@ class TimeSeriesTerm(Term):
     def predict_out_of_sample(
         self,
         X: np.ndarray,  # for api compatibility; not used
+        distribution: Distribution,
     ):
-        X_mat = self.make_design_matrix_out_of_sample(X=X)
+        X_mat = self.make_design_matrix_out_of_sample(X=X, distribution=distribution)
         X_mat = self.remove_zero_variance_columns(X_mat)
         return X_mat @ self._state.coef_
 
@@ -189,10 +197,10 @@ class TimeSeriesTerm(Term):
         self,
         X: np.ndarray,  # for api compatibility; not used
         y: np.ndarray,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
-        distribution=None,
-        sample_weight: np.ndarray = None,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
     ) -> "TimeSeriesTerm":
         if self._state is None:
             raise ValueError("Term must be fitted before it can be updated.")
@@ -202,6 +210,7 @@ class TimeSeriesTerm(Term):
             y=y,
             fitted_values=fitted_values,
             target_values=target_values,
+            distribution=distribution,
         )
         X_mat = self.remove_zero_variance_columns(X_mat)
 
@@ -261,11 +270,11 @@ class AutoregressiveThetaTerm(TimeSeriesTerm):
 
     def make_design_matrix_in_sample_during_fit(
         self,
-        X,
-        y,
-        fitted_values,
-        target_values,
-        distribution=None,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
     ):
         X_mat = make_lags(y=fitted_values[:, self.param], lags=self.lags)
         if self.fit_intercept:
@@ -274,11 +283,11 @@ class AutoregressiveThetaTerm(TimeSeriesTerm):
 
     def make_design_matrix_in_sample_during_update(
         self,
-        X,
-        y,
-        fitted_values,
-        target_values,
-        distribution=None,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
     ):
         lagged_value = np.concatenate((
             self._state.memory,
@@ -299,10 +308,11 @@ class AutoregressiveTargetTerm(TimeSeriesTerm):
 
     def make_design_matrix_in_sample_during_fit(
         self,
-        X,
-        y,
-        fitted_values,
-        target_values,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
     ):
         X_mat = make_lags(y=target_values, lags=self.lags)
         if self.fit_intercept:
@@ -311,11 +321,11 @@ class AutoregressiveTargetTerm(TimeSeriesTerm):
 
     def make_design_matrix_in_sample_during_update(
         self,
-        X,
-        y,
-        fitted_values,
-        target_values,
-        distribution=None,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
     ):
         lagged_value = np.concatenate((
             self._state.memory,
@@ -336,13 +346,13 @@ class AutoregressiveSquaredResidualTerm(TimeSeriesTerm):
 
     def make_design_matrix_in_sample_during_fit(
         self,
-        X,
-        y,
-        fitted_values,
-        target_values,
-        distribution=None,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
     ):
-        squared_residuals = (target_values - fitted_values[:, 0]) ** 2
+        squared_residuals = (target_values - distribution.mean(fitted_values)) ** 2
         X_mat = make_lags(y=squared_residuals, lags=self.lags)
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
@@ -350,18 +360,13 @@ class AutoregressiveSquaredResidualTerm(TimeSeriesTerm):
 
     def make_design_matrix_in_sample_during_update(
         self,
-        X,
-        y,
-        fitted_values,
-        target_values,
-        distribution=None,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
     ):
-        squared_residuals = (target_values - fitted_values[:, 0]) ** 2
-        # print("fitted_values:", fitted_values)
-        # print("target_values:", target_values)
-        # print("squared_residuals:", squared_residuals)
-        # print("y:", y)
-        # print("memory:", self._state.memory)
+        squared_residuals = (target_values - distribution.mean(fitted_values)) ** 2
         lagged_value = np.concatenate((
             self._state.memory,
             squared_residuals,

@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from .distribution import Distribution
+
 
 class Term(ABC):
     """The base class for terms in structured additive distributional regression."""
@@ -55,27 +57,33 @@ class Term(ABC):
         self,
         X: np.ndarray,
         y: np.ndarray,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
-        sample_weight: np.ndarray = None,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
     ) -> "Term":
         raise NotImplementedError("Not implemented")
 
     def predict_in_sample_during_fit(
         self,
         X: np.ndarray,
-        y: np.ndarray = None,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
     ) -> np.ndarray:
-        return self.predict_out_of_sample(X=X)
+        return self.predict_out_of_sample(
+            X=X,
+            distribution=distribution,
+        )
 
     def predict_in_sample_during_update(
         self,
         X: np.ndarray,
         y: np.ndarray,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
     ):
         # For all terms that do not implement their own
         # predict_in_sample_during_update, we use the same
@@ -83,16 +91,18 @@ class Term(ABC):
         # This is valid for terms that do not consist of time series
         # components.
         return self.predict_in_sample_during_fit(
-            X,
-            y,
+            X=X,
+            y=y,
             fitted_values=fitted_values,
             target_values=target_values,
+            distribution=distribution,
         )
 
     @abstractmethod
     def predict_out_of_sample(
         self,
         X: np.ndarray,
+        distribution: Distribution,
     ) -> np.ndarray:
         raise NotImplementedError("Not implemented")
 
@@ -101,8 +111,9 @@ class Term(ABC):
         self,
         X: np.ndarray,
         y: np.ndarray,
-        fitted_values: np.ndarray = None,
-        target_values: np.ndarray = None,
-        sample_weight: np.ndarray = None,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
     ) -> "Term":
         raise NotImplementedError("Not implemented")
