@@ -42,6 +42,7 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 | [`PowerExponential`](#ondil.distributions.PowerExponential)           | Power Exponential distribution         | -                       |
 | [`Weibull`](#ondil.distributions.Weibull)                               | Weibull distribution                   | `scipy.stats.weibull_min`|
 
+| [`Poisson`](#ondil.distributions.Poisson)                             | Poisson distribution                   | `scipy.stats.poisson`   |
 
 | Distribution                                                                                                      | Description                                              | Scale Matrix Parameterization           | Formula                                                                         |
 | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------- |
@@ -97,6 +98,8 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 ::: ondil.distributions.ReverseGumbel
 
 ::: ondil.distributions.Weibull
+
+::: ondil.distributions.Poisson
 
 ## Multivariate Distributions
 
