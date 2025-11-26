@@ -3,7 +3,7 @@ from .autoregressive_terms import (
     AutoregressiveTargetTerm,
     AutoregressiveThetaTerm,
 )
-from .linear_terms import LinearTerm, RegularizedLinearTermIC, InterceptTerm
+from .linear_terms import InterceptTerm, LinearTerm, RegularizedLinearTermIC
 from .special import ScikitLearnEstimatorTerm
 
 __all__ = [
