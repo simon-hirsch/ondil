@@ -530,3 +530,71 @@ class AutoregressiveSquaredResidualTerm(TimeSeriesTerm):
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
         return X_mat[[-1], :]
+
+
+class LaggedResidualTerm(TimeSeriesTerm):
+    r"""Term with lagged residuals as features.
+
+    The lagged residuals are computed as :math:`y_t - \mu_t`, where :math:`\mu_t`
+    are the fitted values from the distribution's mean function.
+    """
+
+    def make_design_matrix_in_sample_during_fit(
+        self,
+        X: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+    ):
+        residual = target_values - distribution.mean(fitted_values)
+        X_mat = make_lags(y=residual, lags=self.lags)
+        if self.fit_intercept:
+            X_mat = add_intercept(X_mat)
+        return X_mat
+
+    def make_design_matrix_in_sample_during_update(
+        self,
+        X: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+    ):
+        target = np.concatenate((
+            self._state.memory_target_values,
+            target_values,
+        ))
+        fv = np.concatenate((
+            self._state.memory_fitted_values,
+            fitted_values,
+        ))
+        residual = (target - distribution.mean(fv)) ** 2
+
+        X_mat = make_lags(
+            y=residual,
+            lags=self.lags,
+        )
+        if self.fit_intercept:
+            X_mat = add_intercept(X_mat)
+        return X_mat[-target_values.shape[0] :, :]
+
+    def make_design_matrix_out_of_sample(
+        self,
+        X,
+        distribution: Distribution,
+    ):
+        if X.shape[0] > 1:
+            raise ValueError(
+                "Out-of-sample prediction for autoregressive terms can only be done "
+                "one step ahead.",
+            )
+
+        residual = self._state.memory_target_values - distribution.mean(
+            self._state.memory_fitted_values
+        )
+        X_mat = make_lags(
+            y=residual,
+            lags=self.lags,
+        )
+        if self.fit_intercept:
+            X_mat = add_intercept(X_mat)
+        return X_mat[[-1], :]
