@@ -132,7 +132,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         # based on CONSTANT initial values
         if outer_iteration == 0:
             deviance_start = -2 * np.sum(
-                self.distribution.logpdf(
+                self.distribution.loglikelihood(
                     y=y,
                     theta=self.distribution.constant_initial_values(y),
                 )
@@ -141,7 +141,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
             )
         else:
             deviance_start = -2 * np.sum(
-                self.distribution.logpdf(y, self._fitted_values)
+                self.distribution.loglikelihood(y, self._fitted_values)
                 * sample_weight
                 * forget_weight
             )
@@ -192,7 +192,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                 eta_iteration, param=param
             )
             deviance_iteration[inner_iteration + 1] = -2 * np.sum(
-                self.distribution.logpdf(y, fitted_values_iteration)
+                self.distribution.loglikelihood(y, fitted_values_iteration)
                 * sample_weight
                 * forget_weight
             )
@@ -249,7 +249,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         self._deviance_start = (
             np.sum(
                 -2
-                * self.distribution.logpdf(y, self._fitted_values)
+                * self.distribution.loglikelihood(y, self._fitted_values)
                 * sample_weight
                 * forget_weight
             ),
@@ -420,7 +420,9 @@ class OnlineStructuredAdditiveDistributionRegressor(
         # TODO: This needs the forget weights?
         self._deviance_start = (
             np.sum(
-                -2 * self.distribution.logpdf(y, self._fitted_values) * sample_weight
+                -2
+                * self.distribution.loglikelihood(y, self._fitted_values)
+                * sample_weight
             )
             + (1 - self.learning_rate) ** y.shape[0] * self._deviance_final
         )
@@ -517,7 +519,9 @@ class OnlineStructuredAdditiveDistributionRegressor(
 
         deviance_start = (
             np.sum(
-                -2 * self.distribution.logpdf(y, self._fitted_values) * sample_weight
+                -2
+                * self.distribution.loglikelihood(y, self._fitted_values)
+                * sample_weight
             )
             + (1 - self.learning_rate) ** y.shape[0] * self._deviance_final
         )
@@ -566,7 +570,8 @@ class OnlineStructuredAdditiveDistributionRegressor(
             deviance_iteration[inner_iteration + 1] = (
                 -2
                 * np.sum(
-                    self.distribution.logpdf(y, fitted_values_iteration) * sample_weight
+                    self.distribution.loglikelihood(y, fitted_values_iteration)
+                    * sample_weight
                 )
                 + (1 - self.learning_rate) ** y.shape[0] * self._deviance_final
             )
