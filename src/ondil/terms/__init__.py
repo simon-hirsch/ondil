@@ -2,6 +2,7 @@ from .autoregressive_terms import (
     AutoregressiveSquaredResidualTerm,
     AutoregressiveTargetTerm,
     AutoregressiveThetaTerm,
+    LaggedResidualTerm,
     JointEstimationTimeSeriesTerm,
 )
 from .linear_terms import InterceptTerm, LinearTerm, RegularizedLinearTermIC
@@ -13,7 +14,7 @@ __all__ = [
     "AutoregressiveThetaTerm",
     "AutoregressiveTargetTerm",
     "AutoregressiveSquaredResidualTerm",
-    "LinearTerm",
+    "LaggedResidualTerm",
     "RegularizedLinearTermIC",
     "ScikitLearnEstimatorTerm",
 ]
