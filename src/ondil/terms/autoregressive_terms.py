@@ -81,6 +81,7 @@ class TimeSeriesTerm(Term):
             target_values=target_values,
             distribution=distribution,
         )
+
         self.find_zero_variance_columns(X_mat)
         X_mat = self.remove_zero_variance_columns(X_mat)
 
@@ -256,10 +257,14 @@ class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
         terms: list = None,
         method: EstimationMethod = "ols",
         fit_intercept: bool = True,
+        forget: float = 0.0,
     ):
         self.terms = terms
         self.method = method
+        self.forget = forget
         self.fit_intercept = fit_intercept
+        self.is_regularized = False
+        self.regularize_intercept = False
 
     def _prepare_term(self):
         super()._prepare_term()
@@ -267,7 +272,9 @@ class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
         # Since we don't want to initialize the terms individually, but borrow
         # the methods to create design matrices from the individual terms.
         # self.terms = [term._prepare_term() for term in self.terms]
-        self.lags = [np.max(term.lags) for term in self.terms]
+        self.lags = [
+            np.max(term.lags) if hasattr(term, "lags") else 0 for term in self.terms
+        ]
         return self
 
     def make_design_matrix_in_sample_during_fit(
@@ -279,10 +286,10 @@ class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
     ):
         X_mats = [
             term.make_design_matrix_in_sample_during_fit(
-                X,
-                fitted_values,
-                target_values,
-                distribution,
+                X=X,
+                fitted_values=fitted_values,
+                target_values=target_values,
+                distribution=distribution,
             )[:, int(term.fit_intercept) :]
             for term in self.terms
         ]
@@ -300,10 +307,10 @@ class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
     ):
         X_mats = [
             term.make_design_matrix_in_sample_during_update(
-                X,
-                fitted_values,
-                target_values,
-                distribution,
+                X=X,
+                fitted_values=fitted_values,
+                target_values=target_values,
+                distribution=distribution,
             )[:, int(term.fit_intercept) :]
             for term in self.terms
         ]
@@ -328,6 +335,50 @@ class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
         return X_mat
+
+    def fit(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
+    ) -> "JointEstimationTimeSeriesTerm":
+        new_instance = super().fit(
+            X=X,
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+            sample_weight=sample_weight,
+        )
+        new_instance.terms = self.terms
+        for term in new_instance.terms:
+            term._state = new_instance._state
+        return new_instance
+
+    def update(
+        self,
+        X: np.ndarray,  # for api compatibility; not used
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
+    ) -> "TimeSeriesTerm":
+        new_instance = super().update(
+            X=X,
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+            sample_weight=sample_weight,
+        )
+        new_instance.terms = self.terms
+        for term in new_instance.terms:
+            term._state = new_instance._state
+        return new_instance
 
 
 class AutoregressiveThetaTerm(TimeSeriesTerm):

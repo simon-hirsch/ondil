@@ -38,13 +38,6 @@ class LinearTerm(Term):
 
     allow_online_updates: bool = True
 
-    features: np.ndarray | list[int] | Literal["all"]
-    method: EstimationMethod | str = "ols"
-    fit_intercept: bool = True
-    forget: float = 0.0
-    is_regularized: bool = False
-    regularize_intercept: None | bool = None
-
     def __init__(
         self,
         features: np.ndarray | list[int] | Literal["all"] = "all",
@@ -70,13 +63,40 @@ class LinearTerm(Term):
     def make_design_matrix(
         self,
         X: np.ndarray | None = None,
-        target_values: np.ndarray | None = None,
-    ):
+    ) -> np.ndarray:
         if self.fit_intercept:
             X_mat = add_intercept(subset_array(X, self.features))
         else:
             X_mat = subset_array(X, self.features)
         return X_mat
+
+    def make_design_matrix_in_sample_during_fit(
+        self,
+        X: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+    ):
+        """For compatibility with the TimeSeriesTerm interface."""
+        return self.make_design_matrix(X)
+
+    def make_design_matrix_in_sample_during_update(
+        self,
+        X: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+    ):
+        """For compatibility with the TimeSeriesTerm interface."""
+        return self.make_design_matrix(X)
+
+    def make_design_matrix_out_of_sample(
+        self,
+        X,
+        distribution: Distribution,
+    ):
+        """For compatibility with the TimeSeriesTerm interface."""
+        return self.make_design_matrix(X)
 
     def fit(
         self,
