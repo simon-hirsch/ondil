@@ -117,3 +117,35 @@ class Term(ABC):
         sample_weight: np.ndarray,
     ) -> "Term":
         raise NotImplementedError("Not implemented")
+
+
+class FeatureTransformation(ABC):
+    """Base class for feature transformations."""
+
+    @abstractmethod
+    def make_design_matrix_in_sample_during_fit(
+        self,
+        X: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+    ):
+        raise NotImplementedError("Not implemented")
+
+    @abstractmethod
+    def make_design_matrix_in_sample_during_update(
+        self,
+        X: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+    ):
+        raise NotImplementedError("Not implemented")
+
+    @abstractmethod
+    def make_design_matrix_out_of_sample(
+        self,
+        X,
+        distribution: Distribution,
+    ):
+        raise NotImplementedError("Not implemented")
