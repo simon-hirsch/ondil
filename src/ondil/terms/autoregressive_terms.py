@@ -4,9 +4,9 @@ from dataclasses import dataclass, replace
 import numpy as np
 
 from ..base import Distribution, EstimationMethod, Term
+from ..base.terms import FeatureTransformation
 from ..design_matrix import add_intercept, make_lags
 from ..methods import get_estimation_method
-from ..base.terms import FeatureTransformation
 
 
 @dataclass(frozen=True)
