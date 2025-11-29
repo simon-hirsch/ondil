@@ -6,6 +6,7 @@ import numpy as np
 from ..base import Distribution, EstimationMethod, Term
 from ..design_matrix import add_intercept, make_lags
 from ..methods import get_estimation_method
+from ..base.terms import FeatureTransformation
 
 
 @dataclass(frozen=True)
@@ -18,7 +19,7 @@ class ARTermState:
     memory_target_values: np.ndarray | None
 
 
-class TimeSeriesTerm(Term):
+class JointEstimationTimeSeriesTerm(Term):
     """Autoregressive term for time series modeling.
 
     This is a rather generic base class which, in the fit and update methods, will
@@ -46,7 +47,7 @@ class TimeSeriesTerm(Term):
 
     def __init__(
         self,
-        lags: np.ndarray | list[int] | int = 1,
+        effects: list[FeatureTransformation],
         method: EstimationMethod = "ols",
         fit_intercept: bool = True,
         forget: float = 0.0,
@@ -58,12 +59,15 @@ class TimeSeriesTerm(Term):
         self.forget = forget
         self.is_regularized = is_regularized
         self.regularize_intercept = regularize_intercept
-        self.lags = lags
+        self.effects = effects
 
     def _prepare_term(self):
         self._method = get_estimation_method(self.method)
         if self._method._path_based_method:
             raise ValueError("Path-based methods are not supported for LinearTerm.")
+        self.lags = [
+            np.max(term.lags) if hasattr(term, "lags") else 0 for term in self.effects
+        ]
         return self
 
     def fit(
@@ -74,7 +78,7 @@ class TimeSeriesTerm(Term):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
-    ) -> "TimeSeriesTerm":
+    ) -> "JointEstimationTimeSeriesTerm":
         X_mat = self.make_design_matrix_in_sample_during_fit(
             X=X,
             fitted_values=fitted_values,
@@ -157,7 +161,6 @@ class TimeSeriesTerm(Term):
         X_mat = self.remove_zero_variance_columns(X_mat)
         return X_mat @ self._state.coef_
 
-    # TODO: Can this go to the base class?
     def predict_out_of_sample(
         self,
         X: np.ndarray,  # for api compatibility; not used
@@ -175,7 +178,7 @@ class TimeSeriesTerm(Term):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
-    ) -> "TimeSeriesTerm":
+    ) -> "JointEstimationTimeSeriesTerm":
         if self._state is None:
             raise ValueError("Term must be fitted before it can be updated.")
 
@@ -222,61 +225,6 @@ class TimeSeriesTerm(Term):
         )
         return new_instance
 
-    # These three need to be implemented by subclasses
-    def make_design_matrix_in_sample_during_update(
-        self,
-        X: np.ndarray,
-        fitted_values: np.ndarray,
-        target_values: np.ndarray,
-        distribution: Distribution,
-    ) -> np.ndarray:
-        raise NotImplementedError("Not implemented")
-
-    def make_design_matrix_in_sample_during_fit(
-        self,
-        X: np.ndarray,
-        fitted_values: np.ndarray,
-        target_values: np.ndarray,
-        distribution: Distribution,
-    ) -> np.ndarray:
-        raise NotImplementedError("Not implemented")
-
-    def make_design_matrix_out_of_sample(
-        self,
-        X: np.ndarray,
-        distribution: Distribution,
-    ) -> np.ndarray:
-        raise NotImplementedError("Not implemented")
-
-
-class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
-    allow_online_updates: bool = True
-
-    def __init__(
-        self,
-        terms: list = None,
-        method: EstimationMethod = "ols",
-        fit_intercept: bool = True,
-        forget: float = 0.0,
-    ):
-        self.terms = terms
-        self.method = method
-        self.forget = forget
-        self.fit_intercept = fit_intercept
-        self.is_regularized = False
-        self.regularize_intercept = False
-
-    def _prepare_term(self):
-        super()._prepare_term()
-        # I don't think this is necessary
-        # Since we don't want to initialize the terms individually, but borrow
-        # the methods to create design matrices from the individual terms.
-        # self.terms = [term._prepare_term() for term in self.terms]
-        self.lags = [
-            np.max(term.lags) if hasattr(term, "lags") else 0 for term in self.terms
-        ]
-        return self
-
     def make_design_matrix_in_sample_during_fit(
         self,
         X: np.ndarray,
@@ -290,8 +238,8 @@ class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
                 fitted_values=fitted_values,
                 target_values=target_values,
                 distribution=distribution,
-            )[:, int(term.fit_intercept) :]
-            for term in self.terms
+            )
+            for term in self.effects
         ]
         X_mat = np.hstack(X_mats)
         if self.fit_intercept:
@@ -311,8 +259,9 @@ class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
                 fitted_values=fitted_values,
                 target_values=target_values,
                 distribution=distribution,
-            )[:, int(term.fit_intercept) :]
-            for term in self.terms
+                state=self._state,
+            )
+            for term in self.effects
         ]
         X_mat = np.hstack(X_mats)
         if self.fit_intercept:
@@ -328,79 +277,70 @@ class JointEstimationTimeSeriesTerm(TimeSeriesTerm):
             term.make_design_matrix_out_of_sample(
                 X,
                 distribution,
-            )[:, int(term.fit_intercept) :]
-            for term in self.terms
+                state=self._state,
+            )
+            for term in self.effects
         ]
         X_mat = np.hstack(X_mats)
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
         return X_mat
 
-    def fit(
+
+# This defines what a time series feature should implement
+# But maybe not all features are needed
+# The important part is that the feature has access to the
+# - fitted_values
+# - target_values to create lagged versions
+# - to the distribution (to compute residuals etc based on hte mean/median)
+# - to the state (to access memory of previous fitted/target values)
+
+
+class TimeSeriesFeature(FeatureTransformation):
+    def __init__(self, lags: np.ndarray | list[int] | int = 1):
+        self.lags = lags
+
+    def make_design_matrix_in_sample_during_fit(
         self,
         X: np.ndarray,
-        y: np.ndarray,
         fitted_values: np.ndarray,
         target_values: np.ndarray,
         distribution: Distribution,
-        sample_weight: np.ndarray,
-    ) -> "JointEstimationTimeSeriesTerm":
-        new_instance = super().fit(
-            X=X,
-            y=y,
-            fitted_values=fitted_values,
-            target_values=target_values,
-            distribution=distribution,
-            sample_weight=sample_weight,
-        )
-        new_instance.terms = self.terms
-        for term in new_instance.terms:
-            term._state = new_instance._state
-        return new_instance
+        **kwargs,
+    ):
+        raise NotImplementedError("Not implemented")
 
-    def update(
+    def make_design_matrix_in_sample_during_update(
         self,
-        X: np.ndarray,  # for api compatibility; not used
-        y: np.ndarray,
+        X: np.ndarray,
         fitted_values: np.ndarray,
         target_values: np.ndarray,
         distribution: Distribution,
-        sample_weight: np.ndarray,
-    ) -> "TimeSeriesTerm":
-        new_instance = super().update(
-            X=X,
-            y=y,
-            fitted_values=fitted_values,
-            target_values=target_values,
-            distribution=distribution,
-            sample_weight=sample_weight,
-        )
-        new_instance.terms = self.terms
-        for term in new_instance.terms:
-            term._state = new_instance._state
-        return new_instance
+        state: ARTermState,
+        **kwargs,
+    ):
+        raise NotImplementedError("Not implemented")
+
+    def make_design_matrix_out_of_sample(
+        self,
+        X,
+        distribution: Distribution,
+        state: ARTermState,
+        **kwargs,
+    ):
+        raise NotImplementedError("Not implemented")
 
 
-class AutoregressiveThetaTerm(TimeSeriesTerm):
+class LaggedTheta(TimeSeriesFeature):
     """Autoregressive term using target values for lagged predictors."""
 
     def __init__(
         self,
         lags: np.ndarray | list[int] | int = 1,
-        method: EstimationMethod = "ols",
-        fit_intercept: bool = True,
-        forget: float = 0.0,
-        is_regularized: bool = False,
-        regularize_intercept: None | bool = None,
         param: int = 0,
     ):
         super().__init__(
             lags=lags,
-            method=method,
-            fit_intercept=fit_intercept,
-            forget=forget,
-            is_regularized=is_regularized,
-            regularize_intercept=regularize_intercept,
         )
         self.param = param
 
@@ -408,23 +348,20 @@ class AutoregressiveThetaTerm(TimeSeriesTerm):
         self,
         X: np.ndarray,
         fitted_values: np.ndarray,
-        target_values: np.ndarray,
-        distribution: Distribution,
+        **kwargs,
     ):
         X_mat = make_lags(y=fitted_values[:, self.param], lags=self.lags)
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat
 
     def make_design_matrix_in_sample_during_update(
         self,
-        X: np.ndarray,
         fitted_values: np.ndarray,
         target_values: np.ndarray,
-        distribution: Distribution,
+        state: ARTermState,
+        **kwargs,
     ):
         lagged_value = np.concatenate((
-            self._state.memory_fitted_values[:, self.param],
+            state.memory_fitted_values[:, self.param],
             fitted_values[:, self.param],
         ))
 
@@ -432,14 +369,13 @@ class AutoregressiveThetaTerm(TimeSeriesTerm):
             y=lagged_value,
             lags=self.lags,
         )
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat[-target_values.shape[0] :, :]
 
     def make_design_matrix_out_of_sample(
         self,
         X,
         distribution: Distribution,
+        state: ARTermState,
     ):
         if X.shape[0] > 1:
             raise ValueError(
@@ -447,27 +383,21 @@ class AutoregressiveThetaTerm(TimeSeriesTerm):
                 "one step ahead.",
             )
         X_mat = make_lags(
-            y=self._state.memory_fitted_values[:, self.param],
+            y=state.memory_fitted_values[:, self.param],
             lags=self.lags,
         )
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat[[-1], :]
 
 
-class AutoregressiveTargetTerm(TimeSeriesTerm):
+class LaggedTarget(TimeSeriesFeature):
     """Autoregressive term using fitted values for lagged predictors."""
 
     def make_design_matrix_in_sample_during_fit(
         self,
-        X: np.ndarray,
-        fitted_values: np.ndarray,
         target_values: np.ndarray,
-        distribution: Distribution,
+        **kwargs,
     ):
         X_mat = make_lags(y=target_values, lags=self.lags)
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat
 
     def make_design_matrix_in_sample_during_update(
@@ -476,9 +406,10 @@ class AutoregressiveTargetTerm(TimeSeriesTerm):
         fitted_values: np.ndarray,
         target_values: np.ndarray,
         distribution: Distribution,
+        state: ARTermState,
     ):
         lagged_value = np.concatenate((
-            self._state.memory_target_values,
+            state.memory_target_values,
             target_values,
         ))
 
@@ -486,14 +417,13 @@ class AutoregressiveTargetTerm(TimeSeriesTerm):
             y=lagged_value,
             lags=self.lags,
         )
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat[-target_values.shape[0] :, :]
 
     def make_design_matrix_out_of_sample(
         self,
         X,
         distribution: Distribution,
+        state: ARTermState,
     ):
         if X.shape[0] > 1:
             raise ValueError(
@@ -501,28 +431,24 @@ class AutoregressiveTargetTerm(TimeSeriesTerm):
                 "one step ahead.",
             )
         X_mat = make_lags(
-            y=self._state.memory_target_values,
+            y=state.memory_target_values,
             lags=self.lags,
         )
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat[[-1], :]
 
 
-class AutoregressiveSquaredResidualTerm(TimeSeriesTerm):
+class LaggedSquaredResidual(TimeSeriesFeature):
     """Autoregressive term using fitted values for lagged predictors."""
 
     def make_design_matrix_in_sample_during_fit(
         self,
-        X: np.ndarray,
         fitted_values: np.ndarray,
         target_values: np.ndarray,
         distribution: Distribution,
+        **kwargs,
     ):
         squared_residuals = (target_values - distribution.mean(fitted_values)) ** 2
         X_mat = make_lags(y=squared_residuals, lags=self.lags)
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat
 
     def make_design_matrix_in_sample_during_update(
@@ -531,13 +457,14 @@ class AutoregressiveSquaredResidualTerm(TimeSeriesTerm):
         fitted_values: np.ndarray,
         target_values: np.ndarray,
         distribution: Distribution,
+        state: ARTermState,
     ):
         target = np.concatenate((
-            self._state.memory_target_values,
+            state.memory_target_values,
             target_values,
         ))
         fv = np.concatenate((
-            self._state.memory_fitted_values,
+            state.memory_fitted_values,
             fitted_values,
         ))
         squared_residuals = (target - distribution.mean(fv)) ** 2
@@ -546,14 +473,13 @@ class AutoregressiveSquaredResidualTerm(TimeSeriesTerm):
             y=squared_residuals,
             lags=self.lags,
         )
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat[-target_values.shape[0] :, :]
 
     def make_design_matrix_out_of_sample(
         self,
         X,
         distribution: Distribution,
+        state: ARTermState,
     ):
         if X.shape[0] > 1:
             raise ValueError(
@@ -562,20 +488,17 @@ class AutoregressiveSquaredResidualTerm(TimeSeriesTerm):
             )
 
         squared_residuals = (
-            self._state.memory_target_values
-            - distribution.mean(self._state.memory_fitted_values)
+            state.memory_target_values - distribution.mean(state.memory_fitted_values)
         ) ** 2
 
         X_mat = make_lags(
             y=squared_residuals,
             lags=self.lags,
         )
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat[[-1], :]
 
 
-class LaggedResidualTerm(TimeSeriesTerm):
+class LaggedResidual(TimeSeriesFeature):
     r"""Term with lagged residuals as features.
 
     The lagged residuals are computed as :math:`y_t - \mu_t`, where :math:`\mu_t`
@@ -584,30 +507,29 @@ class LaggedResidualTerm(TimeSeriesTerm):
 
     def make_design_matrix_in_sample_during_fit(
         self,
-        X: np.ndarray,
         fitted_values: np.ndarray,
         target_values: np.ndarray,
         distribution: Distribution,
+        **kwargs,
     ):
         residual = target_values - distribution.mean(fitted_values)
         X_mat = make_lags(y=residual, lags=self.lags)
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat
 
     def make_design_matrix_in_sample_during_update(
         self,
-        X: np.ndarray,
         fitted_values: np.ndarray,
         target_values: np.ndarray,
         distribution: Distribution,
+        state: ARTermState,
+        **kwargs,
     ):
         target = np.concatenate((
-            self._state.memory_target_values,
+            state.memory_target_values,
             target_values,
         ))
         fv = np.concatenate((
-            self._state.memory_fitted_values,
+            state.memory_fitted_values,
             fitted_values,
         ))
         residual = (target - distribution.mean(fv)) ** 2
@@ -616,14 +538,13 @@ class LaggedResidualTerm(TimeSeriesTerm):
             y=residual,
             lags=self.lags,
         )
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat[-target_values.shape[0] :, :]
 
     def make_design_matrix_out_of_sample(
         self,
         X,
         distribution: Distribution,
+        state: ARTermState,
     ):
         if X.shape[0] > 1:
             raise ValueError(
@@ -631,13 +552,11 @@ class LaggedResidualTerm(TimeSeriesTerm):
                 "one step ahead.",
             )
 
-        residual = self._state.memory_target_values - distribution.mean(
-            self._state.memory_fitted_values
+        residual = state.memory_target_values - distribution.mean(
+            state.memory_fitted_values
         )
         X_mat = make_lags(
             y=residual,
             lags=self.lags,
         )
-        if self.fit_intercept:
-            X_mat = add_intercept(X_mat)
         return X_mat[[-1], :]

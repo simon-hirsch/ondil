@@ -126,9 +126,7 @@ class FeatureTransformation(ABC):
     def make_design_matrix_in_sample_during_fit(
         self,
         X: np.ndarray,
-        fitted_values: np.ndarray,
-        target_values: np.ndarray,
-        distribution: Distribution,
+        **kwargs,
     ):
         raise NotImplementedError("Not implemented")
 
@@ -136,9 +134,7 @@ class FeatureTransformation(ABC):
     def make_design_matrix_in_sample_during_update(
         self,
         X: np.ndarray,
-        fitted_values: np.ndarray,
-        target_values: np.ndarray,
-        distribution: Distribution,
+        **kwargs,
     ):
         raise NotImplementedError("Not implemented")
 
@@ -146,6 +142,6 @@ class FeatureTransformation(ABC):
     def make_design_matrix_out_of_sample(
         self,
         X,
-        distribution: Distribution,
+        **kwargs,
     ):
         raise NotImplementedError("Not implemented")
