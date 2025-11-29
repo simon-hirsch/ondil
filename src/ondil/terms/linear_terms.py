@@ -5,6 +5,7 @@ from typing import Literal
 import numpy as np
 
 from ..base import Distribution, EstimationMethod, Term
+from ..base.terms import FeatureTransformation
 from ..design_matrix import add_intercept, subset_array
 from ..gram import init_forget_vector
 from ..information_criteria import InformationCriterion
@@ -31,6 +32,35 @@ class RegularizedLinearTermICState:
     rss: np.ndarray | None
     n_observations: int | None
     n_nonzero_coef: np.ndarray | None
+
+
+class LinearFeatures(FeatureTransformation):
+    def __init__(
+        self,
+        features: np.ndarray | list[int] | Literal["all"] = "all",
+    ):
+        self.features = features
+
+    def make_design_matrix_in_sample_during_fit(
+        self,
+        X: np.ndarray,
+        **kwargs,
+    ) -> np.ndarray:
+        return subset_array(X, self.features)
+
+    def make_design_matrix_in_sample_during_update(
+        self,
+        X: np.ndarray,
+        **kwargs,
+    ) -> np.ndarray:
+        return subset_array(X, self.features)
+
+    def make_design_matrix_out_of_sample(
+        self,
+        X,
+        **kwargs,
+    ) -> np.ndarray:
+        return subset_array(X, self.features)
 
 
 class LinearTerm(Term):
@@ -70,32 +100,13 @@ class LinearTerm(Term):
             X_mat = subset_array(X, self.features)
         return X_mat
 
-    def make_design_matrix_in_sample_during_fit(
-        self,
-        X: np.ndarray,
-        fitted_values: np.ndarray,
-        target_values: np.ndarray,
-        distribution: Distribution,
-    ):
-        """For compatibility with the TimeSeriesTerm interface."""
+    def make_design_matrix_in_sample_during_fit(self, X: np.ndarray, **kwargs):
         return self.make_design_matrix(X)
 
-    def make_design_matrix_in_sample_during_update(
-        self,
-        X: np.ndarray,
-        fitted_values: np.ndarray,
-        target_values: np.ndarray,
-        distribution: Distribution,
-    ):
-        """For compatibility with the TimeSeriesTerm interface."""
+    def make_design_matrix_in_sample_during_update(self, X: np.ndarray, **kwargs):
         return self.make_design_matrix(X)
 
-    def make_design_matrix_out_of_sample(
-        self,
-        X,
-        distribution: Distribution,
-    ):
-        """For compatibility with the TimeSeriesTerm interface."""
+    def make_design_matrix_out_of_sample(self, X, **kwargs):
         return self.make_design_matrix(X)
 
     def fit(
@@ -107,7 +118,7 @@ class LinearTerm(Term):
         distribution: Distribution,
         sample_weight: np.ndarray,
     ) -> "LinearTerm":
-        X_mat = self.make_design_matrix(X, target_values=target_values)
+        X_mat = self.make_design_matrix(X)
         self.find_zero_variance_columns(X_mat)
         X_mat = self.remove_zero_variance_columns(X_mat)
 
@@ -149,7 +160,7 @@ class LinearTerm(Term):
         X: np.ndarray,
         distribution: Distribution,
     ) -> np.ndarray:
-        X_mat = self.make_design_matrix(X=X, target_values=None)
+        X_mat = self.make_design_matrix(X=X)
         X_mat = self.remove_zero_variance_columns(X_mat)
         return X_mat @ self._state.coef_
 
@@ -162,7 +173,7 @@ class LinearTerm(Term):
         distribution: Distribution,
         sample_weight: np.ndarray,
     ) -> "LinearTerm":
-        X_mat = self.make_design_matrix(X, target_values=target_values)
+        X_mat = self.make_design_matrix(X=X)
         X_mat = self.remove_zero_variance_columns(X_mat)
 
         g = self._method.update_x_gram(
