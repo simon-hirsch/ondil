@@ -10,7 +10,7 @@ from ..types import ParameterShapes
 
 
 class Beta(ScipyMixin, Distribution):
-    """The Beta Distribution for GAMLSS.
+    r"""The Beta Distribution for GAMLSS.
 
     The distribution function is defined as in GAMLSS as:
     $$

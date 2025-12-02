@@ -9,7 +9,7 @@ from ..types import ParameterShapes
 
 
 class JSU(ScipyMixin, Distribution):
-    """
+    r"""
     Corresponds to GAMLSS JSUo() and scipy.stats.johnsonsu()
 
     Distribution parameters:

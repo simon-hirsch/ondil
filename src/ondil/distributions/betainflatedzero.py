@@ -10,7 +10,7 @@ from ..types import ParameterShapes
 
 
 class BetaInflatedZero(Distribution):
-    """The Zero Inflated Beta Distribution for GAMLSS.
+    r"""The Zero Inflated Beta Distribution for GAMLSS.
     
     f_Y(y \\mid \\mu, \\sigma, \\nu) = 
     \\begin{cases}

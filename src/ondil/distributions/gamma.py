@@ -10,7 +10,7 @@ from ..types import ParameterShapes
 
 
 class Gamma(ScipyMixin, Distribution):
-    """The Gamma Distribution for GAMLSS.
+    r"""The Gamma Distribution for GAMLSS.
 
     The distribution function is defined as in GAMLSS as:
     $$

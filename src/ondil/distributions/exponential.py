@@ -9,7 +9,7 @@ from ..types import ParameterShapes
 
 
 class Exponential(ScipyMixin, Distribution):
-    """
+    r"""
     The Exponential distribution parameterized by the mean (mu).
 
     PDF:

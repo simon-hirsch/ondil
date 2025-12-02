@@ -6,7 +6,7 @@ def add_intercept(X: np.ndarray):
 
 
 def make_intercept(n_observations: int) -> np.ndarray:
-    """Make the intercept series as N x 1 array.
+    r"""Make the intercept series as N x 1 array.
 
     Args:
         y (np.ndarray): Response variable $Y$
