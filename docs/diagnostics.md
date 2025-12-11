@@ -2,6 +2,9 @@
 
 We provide several diagnostic plots to assess the fit of distributional regression models. These include the Probability Integral Transform (PIT) histogram, Q-Q plot, and worm plot. 
 
+!!! note
+    Note that you need to have `matplotlib` installed to use the diagnostic plotting functions.
+
 Model diagnostics in `ondil` follow the `scikit-learn` convention of [`Displays`](https://scikit-learn.org/stable/auto_examples/miscellaneous/plot_display_object_visualization.html) and can be created using the `from_estimator` class method of the respective display classes.
 
 The whole code for generating the figures is provided in the file [`examples/diagnostics.py`](https://github.com/simon-hirsch/ondil/blob/main/examples/diagnostic_tools.py) in the examples folder.
