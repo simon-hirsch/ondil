@@ -4,6 +4,8 @@ We provide several diagnostic plots to assess the fit of distributional regressi
 
 Model diagnostics in `ondil` follow the `scikit-learn` convention of [`Displays`](https://scikit-learn.org/stable/auto_examples/miscellaneous/plot_display_object_visualization.html) and can be created using the `from_estimator` class method of the respective display classes.
 
+The whole code for generating the figures is provided in the file [`examples/diagnostics.py`](https://github.com/simon-hirsch/ondil/blob/main/examples/diagnostic_tools.py) in the examples folder.
+
 ## Probability Integral Transform (PIT) Histogram
 
 We can assess the calibration of our additive models using the Probability Integral Transform (PIT) histogram. The PIT is computed by evaluating the cumulative distribution function (CDF) of the fitted model at the observed data points. If the model is well-calibrated, the PIT values should be uniformly distributed.
