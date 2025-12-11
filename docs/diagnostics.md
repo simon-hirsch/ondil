@@ -7,7 +7,7 @@ We provide several diagnostic plots to assess the fit of distributional regressi
 
 Model diagnostics in `ondil` follow the `scikit-learn` convention of [`Displays`](https://scikit-learn.org/stable/auto_examples/miscellaneous/plot_display_object_visualization.html) and can be created using the `from_estimator` class method of the respective display classes.
 
-The whole code for generating the figures is provided in the file [`examples/diagnostics.py`](https://github.com/simon-hirsch/ondil/blob/main/examples/diagnostic_tools.py) in the examples folder.
+The whole code for generating the figures is provided in the file [`examples/diagnostic_tools.py`](https://github.com/simon-hirsch/ondil/blob/main/examples/diagnostic_tools.py) in the examples folder.
 
 ## Probability Integral Transform (PIT) Histogram
 
