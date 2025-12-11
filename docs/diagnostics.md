@@ -97,3 +97,14 @@ WormPlotDisplay.from_estimator(
 /// caption
 Worm plot (detrended QQ-plot) for the diabetes dataset using a simple linear regression model with normal distribution.
 ///
+
+
+# API reference
+
+::: ondil.base.DiagnosticDisplay
+
+::: ondil.diagnostics.PITHistogramDisplay
+    
+::: ondil.diagnostics.QQDisplay
+
+::: ondil.diagnostics.WormPlotDisplay
