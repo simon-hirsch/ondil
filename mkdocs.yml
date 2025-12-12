@@ -10,6 +10,7 @@ nav:
   - Distributions : distributions.md
   - Link Functions : links.md
   - Coordinate Descent : coordinate_descent.md
+  - Diagnostics : diagnostics.md
   - Gramian Matrix : gram.md
   - Model Selection : model_selection.md
   - Development : development.md
