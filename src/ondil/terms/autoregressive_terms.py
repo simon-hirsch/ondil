@@ -292,12 +292,11 @@ class RegularizedJointEstimationTimeSeriesTerm(
         method: EstimationMethod = "lasso",
         fit_intercept: bool = True,
         forget: float = 0.0,
-        is_regularized: bool = True,
-        regularize_intercept: None | bool = None,
+        is_regularized: np.ndarray | None = None,
+        regularize_intercept: bool = True,
         ic: str = "aic",
     ):
         super().__init__(
-            effects=effects,
             method=method,
             fit_intercept=fit_intercept,
             forget=forget,
@@ -305,6 +304,109 @@ class RegularizedJointEstimationTimeSeriesTerm(
             regularize_intercept=regularize_intercept,
             ic=ic,
         )
+        self.effects = effects
+
+    def _prepare_term(self):
+        self._method = get_estimation_method(self.method)
+        if not self._method._path_based_method:
+            raise ValueError("Non-Path-based methods are not supported for LinearTerm.")
+        self.lags = [
+            np.max(term.lags) if hasattr(term, "lags") else 0 for term in self.effects
+        ]
+        return self
+
+    def fit(
+        self,
+        X: np.ndarray,  # for api compatibility; not used
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
+    ) -> "JointEstimationTimeSeriesTerm":
+        (
+            is_regularized,
+            g,
+            h,
+            coef_,
+            coef_path_,
+            best_idx,
+            ic_values_,
+            rss,
+            n_observations,
+            n_nonzero_coef,
+        ) = self._fit(
+            X=X,
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+            sample_weight=sample_weight,
+        )
+        self._state = ARTermPathState(
+            is_regularized=is_regularized,
+            g=g,
+            h=h,
+            coef_=coef_,
+            coef_path_=coef_path_,
+            best_idx=best_idx,
+            ic_values_=ic_values_,
+            rss=rss,
+            n_observations=n_observations,
+            n_nonzero_coef=n_nonzero_coef,
+            memory_fitted_values=fitted_values[-np.max(self.lags) :],
+            memory_target_values=target_values[-np.max(self.lags) :],
+        )
+        return self
+
+    def update(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
+    ) -> "RegularizedJointEstimationTimeSeriesTerm":
+        (
+            g,
+            h,
+            coef_,
+            coef_path_,
+            best_idx,
+            ic_values_,
+            rss,
+            n_observations,
+            n_nonzero_coef,
+        ) = self._update(
+            X=X,
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+            sample_weight=sample_weight,
+        )
+        # Create a new instance with updated values
+        new_instance = copy.copy(self)
+        new_instance._state = replace(
+            self._state,
+            g=g,
+            h=h,
+            coef_=coef_,
+            coef_path_=coef_path_,
+            best_idx=best_idx,
+            ic_values_=ic_values_,
+            rss=rss,
+            n_observations=n_observations,
+            n_nonzero_coef=n_nonzero_coef,
+            memory_fitted_values=np.concatenate(
+                (self._state.memory_fitted_values, fitted_values),
+            )[-np.max(self.lags) :],
+            memory_target_values=np.concatenate(
+                (self._state.memory_target_values, target_values),
+            )[-np.max(self.lags) :],
+        )
+        return new_instance
 
 
 # This defines what a time series feature should implement
