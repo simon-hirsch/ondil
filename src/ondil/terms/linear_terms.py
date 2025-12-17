@@ -44,6 +44,7 @@ class LinearFeatures(FeatureTransformation):
     def make_design_matrix_in_sample_during_fit(
         self,
         X: np.ndarray,
+        distribution: Distribution,
         **kwargs,
     ) -> np.ndarray:
         return subset_array(X, self.features)
@@ -51,6 +52,7 @@ class LinearFeatures(FeatureTransformation):
     def make_design_matrix_in_sample_during_update(
         self,
         X: np.ndarray,
+        distribution: Distribution,
         **kwargs,
     ) -> np.ndarray:
         return subset_array(X, self.features)
@@ -58,6 +60,7 @@ class LinearFeatures(FeatureTransformation):
     def make_design_matrix_out_of_sample(
         self,
         X,
+        distribution: Distribution,
         **kwargs,
     ) -> np.ndarray:
         return subset_array(X, self.features)

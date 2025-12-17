@@ -293,7 +293,7 @@ class RegularizedJointEstimationTimeSeriesTerm(
         fit_intercept: bool = True,
         forget: float = 0.0,
         is_regularized: np.ndarray | None = None,
-        regularize_intercept: bool = True,
+        regularize_intercept: bool = False,
         ic: str = "aic",
     ):
         super().__init__(
