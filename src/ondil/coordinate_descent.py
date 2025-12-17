@@ -33,7 +33,8 @@ def online_coordinate_descent(
     y_gram: np.ndarray,
     beta: np.ndarray,
     regularization: float,
-    is_regularized: bool,
+    regularization_weights: np.ndarray | None,
+    is_regularized: np.ndarray,
     alpha: float,
     beta_lower_bound: np.ndarray | None,
     beta_upper_bound: np.ndarray | None,
@@ -64,28 +65,36 @@ def online_coordinate_descent(
     beta_now = np.copy(beta)
     beta_star = np.copy(beta)
 
+    if regularization_weights is None:
+        regularization_weights = np.ones(J)
+
     while True:
         i += 1
         beta_star = np.copy(beta_now)
-
         if (selection == "random") and (i >= 2):
             JJ = np.random.permutation(J)
-
         for j in JJ:
             if (i < 2) | (beta_now[j] != 0):
                 update = (
                     y_gram[j] - (x_gram[j, :] @ beta_now) + x_gram[j, j] * beta_now[j]
                 )
                 if is_regularized[j]:
-                    update = soft_threshold(update, alpha * regularization)
-                    denom = x_gram[j, j] + regularization * (1 - alpha)
+                    update = soft_threshold(
+                        update, alpha * regularization * regularization_weights[j]
+                    )
+                    denom = x_gram[j, j] + regularization * regularization_weights[
+                        j
+                    ] * (1 - alpha)
                 else:
                     denom = x_gram[j, j]
+
                 beta_now[j] = update / denom
+                # Bounds
                 if beta_lower_bound is not None:
                     beta_now[j] = max(beta_now[j], beta_lower_bound[j])
                 if beta_upper_bound is not None:
                     beta_now[j] = min(beta_now[j], beta_upper_bound[j])
+
         if np.max(np.abs(beta_now - beta_star)) <= tolerance * np.max(np.abs(beta_now)):
             break
         if i > max_iterations:
@@ -106,8 +115,9 @@ def online_coordinate_descent_path(
     is_regularized: np.ndarray,
     alpha: float,
     early_stop: int,
-    beta_lower_bound: np.ndarray,
-    beta_upper_bound: np.ndarray,
+    regularization_weights: np.ndarray | None,
+    beta_lower_bound: np.ndarray | None,
+    beta_upper_bound: np.ndarray | None,
     which_start_value: Literal[
         "previous_lambda", "previous_fit", "average"
     ] = "previous_lambda",
@@ -138,6 +148,9 @@ def online_coordinate_descent_path(
     beta_path_new = np.zeros_like(beta_path)
     iterations = np.zeros_like(lambda_path)
 
+    if regularization_weights is None:
+        regularization_weights = np.ones(beta_path.shape[1])
+
     for i, regularization in enumerate(lambda_path):
         # Select the according start values for the next CD update
         if which_start_value == "average":
@@ -156,6 +169,7 @@ def online_coordinate_descent_path(
                 y_gram=y_gram,
                 beta=beta,
                 regularization=regularization,
+                regularization_weights=regularization_weights,
                 is_regularized=is_regularized,
                 alpha=alpha,
                 beta_lower_bound=beta_lower_bound,
