@@ -36,9 +36,27 @@ def test_coordinate_descent():
         lambda_path=lambda_grid,
         alpha=1.0,
         is_regularized=is_regularized,
+        regularization_weights=None,
         early_stop=0,
         beta_lower_bound=np.repeat(-np.inf, J),
         beta_upper_bound=np.repeat(np.inf, J),
+        which_start_value="previous_lambda",
+        selection="cyclic",
+        tolerance=tolerance,
+        max_iterations=1000,
+    )[0]
+
+    ondil_lasso_path_2 = online_coordinate_descent_path(
+        x_gram=x_gram,
+        y_gram=y_gram,
+        beta_path=beta_path,
+        lambda_path=lambda_grid,
+        alpha=1.0,
+        is_regularized=is_regularized,
+        regularization_weights=None,
+        early_stop=0,
+        beta_lower_bound=None,
+        beta_upper_bound=None,
         which_start_value="previous_lambda",
         selection="cyclic",
         tolerance=tolerance,
@@ -54,6 +72,9 @@ def test_coordinate_descent():
     assert np.all(
         np.mean(np.isclose(sklearn_lasso_path - ondil_lasso_path, 0), axis=0) > 0.95
     ), "Betas don't match"
+    assert np.allclose(ondil_lasso_path_2 - ondil_lasso_path, 0), (
+        "Betas bounds infinite bounds and None bounds don't match"
+    )
 
 
 def test_coordinate_descent_bounds():
@@ -81,6 +102,7 @@ def test_coordinate_descent_bounds():
         alpha=1.0,
         early_stop=0,
         is_regularized=is_regularized,
+        regularization_weights=None,
         beta_lower_bound=np.repeat(0, J),
         beta_upper_bound=np.repeat(np.inf, J),
         which_start_value="previous_lambda",
@@ -96,6 +118,7 @@ def test_coordinate_descent_bounds():
         lambda_path=lambda_grid,
         alpha=1.0,
         is_regularized=is_regularized,
+        regularization_weights=None,
         early_stop=0,
         beta_lower_bound=np.repeat(-np.inf, J),
         beta_upper_bound=np.repeat(0, J),
