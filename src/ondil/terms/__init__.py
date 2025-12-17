@@ -1,9 +1,9 @@
 from .autoregressive_terms import (
     JointEstimationTimeSeriesTerm,
+    LaggedResidual,
     LaggedSquaredResidual,
     LaggedTarget,
     LaggedTheta,
-    LaggedResidual,
 )
 from .linear_terms import InterceptTerm, LinearTerm, RegularizedLinearTermIC
 from .special import ScikitLearnEstimatorTerm
