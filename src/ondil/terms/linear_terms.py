@@ -1,6 +1,6 @@
 import copy
 from dataclasses import dataclass, replace
-from typing import Literal
+from typing import Literal, Tuple
 
 import numpy as np
 
@@ -63,53 +63,27 @@ class LinearFeatures(FeatureTransformation):
         return subset_array(X, self.features)
 
 
-class LinearTerm(Term):
-    """Linear term for structured additive distributional regression."""
+class _LinearBaseTerm(Term):
+    """Base class for linear terms.
 
-    allow_online_updates: bool = True
+    This class should not be used directly.
+    Provides _fit() and _update() methods for further use in child classes."""
 
     def __init__(
         self,
-        features: np.ndarray | list[int] | Literal["all"] = "all",
-        method: EstimationMethod = "ols",
-        fit_intercept: bool = True,
+        method,
         forget: float = 0.0,
-        is_regularized: bool = False,
+        fit_intercept: bool = True,
+        is_regularized: np.ndarray | None = None,
         regularize_intercept: None | bool = None,
     ):
-        self.features = features
-        self.fit_intercept = fit_intercept
         self.method = method
-        self.forget = forget
+        self.fit_intercept = fit_intercept
         self.is_regularized = is_regularized
         self.regularize_intercept = regularize_intercept
+        self.forget = forget
 
-    def _prepare_term(self):
-        self._method = get_estimation_method(self.method)
-        if self._method._path_based_method:
-            raise ValueError("Path-based methods are not supported for LinearTerm.")
-        return self
-
-    def make_design_matrix(
-        self,
-        X: np.ndarray | None = None,
-    ) -> np.ndarray:
-        if self.fit_intercept:
-            X_mat = add_intercept(subset_array(X, self.features))
-        else:
-            X_mat = subset_array(X, self.features)
-        return X_mat
-
-    def make_design_matrix_in_sample_during_fit(self, X: np.ndarray, **kwargs):
-        return self.make_design_matrix(X)
-
-    def make_design_matrix_in_sample_during_update(self, X: np.ndarray, **kwargs):
-        return self.make_design_matrix(X)
-
-    def make_design_matrix_out_of_sample(self, X, **kwargs):
-        return self.make_design_matrix(X)
-
-    def fit(
+    def _fit(
         self,
         X: np.ndarray,
         y: np.ndarray,
@@ -118,7 +92,12 @@ class LinearTerm(Term):
         distribution: Distribution,
         sample_weight: np.ndarray,
     ) -> "LinearTerm":
-        X_mat = self.make_design_matrix(X)
+        X_mat = self.make_design_matrix_in_sample_during_fit(
+            X=X,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+        )
         self.find_zero_variance_columns(X_mat)
         X_mat = self.remove_zero_variance_columns(X_mat)
 
@@ -146,25 +125,9 @@ class LinearTerm(Term):
             y_gram=h,
             is_regularized=is_regularized,
         )
+        return g, h, coef_, is_regularized
 
-        self._state = LinearTermState(
-            is_regularized=is_regularized,
-            g=g,
-            h=h,
-            coef_=coef_,
-        )
-        return self
-
-    def predict_out_of_sample(
-        self,
-        X: np.ndarray,
-        distribution: Distribution,
-    ) -> np.ndarray:
-        X_mat = self.make_design_matrix(X=X)
-        X_mat = self.remove_zero_variance_columns(X_mat)
-        return X_mat @ self._state.coef_
-
-    def update(
+    def _update(
         self,
         X: np.ndarray,
         y: np.ndarray,
@@ -173,7 +136,12 @@ class LinearTerm(Term):
         distribution: Distribution,
         sample_weight: np.ndarray,
     ) -> "LinearTerm":
-        X_mat = self.make_design_matrix(X=X)
+        X_mat = self.make_design_matrix_in_sample_during_update(
+            X=X,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+        )
         X_mat = self.remove_zero_variance_columns(X_mat)
 
         g = self._method.update_x_gram(
@@ -193,6 +161,108 @@ class LinearTerm(Term):
             x_gram=g,
             y_gram=h,
             is_regularized=self._state.is_regularized,
+        )
+        return g, h, coef_
+
+
+class LinearTerm(_LinearBaseTerm):
+    """Linear term for structured additive distributional regression."""
+
+    allow_online_updates: bool = True
+
+    def __init__(
+        self,
+        features: np.ndarray | list[int] | Literal["all"] = "all",
+        method: EstimationMethod = "ols",
+        fit_intercept: bool = True,
+        forget: float = 0.0,
+        is_regularized: bool = False,
+        regularize_intercept: None | bool = None,
+    ):
+        super().__init__(
+            method=method,
+            fit_intercept=fit_intercept,
+            is_regularized=is_regularized,
+            regularize_intercept=regularize_intercept,
+            forget=forget,
+        )
+        self.features = features
+
+    def _prepare_term(self):
+        self._method = get_estimation_method(self.method)
+        if self._method._path_based_method:
+            raise ValueError("Path-based methods are not supported for LinearTerm.")
+        return self
+
+    def make_design_matrix(
+        self,
+        X: np.ndarray | None = None,
+    ) -> np.ndarray:
+        if self.fit_intercept:
+            X_mat = add_intercept(subset_array(X, self.features))
+        else:
+            X_mat = subset_array(X, self.features)
+        return X_mat
+
+    def make_design_matrix_in_sample_during_fit(self, X: np.ndarray, **kwargs):
+        return self.make_design_matrix(X)
+
+    def make_design_matrix_in_sample_during_update(self, X: np.ndarray, **kwargs):
+        return self.make_design_matrix(X)
+
+    def make_design_matrix_out_of_sample(self, X, **kwargs):
+        return self.make_design_matrix(X)
+
+    def predict_out_of_sample(
+        self,
+        X: np.ndarray,
+        distribution: Distribution,
+    ) -> np.ndarray:
+        X_mat = self.make_design_matrix_out_of_sample(X=X)
+        X_mat = self.remove_zero_variance_columns(X_mat)
+        return X_mat @ self._state.coef_
+
+    def fit(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
+    ) -> "LinearTerm":
+        g, h, coef_, is_regularized = self._fit(
+            X=X,
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+            sample_weight=sample_weight,
+        )
+        self._state = LinearTermState(
+            is_regularized=is_regularized,
+            g=g,
+            h=h,
+            coef_=coef_,
+        )
+        return self
+
+    def update(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
+    ) -> "LinearTerm":
+        g, h, coef_ = self._update(
+            X=X,
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+            sample_weight=sample_weight,
         )
         # Create a new instance with updated values
         new_instance = copy.copy(self)
@@ -226,22 +296,20 @@ class InterceptTerm(LinearTerm):
         return np.ones((n_samples, 1))
 
 
-class RegularizedLinearTermIC(Term):
+class _LinearPathModelSelectionIC(Term):
     """Linear term with regularization and information criterion for model selection."""
 
     allow_online_updates: bool = True
 
     def __init__(
         self,
-        features: np.ndarray | list[int] | Literal["all"] = "all",
         method: EstimationMethod | str = "lasso",
         fit_intercept: bool = True,
         forget: float = 0.0,
         ic: Literal["aic", "bic", "aicc", "hqc"] = "aic",
-        is_regularized: bool = False,
+        is_regularized: np.ndarray | None = None,
         regularize_intercept: None | bool = None,
     ):
-        self.features = features
         self.fit_intercept = fit_intercept
         self.method = method
         self.forget = forget
@@ -255,7 +323,7 @@ class RegularizedLinearTermIC(Term):
             raise ValueError("Non-path-based methods are not supported for LinearTerm.")
         return self
 
-    def fit(
+    def _fit(
         self,
         X: np.ndarray,
         y: np.ndarray,
@@ -264,10 +332,12 @@ class RegularizedLinearTermIC(Term):
         distribution: Distribution,
         sample_weight: np.ndarray,
     ) -> "RegularizedLinearTermIC":
-        if self.fit_intercept:
-            X_mat = add_intercept(subset_array(X, self.features))
-        else:
-            X_mat = subset_array(X, self.features)
+        X_mat = self.make_design_matrix_in_sample_during_fit(
+            X=X,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+        )
 
         self.find_zero_variance_columns(X_mat)
         X_mat = self.remove_zero_variance_columns(X_mat)
@@ -314,34 +384,20 @@ class RegularizedLinearTermIC(Term):
         best_idx = np.argmin(ic_values_)
         coef_ = coef_path_[best_idx, :]
 
-        self._state = RegularizedLinearTermICState(
-            is_regularized=is_regularized,
-            g=g,
-            h=h,
-            coef_=coef_,
-            coef_path_=coef_path_,
-            best_idx=best_idx,
-            ic_values_=ic_values_,
-            rss=rss,
-            n_observations=n_observations,
-            n_nonzero_coef=n_nonzero_coef,
+        return (
+            is_regularized,
+            g,
+            h,
+            coef_,
+            coef_path_,
+            best_idx,
+            ic_values_,
+            rss,
+            n_observations,
+            n_nonzero_coef,
         )
-        return self
 
-    def predict_out_of_sample(
-        self,
-        X: np.ndarray,
-        distribution: Distribution,
-    ) -> np.ndarray:
-        if self.fit_intercept:
-            X_mat = add_intercept(subset_array(X, self.features))
-        else:
-            X_mat = subset_array(X, self.features)
-
-        X_mat = self.remove_zero_variance_columns(X_mat)
-        return X_mat @ self._state.coef_
-
-    def update(
+    def _update(
         self,
         X: np.ndarray,
         y: np.ndarray,
@@ -349,7 +405,7 @@ class RegularizedLinearTermIC(Term):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
-    ) -> "RegularizedLinearTermIC":
+    ) -> Tuple:
         """Update the Term.
 
         Returns an updated copy and leaves the original unchanged.
@@ -362,11 +418,12 @@ class RegularizedLinearTermIC(Term):
         Returns:
             LinearTerm: _description_
         """
-        if self.fit_intercept:
-            X_mat = add_intercept(subset_array(X, self.features))
-        else:
-            X_mat = subset_array(X, self.features)
-
+        X_mat = self.make_design_matrix_in_sample_during_update(
+            X=X,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+        )
         X_mat = self.remove_zero_variance_columns(X_mat)
 
         g = self._method.update_x_gram(
@@ -407,6 +464,139 @@ class RegularizedLinearTermIC(Term):
         best_idx = np.argmin(ic_values_)
         coef_ = coef_path_[best_idx, :]
 
+        return (
+            g,
+            h,
+            coef_,
+            coef_path_,
+            best_idx,
+            ic_values_,
+            rss,
+            n_observations,
+            n_nonzero_coef,
+        )
+
+
+class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
+    """Linear term with regularization and information criterion for model selection."""
+
+    def __init__(
+        self,
+        features: np.ndarray | list[int] | Literal["all"] = "all",
+        method: EstimationMethod | str = "lasso",
+        fit_intercept: bool = True,
+        forget: float = 0.0,
+        ic: Literal["aic", "bic", "aicc", "hqc"] = "aic",
+        is_regularized: np.ndarray | None = None,
+        regularize_intercept: None | bool = None,
+    ):
+        super().__init__(
+            method=method,
+            fit_intercept=fit_intercept,
+            forget=forget,
+            ic=ic,
+            is_regularized=is_regularized,
+            regularize_intercept=regularize_intercept,
+        )
+        self.features = features
+
+    def make_design_matrix(
+        self,
+        X: np.ndarray | None = None,
+    ) -> np.ndarray:
+        if self.fit_intercept:
+            X_mat = add_intercept(subset_array(X, self.features))
+        else:
+            X_mat = subset_array(X, self.features)
+        return X_mat
+
+    def make_design_matrix_in_sample_during_fit(self, X: np.ndarray, **kwargs):
+        return self.make_design_matrix(X)
+
+    def make_design_matrix_in_sample_during_update(self, X: np.ndarray, **kwargs):
+        return self.make_design_matrix(X)
+
+    def make_design_matrix_out_of_sample(self, X, **kwargs):
+        return self.make_design_matrix(X)
+
+    def predict_out_of_sample(
+        self,
+        X: np.ndarray,
+        distribution: Distribution,
+    ) -> np.ndarray:
+        X_mat = self.make_design_matrix(X=X)
+        X_mat = self.remove_zero_variance_columns(X_mat)
+        return X_mat @ self._state.coef_
+
+    def fit(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
+    ) -> "RegularizedLinearTermIC":
+        (
+            is_regularized,
+            g,
+            h,
+            coef_,
+            coef_path_,
+            best_idx,
+            ic_values_,
+            rss,
+            n_observations,
+            n_nonzero_coef,
+        ) = self._fit(
+            X=X,
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+            sample_weight=sample_weight,
+        )
+        self._state = RegularizedLinearTermICState(
+            is_regularized=is_regularized,
+            g=g,
+            h=h,
+            coef_=coef_,
+            coef_path_=coef_path_,
+            best_idx=best_idx,
+            ic_values_=ic_values_,
+            rss=rss,
+            n_observations=n_observations,
+            n_nonzero_coef=n_nonzero_coef,
+        )
+        return self
+
+    def update(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        sample_weight: np.ndarray,
+    ) -> "RegularizedLinearTermIC":
+        (
+            g,
+            h,
+            coef_,
+            coef_path_,
+            best_idx,
+            ic_values_,
+            rss,
+            n_observations,
+            n_nonzero_coef,
+        ) = self._update(
+            X=X,
+            y=y,
+            fitted_values=fitted_values,
+            target_values=target_values,
+            distribution=distribution,
+            sample_weight=sample_weight,
+        )
         # Create a new instance with updated values
         new_instance = copy.copy(self)
         new_instance._state = replace(

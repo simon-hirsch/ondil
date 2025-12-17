@@ -7,6 +7,7 @@ from ..base import Distribution, EstimationMethod, Term
 from ..base.terms import FeatureTransformation
 from ..design_matrix import add_intercept, make_lags
 from ..methods import get_estimation_method
+from ..terms.linear_terms import _LinearBaseTerm, _LinearPathModelSelectionIC
 
 
 @dataclass(frozen=True)
@@ -19,7 +20,23 @@ class ARTermState:
     memory_target_values: np.ndarray | None
 
 
-class JointEstimationTimeSeriesTerm(Term):
+@dataclass(frozen=True)
+class ARTermPathState:
+    is_regularized: np.ndarray | None
+    g: np.ndarray | None
+    h: np.ndarray | None
+    coef_: np.ndarray | None
+    coef_path_: np.ndarray | None
+    best_idx: int | None
+    ic_values_: np.ndarray | None
+    rss: np.ndarray | None
+    n_observations: int | None
+    n_nonzero_coef: np.ndarray | None
+    memory_fitted_values: np.ndarray | None
+    memory_target_values: np.ndarray | None
+
+
+class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
     """Autoregressive term for time series modeling.
 
     This is a rather generic base class which, in the fit and update methods, will
@@ -54,11 +71,13 @@ class JointEstimationTimeSeriesTerm(Term):
         is_regularized: bool = False,
         regularize_intercept: None | bool = None,
     ):
-        self.fit_intercept = fit_intercept
-        self.method = method
-        self.forget = forget
-        self.is_regularized = is_regularized
-        self.regularize_intercept = regularize_intercept
+        super().__init__(
+            fit_intercept=fit_intercept,
+            method=method,
+            forget=forget,
+            is_regularized=is_regularized,
+            regularize_intercept=regularize_intercept,
+        )
         self.effects = effects
 
     def _prepare_term(self):
@@ -79,41 +98,14 @@ class JointEstimationTimeSeriesTerm(Term):
         distribution: Distribution,
         sample_weight: np.ndarray,
     ) -> "JointEstimationTimeSeriesTerm":
-        X_mat = self.make_design_matrix_in_sample_during_fit(
+        g, h, coef_, is_regularized = self._fit(
             X=X,
+            y=y,
             fitted_values=fitted_values,
             target_values=target_values,
             distribution=distribution,
+            sample_weight=sample_weight,
         )
-
-        self.find_zero_variance_columns(X_mat)
-        X_mat = self.remove_zero_variance_columns(X_mat)
-
-        if self.is_regularized:
-            is_regularized = self.is_regularized
-        else:
-            n_features = X_mat.shape[1]
-            is_regularized = np.repeat(True, n_features)
-        if self.fit_intercept and not self.regularize_intercept:
-            is_regularized[0] = False
-
-        g = self._method.init_x_gram(
-            X=X_mat,
-            weights=sample_weight,
-            forget=self.forget,
-        )
-        h = self._method.init_y_gram(
-            X=X_mat,
-            y=y,
-            weights=sample_weight,
-            forget=self.forget,
-        )
-        coef_ = self._method.fit_beta(
-            x_gram=g,
-            y_gram=h,
-            is_regularized=is_regularized,
-        )
-
         # not that max(self.lags) does not work if lags is an integer.
         # np.max converts it to an array first.
         new = copy.copy(self)
@@ -182,31 +174,13 @@ class JointEstimationTimeSeriesTerm(Term):
         if self._state is None:
             raise ValueError("Term must be fitted before it can be updated.")
 
-        X_mat = self.make_design_matrix_in_sample_during_update(
+        g, h, coef_ = self._update(
             X=X,
+            y=y,
             fitted_values=fitted_values,
             target_values=target_values,
             distribution=distribution,
-        )
-        X_mat = self.remove_zero_variance_columns(X_mat)
-
-        g = self._method.update_x_gram(
-            gram=self._state.g,
-            X=X_mat,
-            weights=sample_weight,
-            forget=self.forget,
-        )
-        h = self._method.update_y_gram(
-            gram=self._state.h,
-            X=X_mat,
-            y=y,
-            weights=sample_weight,
-            forget=self.forget,
-        )
-        coef_ = self._method.fit_beta(
-            x_gram=g,
-            y_gram=h,
-            is_regularized=self._state.is_regularized,
+            sample_weight=sample_weight,
         )
 
         new_instance = copy.copy(self)
@@ -285,6 +259,52 @@ class JointEstimationTimeSeriesTerm(Term):
         if self.fit_intercept:
             X_mat = add_intercept(X_mat)
         return X_mat
+
+
+class RegularizedJointEstimationTimeSeriesTerm(
+    _LinearPathModelSelectionIC,
+    JointEstimationTimeSeriesTerm,
+    # Left to right inheritance to ensure correct MRO
+    # we get the _fit and the _update methods from
+    # _LinearPathModelSelectionIC
+):
+    """Regularized autoregressive term for time series modeling with model selection.
+
+    This class extends the JointEstimationTimeSeriesTerm to include regularization
+    and model selection capabilities using information criteria.
+
+    Parameters
+    ----------
+    lags : list[int]
+        List of lag orders to include in the autoregressive term.
+    method : EstimationMethod | str, default="lasso"
+        Estimation method to use. Can be an instance of EstimationMethod or a string
+        identifier for a predefined method.
+    intercept : bool, default=True
+        Whether to include an intercept in the model.
+    ic : str, default="aic"
+        Information criterion to use for model selection.
+    """
+
+    def __init__(
+        self,
+        effects: list[FeatureTransformation],
+        method: EstimationMethod = "lasso",
+        fit_intercept: bool = True,
+        forget: float = 0.0,
+        is_regularized: bool = True,
+        regularize_intercept: None | bool = None,
+        ic: str = "aic",
+    ):
+        super().__init__(
+            effects=effects,
+            method=method,
+            fit_intercept=fit_intercept,
+            forget=forget,
+            is_regularized=is_regularized,
+            regularize_intercept=regularize_intercept,
+            ic=ic,
+        )
 
 
 # This defines what a time series feature should implement
