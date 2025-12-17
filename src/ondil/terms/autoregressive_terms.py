@@ -458,8 +458,8 @@ class LaggedTheta(TimeSeriesFeature):
 
     def __init__(
         self,
+        param: int,
         lags: np.ndarray | list[int] | int = 1,
-        param: int = 0,
     ):
         super().__init__(
             lags=lags,
