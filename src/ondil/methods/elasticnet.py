@@ -103,15 +103,12 @@ class ElasticNetPath(EstimationMethod):
 
     def _set_and_validate_bounds(self, x_gram: np.ndarray) -> None:
         J = x_gram.shape[1]
-        if self.beta_lower_bound is None:
-            self.beta_lower_bound = np.repeat(-np.inf, J)
-        if self.beta_upper_bound is None:
-            self.beta_upper_bound = np.repeat(np.inf, J)
-
-        if len(self.beta_lower_bound) != J:
-            raise ValueError("Lower bound does not have correct length")
-        if len(self.beta_upper_bound) != J:
-            raise ValueError("Upper bound does not have correct length")
+        if self.beta_lower_bound is not None:
+            if len(self.beta_lower_bound) != J:
+                raise ValueError("Lower bound does not have correct length")
+        if self.beta_upper_bound is not None:
+            if len(self.beta_upper_bound) != J:
+                raise ValueError("Upper bound does not have correct length")
 
     @staticmethod
     def init_x_gram(X, weights, forget):

@@ -35,8 +35,8 @@ def online_coordinate_descent(
     regularization: float,
     is_regularized: bool,
     alpha: float,
-    beta_lower_bound: np.ndarray,
-    beta_upper_bound: np.ndarray,
+    beta_lower_bound: np.ndarray | None,
+    beta_upper_bound: np.ndarray | None,
     selection: Literal["cyclic", "random"] = "cyclic",
     tolerance: float = 1e-4,
     max_iterations: int = 1000,
@@ -81,9 +81,11 @@ def online_coordinate_descent(
                     denom = x_gram[j, j] + regularization * (1 - alpha)
                 else:
                     denom = x_gram[j, j]
-                beta_now[j] = min(
-                    max(update / denom, beta_lower_bound[j]), beta_upper_bound[j]
-                )
+                beta_now[j] = update / denom
+                if beta_lower_bound is not None:
+                    beta_now[j] = max(beta_now[j], beta_lower_bound[j])
+                if beta_upper_bound is not None:
+                    beta_now[j] = min(beta_now[j], beta_upper_bound[j])
         if np.max(np.abs(beta_now - beta_star)) <= tolerance * np.max(np.abs(beta_now)):
             break
         if i > max_iterations:

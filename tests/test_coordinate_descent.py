@@ -45,6 +45,22 @@ def test_coordinate_descent():
         max_iterations=1000,
     )[0]
 
+    ondil_lasso_path_2 = online_coordinate_descent_path(
+        x_gram=x_gram,
+        y_gram=y_gram,
+        beta_path=beta_path,
+        lambda_path=lambda_grid,
+        alpha=1.0,
+        is_regularized=is_regularized,
+        early_stop=0,
+        beta_lower_bound=None,
+        beta_upper_bound=None,
+        which_start_value="previous_lambda",
+        selection="cyclic",
+        tolerance=tolerance,
+        max_iterations=1000,
+    )[0]
+
     alphas, sklearn_lasso_path, _ = lasso_path(
         X, y, eps=lambda_eps, n_alphas=lambda_n, precompute=x_gram, tol=tolerance
     )
@@ -54,6 +70,9 @@ def test_coordinate_descent():
     assert np.all(
         np.mean(np.isclose(sklearn_lasso_path - ondil_lasso_path, 0), axis=0) > 0.95
     ), "Betas don't match"
+    assert np.allclose(ondil_lasso_path_2 - ondil_lasso_path, 0), (
+        "Betas bounds infinite bounds and None bounds don't match"
+    )
 
 
 def test_coordinate_descent_bounds():
