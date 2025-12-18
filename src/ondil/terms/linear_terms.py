@@ -102,7 +102,8 @@ class _LinearBaseTerm(Term):
             distribution=distribution,
         )
         self.find_zero_variance_columns(X_mat)
-        X_mat = self.remove_zero_variance_columns(X_mat)
+        self.find_multicollinear_columns(X_mat)
+        X_mat = self.remove_problematic_columns(X_mat)
 
         if self.is_regularized:
             is_regularized = self.is_regularized
@@ -343,7 +344,8 @@ class _LinearPathModelSelectionIC(Term):
         )
 
         self.find_zero_variance_columns(X_mat)
-        X_mat = self.remove_zero_variance_columns(X_mat)
+        self.find_multicollinear_columns(X_mat)
+        X_mat = self.remove_problematic_columns(X_mat)
 
         if self.is_regularized:
             is_regularized = self.is_regularized
