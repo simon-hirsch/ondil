@@ -31,11 +31,13 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         link_2: LinkFunction = LogShiftTwo(),
         param_link_1: LinkFunction = KendallsTauToParameter(),
         param_link_2: LinkFunction = KendallsTauToParameter(),
+        family_code: int = 2,
     ):
         super().__init__(
             links={0: link_1, 1: link_2},
             param_links={0: param_link_1, 1: param_link_2},
         )
+        self.family_code = family_code
         self.is_multivariate = True
         self._regularization_allowed = {0: False, 1: False}
 
