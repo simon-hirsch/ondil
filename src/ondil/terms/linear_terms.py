@@ -10,6 +10,7 @@ from ..design_matrix import add_intercept, subset_array
 from ..gram import init_forget_vector
 from ..information_criteria import InformationCriterion
 from ..methods import get_estimation_method
+from ..incremental_statistics import calculate_statistics, update_statistics
 
 
 @dataclass(frozen=True)
@@ -314,12 +315,14 @@ class _LinearPathModelSelectionIC(Term):
         ic: Literal["aic", "bic", "aicc", "hqc"] = "aic",
         is_regularized: np.ndarray | None = None,
         regularize_intercept: None | bool = None,
+        weighted_regularization: bool = False,
     ):
         self.fit_intercept = fit_intercept
         self.method = method
         self.forget = forget
         self.is_regularized = is_regularized
         self.regularize_intercept = regularize_intercept
+        self.weighted_regularization = weighted_regularization
         self.ic = ic
 
     def _prepare_term(self):
@@ -346,6 +349,15 @@ class _LinearPathModelSelectionIC(Term):
                 return beta
             else:
                 return self._state.coef_
+
+    def _calculate_design_variance(
+        self,
+        X: np.ndarray,
+        sample_weight: np.ndarray,
+    ):
+        self.X_mat_mean = np.average(X, weights=sample_weight, axis=0)
+        self.X_mat_diff_sq = (X - self.X_mat_mean) ** 2
+        self.X_mat_var = np.average(self.X_mat_diff_sq, weights=sample_weight, axis=0)
 
     def _fit(
         self,
@@ -377,6 +389,17 @@ class _LinearPathModelSelectionIC(Term):
 
         forget_weights = init_forget_vector(self.forget, y.shape[0])
 
+        self.X_mat_stats = calculate_statistics(
+            X=X_mat,
+            forget=self.forget,
+            sample_weight=sample_weight,
+        )
+
+        if self.weighted_regularization:
+            regularization_weights = 1 / self.X_mat_stats.var
+        else:
+            regularization_weights = None
+
         g = self._method.init_x_gram(
             X=X_mat,
             weights=sample_weight,
@@ -392,6 +415,7 @@ class _LinearPathModelSelectionIC(Term):
             x_gram=g,
             y_gram=h,
             is_regularized=is_regularized,
+            regularization_weights=regularization_weights,
         )
 
         n_observations = y.shape[0]
@@ -450,6 +474,11 @@ class _LinearPathModelSelectionIC(Term):
             distribution=distribution,
         )
         X_mat = self.remove_problematic_columns(X_mat)
+        self.X_mat_stats = update_statistics(
+            incremental_statistics=self.X_mat_stats,
+            X=X_mat,
+            sample_weight=sample_weight,
+        )
 
         g = self._method.update_x_gram(
             gram=self._state.g,
@@ -464,10 +493,17 @@ class _LinearPathModelSelectionIC(Term):
             weights=sample_weight,
             forget=self.forget,
         )
+
+        if self.weighted_regularization:
+            regularization_weights = 1 / self.X_mat_stats.var
+        else:
+            regularization_weights = None
+
         coef_path_ = self._method.fit_beta_path(
             x_gram=g,
             y_gram=h,
             is_regularized=self._state.is_regularized,
+            regularization_weights=regularization_weights,
         )
         n_observations = self._state.n_observations + y.shape[0]
         n_nonzero_coef = np.count_nonzero(coef_path_, axis=1)
@@ -514,6 +550,7 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
         ic: Literal["aic", "bic", "aicc", "hqc"] = "aic",
         is_regularized: np.ndarray | None = None,
         regularize_intercept: None | bool = None,
+        weighted_regularization: bool = False,
     ):
         super().__init__(
             method=method,
@@ -522,6 +559,7 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
             ic=ic,
             is_regularized=is_regularized,
             regularize_intercept=regularize_intercept,
+            weighted_regularization=weighted_regularization,
         )
         self.features = features
 
