@@ -457,12 +457,8 @@ def _derivative_1st_nu(y, rho, nu):
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
 
-    u = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
-    v = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
+    u = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
+    v = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
 
     # Follow C code structure exactly
     t1 = sp.digamma((nu + 1.0) / 2.0)
@@ -506,12 +502,8 @@ def _derivative_1st_nu_l(y, rho, nu):
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
 
-    u = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
-    v = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
+    u = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
+    v = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
 
     # Calculate current likelihood
     c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
@@ -556,13 +548,8 @@ def _derivative_2nd_rho(y, rho, nu):
     """Second derivative wrt rho for t copula"""
 
     y_clipped = np.clip(y, UMIN, UMAX)
-
-    u = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
-    v = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
+    u = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
+    v = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
 
     # Calculate current likelihood
     c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
@@ -590,12 +577,8 @@ def _derivative_2nd_nu(y, rho, nu):
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
 
-    u = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
-    v = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
+    u = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
+    v = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
 
     # Calculate current likelihood
     c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
