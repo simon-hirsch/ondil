@@ -48,7 +48,7 @@ class ElasticNetPath(EstimationMethod):
         selection: Literal["cyclic", "random"] = "cyclic",
         beta_lower_bound: np.ndarray | None = None,
         beta_upper_bound: np.ndarray | None = None,
-        regularization_weights: np.ndarray | None = None,
+        # regularization_weights: np.ndarray | None = None,
         tolerance: float = 1e-4,
         max_iterations: int = 1000,
     ):
@@ -84,7 +84,7 @@ class ElasticNetPath(EstimationMethod):
         self.selection = selection
         self.tolerance = tolerance
         self.max_iterations = max_iterations
-        self.regularization_weights = regularization_weights
+        # self.regularization_weights = regularization_weights
         self._path_length = self.lambda_n
 
     @staticmethod
@@ -135,6 +135,7 @@ class ElasticNetPath(EstimationMethod):
         lambda_path = np.geomspace(
             lambda_max, lambda_max * self.lambda_eps, self.lambda_n
         )
+        print(kwargs.keys())
         regularization_weights = kwargs.get("regularization_weights", None)
 
         beta_path = np.zeros((self.lambda_n, x_gram.shape[0]))
@@ -159,6 +160,7 @@ class ElasticNetPath(EstimationMethod):
     def update_beta_path(self, x_gram, y_gram, beta_path, is_regularized, **kwargs):
         self._validate_bounds(x_gram=x_gram)
 
+        print(kwargs.keys())
         regularization_weights = kwargs.get("regularization_weights", None)
 
         lambda_max = self._get_lambda_max(
