@@ -138,6 +138,7 @@ class Term(ABC):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "Term":
         raise NotImplementedError("Not implemented")
 
@@ -192,6 +193,7 @@ class Term(ABC):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "Term":
         raise NotImplementedError("Not implemented")
 

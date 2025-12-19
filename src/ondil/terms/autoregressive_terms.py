@@ -97,6 +97,7 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "JointEstimationTimeSeriesTerm":
         g, h, coef_, is_regularized = self._fit(
             X=X,
@@ -105,6 +106,7 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
             target_values=target_values,
             distribution=distribution,
             sample_weight=sample_weight,
+            estimation_weight=estimation_weight,
         )
         # not that max(self.lags) does not work if lags is an integer.
         # np.max converts it to an array first.
@@ -170,6 +172,7 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "JointEstimationTimeSeriesTerm":
         if self._state is None:
             raise ValueError("Term must be fitted before it can be updated.")
@@ -181,6 +184,7 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
             target_values=target_values,
             distribution=distribution,
             sample_weight=sample_weight,
+            estimation_weight=estimation_weight,
         )
 
         new_instance = copy.copy(self)
@@ -325,6 +329,7 @@ class RegularizedJointEstimationTimeSeriesTerm(
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "JointEstimationTimeSeriesTerm":
         (
             is_regularized,
@@ -344,6 +349,7 @@ class RegularizedJointEstimationTimeSeriesTerm(
             target_values=target_values,
             distribution=distribution,
             sample_weight=sample_weight,
+            estimation_weight=estimation_weight,
         )
         self._state = ARTermPathState(
             is_regularized=is_regularized,
@@ -369,6 +375,7 @@ class RegularizedJointEstimationTimeSeriesTerm(
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "RegularizedJointEstimationTimeSeriesTerm":
         (
             g,
@@ -387,6 +394,7 @@ class RegularizedJointEstimationTimeSeriesTerm(
             target_values=target_values,
             distribution=distribution,
             sample_weight=sample_weight,
+            estimation_weight=estimation_weight,
         )
         # Create a new instance with updated values
         new_instance = copy.copy(self)

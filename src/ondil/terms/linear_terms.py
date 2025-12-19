@@ -95,6 +95,7 @@ class _LinearBaseTerm(Term):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "LinearTerm":
         X_mat = self.make_design_matrix_in_sample_during_fit(
             X=X,
@@ -117,13 +118,13 @@ class _LinearBaseTerm(Term):
 
         g = self._method.init_x_gram(
             X=X_mat,
-            weights=sample_weight,
+            weights=sample_weight * estimation_weight,
             forget=self.forget,
         )
         h = self._method.init_y_gram(
             X=X_mat,
             y=y,
-            weights=sample_weight,
+            weights=sample_weight * estimation_weight,
             forget=self.forget,
         )
         coef_ = self._method.fit_beta(
@@ -141,6 +142,7 @@ class _LinearBaseTerm(Term):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "LinearTerm":
         X_mat = self.make_design_matrix_in_sample_during_update(
             X=X,
@@ -153,14 +155,14 @@ class _LinearBaseTerm(Term):
         g = self._method.update_x_gram(
             gram=self._state.g,
             X=X_mat,
-            weights=sample_weight,
+            weights=sample_weight * estimation_weight,
             forget=self.forget,
         )
         h = self._method.update_y_gram(
             gram=self._state.h,
             X=X_mat,
             y=y,
-            weights=sample_weight,
+            weights=sample_weight * estimation_weight,
             forget=self.forget,
         )
         coef_ = self._method.fit_beta(
@@ -236,6 +238,7 @@ class LinearTerm(_LinearBaseTerm):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "LinearTerm":
         g, h, coef_, is_regularized = self._fit(
             X=X,
@@ -244,6 +247,7 @@ class LinearTerm(_LinearBaseTerm):
             target_values=target_values,
             distribution=distribution,
             sample_weight=sample_weight,
+            estimation_weight=estimation_weight,
         )
         self._state = LinearTermState(
             is_regularized=is_regularized,
@@ -261,6 +265,7 @@ class LinearTerm(_LinearBaseTerm):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "LinearTerm":
         g, h, coef_ = self._update(
             X=X,
@@ -269,6 +274,7 @@ class LinearTerm(_LinearBaseTerm):
             target_values=target_values,
             distribution=distribution,
             sample_weight=sample_weight,
+            estimation_weight=estimation_weight,
         )
         # Create a new instance with updated values
         new_instance = copy.copy(self)
@@ -367,6 +373,7 @@ class _LinearPathModelSelectionIC(Term):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "RegularizedLinearTermIC":
         X_mat = self.make_design_matrix_in_sample_during_fit(
             X=X,
@@ -402,13 +409,13 @@ class _LinearPathModelSelectionIC(Term):
 
         g = self._method.init_x_gram(
             X=X_mat,
-            weights=sample_weight,
+            weights=sample_weight * estimation_weight,
             forget=self.forget,
         )
         h = self._method.init_y_gram(
             X=X_mat,
             y=y,
-            weights=sample_weight,
+            weights=sample_weight * estimation_weight,
             forget=self.forget,
         )
         coef_path_ = self._method.fit_beta_path(
@@ -454,6 +461,7 @@ class _LinearPathModelSelectionIC(Term):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> Tuple:
         """Update the Term.
 
@@ -599,6 +607,7 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "RegularizedLinearTermIC":
         (
             is_regularized,
@@ -618,6 +627,7 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
             target_values=target_values,
             distribution=distribution,
             sample_weight=sample_weight,
+            estimation_weight=estimation_weight,
         )
         self._state = RegularizedLinearTermICState(
             is_regularized=is_regularized,
@@ -641,6 +651,7 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
         target_values: np.ndarray,
         distribution: Distribution,
         sample_weight: np.ndarray,
+        estimation_weight: np.ndarray,
     ) -> "RegularizedLinearTermIC":
         (
             g,
@@ -659,6 +670,7 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
             target_values=target_values,
             distribution=distribution,
             sample_weight=sample_weight,
+            estimation_weight=estimation_weight,
         )
         # Create a new instance with updated values
         new_instance = copy.copy(self)

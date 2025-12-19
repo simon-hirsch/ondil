@@ -173,7 +173,8 @@ class OnlineStructuredAdditiveDistributionRegressor(
                         fitted_values=fitted_values_iteration,
                         target_values=y,
                         distribution=self.distribution,
-                        sample_weight=sample_weight * estimation_weight,
+                        sample_weight=sample_weight,
+                        estimation_weight=estimation_weight,
                     )
                 )
                 eta_iteration += (
@@ -555,7 +556,8 @@ class OnlineStructuredAdditiveDistributionRegressor(
                         fitted_values=fitted_values_iteration,
                         target_values=y,
                         distribution=self.distribution,
-                        sample_weight=sample_weight * estimation_weight,
+                        sample_weight=sample_weight,
+                        estimation_weight=estimation_weight,
                     )
                 )
                 eta_iteration += (
