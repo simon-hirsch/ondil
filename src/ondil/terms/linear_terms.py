@@ -8,9 +8,9 @@ from ..base import Distribution, EstimationMethod, Term
 from ..base.terms import FeatureTransformation
 from ..design_matrix import add_intercept, subset_array
 from ..gram import init_forget_vector
+from ..incremental_statistics import calculate_statistics, update_statistics
 from ..information_criteria import InformationCriterion
 from ..methods import get_estimation_method
-from ..incremental_statistics import calculate_statistics, update_statistics
 
 
 @dataclass(frozen=True)
