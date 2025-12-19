@@ -101,8 +101,6 @@ class _LinearBaseTerm(Term):
             target_values=target_values,
             distribution=distribution,
         )
-        self.find_zero_variance_columns(X_mat)
-        self.find_multicollinear_columns(X_mat)
         X_mat = self.remove_problematic_columns(X_mat)
 
         if self.is_regularized:
@@ -146,7 +144,7 @@ class _LinearBaseTerm(Term):
             target_values=target_values,
             distribution=distribution,
         )
-        X_mat = self.remove_zero_variance_columns(X_mat)
+        X_mat = self.remove_problematic_columns(X_mat)
 
         g = self._method.update_x_gram(
             gram=self._state.g,
@@ -223,7 +221,7 @@ class LinearTerm(_LinearBaseTerm):
         distribution: Distribution,
     ) -> np.ndarray:
         X_mat = self.make_design_matrix_out_of_sample(X=X)
-        X_mat = self.remove_zero_variance_columns(X_mat)
+        X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self._state.coef_
 
     def fit(
@@ -343,8 +341,6 @@ class _LinearPathModelSelectionIC(Term):
             distribution=distribution,
         )
 
-        self.find_zero_variance_columns(X_mat)
-        self.find_multicollinear_columns(X_mat)
         X_mat = self.remove_problematic_columns(X_mat)
 
         if self.is_regularized:
@@ -429,7 +425,7 @@ class _LinearPathModelSelectionIC(Term):
             target_values=target_values,
             distribution=distribution,
         )
-        X_mat = self.remove_zero_variance_columns(X_mat)
+        X_mat = self.remove_problematic_columns(X_mat)
 
         g = self._method.update_x_gram(
             gram=self._state.g,
@@ -530,7 +526,7 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
         distribution: Distribution,
     ) -> np.ndarray:
         X_mat = self.make_design_matrix(X=X)
-        X_mat = self.remove_zero_variance_columns(X_mat)
+        X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self._state.coef_
 
     def fit(

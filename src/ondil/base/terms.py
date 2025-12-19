@@ -73,46 +73,6 @@ class Term(ABC):
         self._colinear = set(redundant)
         return np.array(sorted(self._colinear))
 
-    def remove_zero_variance_columns(
-        self,
-        X: np.ndarray,
-    ) -> np.ndarray:
-        """Remove zero-variance columns from the design matrix X.
-
-        Args:
-            X (np.ndarray): The design matrix.
-
-        Returns:
-            np.ndarray: The design matrix without columns with variance 0.
-        """
-        remove = set()
-        if hasattr(self, "_zero_std_cols") and len(self._zero_std_cols) > int(
-            self.fit_intercept
-        ):
-            remove = remove.union(set(self._zero_std_cols[int(self.fit_intercept) :]))
-        remove = sorted(list(remove))
-        X = np.delete(X, remove, axis=1)
-        return X
-
-    def remove_multicollinear_columns(
-        self,
-        X: np.ndarray,
-    ) -> np.ndarray:
-        """Remove multicollinear columns from the design matrix X.
-
-        Args:
-            X (np.ndarray): The design matrix.
-
-        Returns:
-            np.ndarray: The design matrix without multicollinear columns.
-        """
-        remove = set()
-        if hasattr(self, "_colinear") and len(self._colinear) > 0:
-            remove = remove.union(self._colinear)
-        remove = sorted(list(remove))
-        X = np.delete(X, remove, axis=1)
-        return X
-
     def remove_problematic_columns(
         self,
         X: np.ndarray,
@@ -125,8 +85,31 @@ class Term(ABC):
         Returns:
             np.ndarray: The design matrix without problematic columns.
         """
-        X = self.remove_zero_variance_columns(X)
-        X = self.remove_multicollinear_columns(X)
+
+        self.find_zero_variance_columns(X)
+        self.find_multicollinear_columns(X)
+
+        remove = set()
+        zv_cols = set()
+        mc_cols = set()
+        if hasattr(self, "_zero_std_cols") and len(self._zero_std_cols) > int(
+            self.fit_intercept
+        ):
+            zv_cols = set(self._zero_std_cols[int(self.fit_intercept) :])
+            remove = remove.union(zv_cols)
+
+        if hasattr(self, "_colinear") and len(self._colinear) > 0:
+            mc_cols = set(self._colinear)
+            remove = remove.union(mc_cols)
+
+        if len(remove) > 0:
+            print(
+                f"Removing columns due to zero variance: {sorted(list(zv_cols))}, "
+                f"multicollinearity: {sorted(list(mc_cols))}, total removed: {sorted(list(remove))}"
+            )
+
+        X = np.delete(X, sorted(list(remove)), axis=1)
+
         return X
 
     @abstractmethod

@@ -133,7 +133,7 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
             target_values=target_values,
             distribution=distribution,
         )
-        X_mat = self.remove_zero_variance_columns(X_mat)
+        X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self._state.coef_
 
     def predict_in_sample_during_update(
@@ -150,7 +150,7 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
             target_values=target_values,
             distribution=distribution,
         )
-        X_mat = self.remove_zero_variance_columns(X_mat)
+        X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self._state.coef_
 
     def predict_out_of_sample(
@@ -159,7 +159,7 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
         distribution: Distribution,
     ):
         X_mat = self.make_design_matrix_out_of_sample(X=X, distribution=distribution)
-        X_mat = self.remove_zero_variance_columns(X_mat)
+        X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self._state.coef_
 
     def update(
