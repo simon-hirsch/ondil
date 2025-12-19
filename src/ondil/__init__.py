@@ -17,6 +17,7 @@ if find_spec("matplotlib") is not None:
     HAS_MPL = True
 
 from . import (
+    incremental_statistics,
     base,
     diagnostics,
     distributions,
