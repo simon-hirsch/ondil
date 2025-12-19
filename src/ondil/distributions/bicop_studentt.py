@@ -6,7 +6,6 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import scipy.special as sp
-from scipy.special import digamma, polygamma
 import scipy.stats as st
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
@@ -686,7 +685,7 @@ except Exception:
 
 
 def trigamma(x: float) -> float:
-    return float(polygamma(1, x))
+    return float(sp.polygamma(1, x))
 
 
 # ---------------- Incomplete Beta helpers (direct translations) ----------------
@@ -930,11 +929,11 @@ def inbeder(
         flipped = False
 
     lbet = sp.betaln(p, q)
-    pa = digamma(p)
+    pa = sp.digamma(p)
     pa1 = trigamma(p)
-    pb = digamma(q)
+    pb = sp.digamma(q)
     pb1 = trigamma(q)
-    pab = digamma(p + q)
+    pab = sp.digamma(p + q)
     pab1 = trigamma(p + q)
     x = max(EPS, min(1.0 - EPS, x))
     p = max(EPS, p)
@@ -1098,8 +1097,8 @@ def diff_t_nu_nu(x, nu):
     t8 = t5 * t6
     t9 = nu_eff * t1
 
-    t11 = digamma(0.5 * nu_eff)
-    t12 = digamma(0.5 * nu_eff + 0.5)
+    t11 = sp.digamma(0.5 * nu_eff)
+    t12 = sp.digamma(0.5 * nu_eff + 0.5)
     t13 = t11 - t12
     t14 = 1.0 / t7
 
@@ -1121,10 +1120,10 @@ def diff_dt_nu(x, nu):
     nu_eff = np.clip(nu_b, 1e-6, np.inf)
 
     t1 = (nu_eff + 1.0) / 2.0
-    t2 = digamma(t1)
+    t2 = sp.digamma(t1)
     t3 = sp.beta(0.5 * nu_eff, 0.5)
     t4 = np.sqrt(nu_eff)
-    t6 = digamma(0.5 * nu_eff)
+    t6 = sp.digamma(0.5 * nu_eff)
 
     t10 = -0.5 / t3 / t4 * (t6 - t2 + 1.0 / nu_eff)
     t11 = 1.0 + (x_b * x_b) / nu_eff
