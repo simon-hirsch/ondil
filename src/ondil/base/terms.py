@@ -89,28 +89,26 @@ class Term(ABC):
         self.find_zero_variance_columns(X)
         self.find_multicollinear_columns(X)
 
-        remove = set()
+        self.remove = set()
         zv_cols = set()
         mc_cols = set()
         if hasattr(self, "_zero_std_cols") and len(self._zero_std_cols) > int(
             self.fit_intercept
         ):
             zv_cols = set(self._zero_std_cols[int(self.fit_intercept) :])
-            remove = remove.union(zv_cols)
+            self.remove = self.remove.union(zv_cols)
 
         if hasattr(self, "_colinear") and len(self._colinear) > 0:
             mc_cols = set(self._colinear)
-            remove = remove.union(mc_cols)
+            self.remove = self.remove.union(mc_cols)
 
-        if len(remove) > 0:
+        if len(self.remove) > 0:
             print(
                 f"Removing columns due to zero variance: {sorted(list(zv_cols))}, "
-                f"multicollinearity: {sorted(list(mc_cols))}, total removed: {sorted(list(remove))}"
+                f"multicollinearity: {sorted(list(mc_cols))}, total removed: {sorted(list(self.remove))}"
             )
 
-        X = np.delete(X, sorted(list(remove)), axis=1)
-
-        return X
+        return np.delete(X, sorted(list(self.remove)), axis=1)
 
     @abstractmethod
     def fit(
