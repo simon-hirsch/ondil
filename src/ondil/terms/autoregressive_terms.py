@@ -159,8 +159,8 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
         distribution: Distribution,
     ):
         X_mat = self.make_design_matrix_out_of_sample(X=X, distribution=distribution)
-        X_mat = self.remove_problematic_columns(X_mat)
-        return X_mat @ self._state.coef_
+        # X_mat = self.remove_problematic_columns(X_mat)
+        return X_mat @ self.coef_
 
     def update(
         self,

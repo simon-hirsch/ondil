@@ -101,6 +101,9 @@ class _LinearBaseTerm(Term):
             target_values=target_values,
             distribution=distribution,
         )
+        self.find_multicollinear_columns(X_mat)
+        self.find_zero_variance_columns(X_mat)
+
         X_mat = self.remove_problematic_columns(X_mat)
 
         if self.is_regularized:
@@ -221,8 +224,8 @@ class LinearTerm(_LinearBaseTerm):
         distribution: Distribution,
     ) -> np.ndarray:
         X_mat = self.make_design_matrix_out_of_sample(X=X)
-        X_mat = self.remove_problematic_columns(X_mat)
-        return X_mat @ self._state.coef_
+        # X_mat = self.remove_problematic_columns(X_mat)
+        return X_mat @ self.coef_
 
     def fit(
         self,
@@ -325,6 +328,25 @@ class _LinearPathModelSelectionIC(Term):
             raise ValueError("Non-path-based methods are not supported for LinearTerm.")
         return self
 
+    @property
+    def coef_(self) -> np.ndarray:
+        """Get the coefficients of the linear term.
+
+        Returns:
+            np.ndarray: Coefficients of the linear term.
+        """
+        if not hasattr(self, "_state"):
+            raise AttributeError("The term has not been fitted yet.")
+        if hasattr(self, "remove"):
+            if len(self.remove) > 0:
+                j = len(self._state.coef_) + len(self.remove)
+                mask = np.setdiff1d(np.arange(j), list(self.remove))
+                beta = np.zeros(j)
+                beta[mask] = self._state.coef_
+                return beta
+            else:
+                return self._state.coef_
+
     def _fit(
         self,
         X: np.ndarray,
@@ -340,6 +362,8 @@ class _LinearPathModelSelectionIC(Term):
             target_values=target_values,
             distribution=distribution,
         )
+        self.find_multicollinear_columns(X_mat)
+        self.find_zero_variance_columns(X_mat)
 
         X_mat = self.remove_problematic_columns(X_mat)
 
@@ -526,8 +550,8 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
         distribution: Distribution,
     ) -> np.ndarray:
         X_mat = self.make_design_matrix(X=X)
-        X_mat = self.remove_problematic_columns(X_mat)
-        return X_mat @ self._state.coef_
+        # X_mat = self.remove_problematic_columns(X_mat)
+        return X_mat @ self.coef_
 
     def fit(
         self,

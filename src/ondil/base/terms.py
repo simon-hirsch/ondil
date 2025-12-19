@@ -86,8 +86,8 @@ class Term(ABC):
             np.ndarray: The design matrix without problematic columns.
         """
 
-        self.find_zero_variance_columns(X)
-        self.find_multicollinear_columns(X)
+        # self.find_zero_variance_columns(X)
+        # self.find_multicollinear_columns(X)
 
         self.remove = set()
         zv_cols = set()
@@ -109,6 +109,25 @@ class Term(ABC):
             )
 
         return np.delete(X, sorted(list(self.remove)), axis=1)
+
+    @property
+    def coef_(self) -> np.ndarray:
+        """Get the coefficients of the linear term.
+
+        Returns:
+            np.ndarray: Coefficients of the linear term.
+        """
+        if not hasattr(self, "_state"):
+            raise AttributeError("The term has not been fitted yet.")
+        if hasattr(self, "remove"):
+            if len(self.remove) > 0:
+                j = len(self._state.coef_) + len(self.remove)
+                mask = np.setdiff1d(np.arange(j), list(self.remove))
+                beta = np.zeros(j)
+                beta[mask] = self._state.coef_
+                return beta
+            else:
+                return self._state.coef_
 
     @abstractmethod
     def fit(
