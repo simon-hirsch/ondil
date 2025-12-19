@@ -294,6 +294,7 @@ class RegularizedJointEstimationTimeSeriesTerm(
         forget: float = 0.0,
         is_regularized: np.ndarray | None = None,
         regularize_intercept: bool = False,
+        weighted_regularization: bool = False,
         ic: str = "aic",
     ):
         super().__init__(
@@ -302,6 +303,7 @@ class RegularizedJointEstimationTimeSeriesTerm(
             forget=forget,
             is_regularized=is_regularized,
             regularize_intercept=regularize_intercept,
+            weighted_regularization=weighted_regularization,
             ic=ic,
         )
         self.effects = effects
