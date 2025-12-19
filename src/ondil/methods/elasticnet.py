@@ -8,7 +8,7 @@ from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
 
 
 class ElasticNetPath(EstimationMethod):
-    """
+    r"""
     Path-based elastic net estimation.
 
     The elastic net method runs coordinate descent along a (geometric) decreasing grid of regularization strengths (lambdas).
@@ -48,6 +48,7 @@ class ElasticNetPath(EstimationMethod):
         selection: Literal["cyclic", "random"] = "cyclic",
         beta_lower_bound: np.ndarray | None = None,
         beta_upper_bound: np.ndarray | None = None,
+        regularization_weights: np.ndarray | None = None,
         tolerance: float = 1e-4,
         max_iterations: int = 1000,
     ):
@@ -83,7 +84,7 @@ class ElasticNetPath(EstimationMethod):
         self.selection = selection
         self.tolerance = tolerance
         self.max_iterations = max_iterations
-
+        self.regularization_weights = regularization_weights
         self._path_length = self.lambda_n
 
     @staticmethod
@@ -101,17 +102,14 @@ class ElasticNetPath(EstimationMethod):
             )
         return lambda_max
 
-    def _set_and_validate_bounds(self, x_gram: np.ndarray) -> None:
+    def _validate_bounds(self, x_gram: np.ndarray) -> None:
         J = x_gram.shape[1]
-        if self.beta_lower_bound is None:
-            self.beta_lower_bound = np.repeat(-np.inf, J)
-        if self.beta_upper_bound is None:
-            self.beta_upper_bound = np.repeat(np.inf, J)
-
-        if len(self.beta_lower_bound) != J:
-            raise ValueError("Lower bound does not have correct length")
-        if len(self.beta_upper_bound) != J:
-            raise ValueError("Upper bound does not have correct length")
+        if self.beta_lower_bound is not None:
+            if len(self.beta_lower_bound) != J:
+                raise ValueError("Lower bound does not have correct length")
+        if self.beta_upper_bound is not None:
+            if len(self.beta_upper_bound) != J:
+                raise ValueError("Upper bound does not have correct length")
 
     @staticmethod
     def init_x_gram(X, weights, forget):
@@ -130,7 +128,7 @@ class ElasticNetPath(EstimationMethod):
         return update_y_gram(gram, X, y, forget=forget, w=weights)
 
     def fit_beta_path(self, x_gram, y_gram, is_regularized):
-        self._set_and_validate_bounds(x_gram=x_gram)
+        self._validate_bounds(x_gram=x_gram)
         lambda_max = self._get_lambda_max(
             x_gram=x_gram, y_gram=y_gram, is_regularized=is_regularized
         )
@@ -149,6 +147,7 @@ class ElasticNetPath(EstimationMethod):
             beta_lower_bound=self.beta_lower_bound,
             beta_upper_bound=self.beta_upper_bound,
             which_start_value=self.start_value_initial,
+            regularization_weights=self.regularization_weights,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,
@@ -173,6 +172,7 @@ class ElasticNetPath(EstimationMethod):
             beta_lower_bound=self.beta_lower_bound,
             beta_upper_bound=self.beta_upper_bound,
             which_start_value=self.start_value_update,
+            regularization_weights=self.regularization_weights,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,

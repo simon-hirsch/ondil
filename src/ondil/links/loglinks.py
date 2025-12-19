@@ -7,7 +7,7 @@ from ..robust_math import SMALL_NUMBER, robust_exp, robust_log
 
 
 class Log(LinkFunction):
-    """
+    r"""
     The log-link function.
 
     The log-link function is defined as \(g(x) = \log(x)\).
@@ -35,7 +35,7 @@ class Log(LinkFunction):
 
 
 class LogShiftValue(LinkFunction):
-    """
+    r"""
     The Log-Link function shifted to a value \(v\).
 
     This link function is defined as \(g(x) = \log(x - v)\). It can be used
@@ -68,7 +68,7 @@ class LogShiftValue(LinkFunction):
 
 
 class LogShiftTwo(LogShiftValue):
-    """
+    r"""
     The Log-Link function shifted to 2.
 
     This link function is defined as \(g(x) = \log(x - 2)\). It can be used
@@ -83,7 +83,7 @@ class LogShiftTwo(LogShiftValue):
 
 
 class LogIdent(LinkFunction):
-    """The Logident Link function.
+    r"""The Logident Link function.
 
     The LogIdent Link function has been introduced by [Narajewski & Ziel 2020](https://arxiv.org/pdf/2005.01365) and can be
     used to avoid the exponential inverse for large values while keeping the log-behaviour in small ranges. This can stabilize

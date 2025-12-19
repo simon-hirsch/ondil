@@ -7,7 +7,7 @@ from ..robust_math import SMALL_NUMBER
 
 
 class Sqrt(LinkFunction):
-    """The square root Link function.
+    r"""The square root Link function.
 
     The square root link function is defined as $$g(x) = \sqrt(x)$$.
     """
@@ -34,7 +34,7 @@ class Sqrt(LinkFunction):
 
 
 class SqrtShiftValue(LinkFunction):
-    """
+    r"""
     The Sqrt-Link function shifted to a value \(v\).
 
     This link function is defined as $$g(x) = \sqrt(x - v)$$. It can be used
@@ -67,7 +67,7 @@ class SqrtShiftValue(LinkFunction):
 
 
 class SqrtShiftTwo(SqrtShiftValue):
-    """
+    r"""
     The Sqrt-Link function shifted to 2.
 
     This link function is defined as $$g(x) = \sqrt(x - 2)$$. It can be used

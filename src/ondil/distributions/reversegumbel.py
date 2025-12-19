@@ -9,7 +9,7 @@ from ..types import ParameterShapes
 
 
 class ReverseGumbel(ScipyMixin, Distribution):
-    """
+    r"""
     The Reverse Gumbel (Type I minimum extreme value) distribution with location (mu) and scale (sigma) parameters.
 
     The probability density function is defined as:

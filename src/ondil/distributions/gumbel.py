@@ -7,7 +7,7 @@ from ..types import ParameterShapes
 
 
 class Gumbel(ScipyMixin, Distribution):
-    """
+    r"""
     The Gumbel distribution.
 
     The probability density function is given by:

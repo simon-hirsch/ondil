@@ -4,7 +4,7 @@ from ..base import LinkFunction
 
 
 class Identity(LinkFunction):
-    """
+    r"""
     The identity link function.
 
     The identity link is defined as \(g(x) = x\).

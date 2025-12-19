@@ -7,7 +7,7 @@ from ..types import ParameterShapes
 
 
 class InverseGaussian(ScipyMixin, Distribution):
-    """
+    r"""
     Inverse Gaussian (Wald) distribution for GAMLSS.
 
     This distribution is characterized by two parameters:

@@ -10,7 +10,7 @@ from ..types import ParameterShapes
 
 
 class PowerExponential(Distribution):
-    """
+    r"""
     Power Exponential distribution (GAMLSS: PE).
 
     The PDF is defined as:

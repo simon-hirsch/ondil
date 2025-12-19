@@ -24,7 +24,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
         forget: float = 0.0,
         to_scale: bool | np.ndarray = True,
     ):
-        """The online scaler allows for incremental updating and scaling of matrices.
+        r"""The online scaler allows for incremental updating and scaling of matrices.
 
         Args:
             forget (float, optional): The forget factor. Older observations will be exponentially discounted. Defaults to 0.0.
@@ -58,7 +58,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
 
     @property
     def std_(self) -> float | np.ndarray:
-        """Standard deviation of the scaled variables."""
+        r"""Standard deviation of the scaled variables."""
         check_is_fitted(self, ["mean_", "var_"])
         if self._do_scale:
             return np.sqrt(self.var_)
@@ -72,7 +72,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
         y: None = None,
         sample_weight: np.ndarray | None = None,
     ) -> "OnlineScaler":
-        """Fit the OnlineScaler() Object for the first time.
+        r"""Fit the OnlineScaler() Object for the first time.
 
         Args:
             X (np.ndarray): Matrix of covariates X.
@@ -112,7 +112,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def update(self, X: np.ndarray, y=None, sample_weight: np.ndarray = None):
-        """Update the `OnlineScaler()` for new rows of X.
+        r"""Update the `OnlineScaler()` for new rows of X.
 
         Args:
             X (np.ndarray): New data for X.
@@ -160,7 +160,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X: np.ndarray) -> np.ndarray:
-        """Transform X to a mean-std scaled matrix.
+        r"""Transform X to a mean-std scaled matrix.
 
         Args:
             X (np.ndarray): X matrix for covariates.
@@ -188,7 +188,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
             return X
 
     def inverse_transform(self, X: np.ndarray) -> np.ndarray:
-        """Back-transform a scaled X matrix to the original domain.
+        r"""Back-transform a scaled X matrix to the original domain.
 
         Args:
             X (np.ndarray): Scaled X matrix.
