@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import scipy.special as sp
-from scipy.special import beta as betafunc, betaln as lbeta, digamma, polygamma
+from scipy.special import digamma, polygamma
 import scipy.stats as st
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
@@ -929,7 +929,7 @@ def inbeder(
         q = q_in
         flipped = False
 
-    lbet = lbeta(p, q)
+    lbet = sp.betaln(p, q)
     pa = digamma(p)
     pa1 = trigamma(p)
     pb = digamma(q)
@@ -1094,7 +1094,7 @@ def diff_t_nu_nu(x, nu):
     # Remaining terms (vectorized)
     t5 = np.power(nu_eff, (nu_eff / 2.0) - 1.0) * abs_x
     t6 = np.power(t1, t4)
-    t7 = betafunc(t2, 0.5)
+    t7 = sp.beta(t2, 0.5)
     t8 = t5 * t6
     t9 = nu_eff * t1
 
@@ -1122,7 +1122,7 @@ def diff_dt_nu(x, nu):
 
     t1 = (nu_eff + 1.0) / 2.0
     t2 = digamma(t1)
-    t3 = betafunc(0.5 * nu_eff, 0.5)
+    t3 = sp.beta(0.5 * nu_eff, 0.5)
     t4 = np.sqrt(nu_eff)
     t6 = digamma(0.5 * nu_eff)
 
@@ -1148,7 +1148,7 @@ def diff_dt_x(x, nu):
 
     t2 = (nu_eff + 1.0) / nu_eff
     t3 = np.sqrt(nu_eff)
-    t4 = 1.0 / (t3 * betafunc(0.5 * nu_eff, 0.5))
+    t4 = 1.0 / (t3 * sp.beta(0.5 * nu_eff, 0.5))
     t5 = 1.0 + (x_b * x_b) / nu_eff
     t6 = (nu_eff + 3.0) / 2.0
     t7 = np.power(t5, -t6)
@@ -1195,7 +1195,7 @@ def _diff_quantile_nu(x, nu):
     denom = abs_x * abs_x + nu_eff
     t6 = np.power(1.0 / denom, t4)
     t5 = np.power(nu_eff, t2 - 1.0) * abs_x
-    t7 = betafunc(t2, 0.5)
+    t7 = sp.beta(t2, 0.5)
 
     xmax = nu_eff / (nu_eff + abs_x * abs_x)
 
