@@ -25,18 +25,10 @@ class Term(ABC):
         Args:
             X (np.ndarray): The design matrix.
         Returns:
-            np.ndarray: Indices of columns with variance 0. columns.
+            np.ndarray: Indices of columns with variance 0.
         """
-
-        # Remove the columns with zero standard deviation
-        # but keep the first one (intercept) if present
         self._zero_std_cols = np.where(np.isclose(X.std(axis=0), 0))[0]
-        if len(self._zero_std_cols) > int(self.fit_intercept):
-            print(
-                f"Found: {len(self._zero_std_cols)} columns with variance 0. Removing them."
-            )
-
-        self.find_multicollinear_columns(X)
+        return self._zero_std_cols
 
     def find_multicollinear_columns(
         self,
@@ -79,6 +71,7 @@ class Term(ABC):
                 independent_cols.append(j)
 
         self._colinear = set(redundant)
+        return np.array(sorted(self._colinear))
 
     def remove_zero_variance_columns(
         self,
@@ -93,13 +86,47 @@ class Term(ABC):
             np.ndarray: The design matrix without columns with variance 0.
         """
         remove = set()
-        if len(self._zero_std_cols) > int(self.fit_intercept):
+        if hasattr(self, "_zero_std_cols") and len(self._zero_std_cols) > int(
+            self.fit_intercept
+        ):
             remove = remove.union(set(self._zero_std_cols[int(self.fit_intercept) :]))
-        if len(self._colinear) > 0:
+        remove = sorted(list(remove))
+        X = np.delete(X, remove, axis=1)
+        return X
+
+    def remove_multicollinear_columns(
+        self,
+        X: np.ndarray,
+    ) -> np.ndarray:
+        """Remove multicollinear columns from the design matrix X.
+
+        Args:
+            X (np.ndarray): The design matrix.
+
+        Returns:
+            np.ndarray: The design matrix without multicollinear columns.
+        """
+        remove = set()
+        if hasattr(self, "_colinear") and len(self._colinear) > 0:
             remove = remove.union(self._colinear)
         remove = sorted(list(remove))
-
         X = np.delete(X, remove, axis=1)
+        return X
+
+    def remove_problematic_columns(
+        self,
+        X: np.ndarray,
+    ) -> np.ndarray:
+        """Remove both zero-variance and multicollinear columns from the design matrix X.
+
+        Args:
+            X (np.ndarray): The design matrix.
+
+        Returns:
+            np.ndarray: The design matrix without problematic columns.
+        """
+        X = self.remove_zero_variance_columns(X)
+        X = self.remove_multicollinear_columns(X)
         return X
 
     @abstractmethod
