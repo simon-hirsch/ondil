@@ -7,6 +7,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 import scipy.special as sp
 import scipy.stats as st
+from numba import njit, prange
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
 from ..links import FisherZLink, KendallsTauToParameter, LogShiftTwo
@@ -373,20 +374,19 @@ def _log_likelihood_t(y, rho, nu):
     """Log-likelihood for bivariate t copula"""
 
     y_clipped = np.clip(y, UMIN, UMAX)
-
-    t1 = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
-    t2 = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
-
+    nu1 = np.asarray(nu).ravel()        
+    t1 = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
+    t2 = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
     # Bivariate t copula density (following C code structure)
     # f = StableGammaDivision((nu+2)/2, nu/2) / (nu*pi*sqrt(1-rho^2)*dt(t1,nu)*dt(t2,nu))
     #     * (1 + (t1^2 + t2^2 - 2*rho*t1*t2)/(nu*(1-rho^2)))^(-(nu+2)/2)
 
     # Calculate the gamma ratio using stable division
     gamma_ratio = stable_gamma_division((nu + 2.0) / 2.0, nu / 2.0)
-
     # Calculate t distribution PDFs (dt in C code)
-    dt1 = st.t.pdf(t1, df=nu)
-    dt2 = st.t.pdf(t2, df=nu)
+    nu1 = np.asarray(nu).ravel()        
+    dt1 = st.t.pdf(t1[:, 0], df=nu1).reshape(-1, 1)
+    dt2 = st.t.pdf(t2[:, 0], df=nu1).reshape(-1, 1)
 
     # Calculate the quadratic form in the exponent
     quad_form = (t1 * t1 + t2 * t2 - 2.0 * rho * t1 * t2) / (nu * (1 - rho**2))
@@ -408,8 +408,9 @@ def _derivative_1st_rho(y, rho, nu):
 
     y_clipped = np.clip(y, UMIN, UMAX)
 
-    t1 = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
-    t2 = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
+    nu1 = np.asarray(nu).ravel()        
+    t1 = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
+    t2 = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
     t3 = -(nu + 2.0) / 2.0
     t10 = nu * (1.0 - rho * rho)
@@ -429,8 +430,9 @@ def _derivative_1st_rho_l(y, rho, nu):
     y_clipped = np.clip(y, UMIN, UMAX)
 
     c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
-    t1 = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
-    t2 = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
+    nu1 = np.asarray(nu).ravel()        
+    t1 = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
+    t2 = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
     # Calculate current likelihood
     t3 = -(nu + 2.0) / 2.0
@@ -450,9 +452,9 @@ def _derivative_1st_nu(y, rho, nu):
 
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
-
-    u = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
-    v = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
+    nu1 = np.asarray(nu).ravel()        
+    u = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
+    v = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
     # Follow C code structure exactly
     t1 = sp.digamma((nu + 1.0) / 2.0)
@@ -495,9 +497,9 @@ def _derivative_1st_nu_l(y, rho, nu):
 
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
-
-    u = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
-    v = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
+    nu1 = np.asarray(nu).ravel()        
+    u = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
+    v = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
     # Calculate current likelihood
     c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
@@ -542,8 +544,9 @@ def _derivative_2nd_rho(y, rho, nu):
     """Second derivative wrt rho for t copula"""
 
     y_clipped = np.clip(y, UMIN, UMAX)
-    u = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
-    v = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
+    nu1 = np.asarray(nu).ravel()        
+    u = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
+    v = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
     # Calculate current likelihood
     c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
@@ -570,9 +573,9 @@ def _derivative_2nd_nu(y, rho, nu):
 
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
-
-    u = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
-    v = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
+    nu1 = np.asarray(nu).ravel()        
+    u = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
+    v = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
     # Calculate current likelihood
     c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
@@ -652,25 +655,12 @@ def _derivative_2nd_nu(y, rho, nu):
     return deriv.squeeze()
 
 
-# Make st.beta a function (alias to scipy.special.beta) so your function works unchanged
-try:
-    import scipy.special as _spsp
-
-    st.beta = _spsp.beta
-except Exception:
-    pass
-
-
 def trigamma(x: float) -> float:
     return float(sp.polygamma(1, x))
 
 
-# ---------------- Incomplete Beta helpers (direct translations) ----------------
-
-
-def incompleBeta_an1_bn1_p(
-    x: float, p: float, q: float
-) -> Tuple[List[float], List[float]]:
+@njit(cache=True)
+def _an_bn_1_p(x, p, q):
     t2 = 1.0 / (1.0 - x)
     t3 = x * t2
     t4 = q - 1.0
@@ -694,9 +684,11 @@ def incompleBeta_an1_bn1_p(
     t46 = t34 * t34
     t47 = 1.0 / t46
     t48 = t33 * t47
+
     an0 = t3 * t4 / t5
     an1 = -t3 * t4 / t9
     an2 = 2.0 * t3 * t4 / t9 / t5
+
     bn0 = t32 * t36
     bn1 = t40 * t36 - t32 * t44 - t32 * t48
     bn2 = (
@@ -707,12 +699,11 @@ def incompleBeta_an1_bn1_p(
         + 2.0 * t32 * t43 * t47
         + 2.0 * t32 * t33 / t46 / t34
     )
-    return [an0, an1, an2], [bn0, bn1, bn2]
+    return an0, an1, an2, bn0, bn1, bn2
 
 
-def incompleBeta_an1_bn1_q(
-    x: float, p: float, q: float
-) -> Tuple[List[float], List[float]]:
+@njit(cache=True)
+def _an_bn_1_q(x, p, q):
     t2 = 1.0 / (1.0 - x)
     t3 = x * t2
     t6 = 1.0 / (p + 1.0)
@@ -727,18 +718,19 @@ def incompleBeta_an1_bn1_q(
     t36 = 2.0 * t3 + 4.0 + 2.0 * (t3 + 2.0) * t16 + p * t20 - t19 * t3
     t39 = q * q
     t40 = 1.0 / t39
+
     an0 = t3 * (q - 1.0) * t6
     an1 = t3 * t6
     an2 = 0.0
+
     bn0 = t22 * t23 * t28
     bn1 = t36 * t23 * t28 - t22 * t40 * t28
     bn2 = -2.0 * t3 * t23 * t27 - 2.0 * t36 * t40 * t28 + 2.0 * t22 / t39 / q * t28
-    return [an0, an1, an2], [bn0, bn1, bn2]
+    return an0, an1, an2, bn0, bn1, bn2
 
 
-def incompleBeta_an_bn_p(
-    x: float, p: float, q: float, n: int
-) -> Tuple[List[float], List[float]]:
+@njit(cache=True)
+def _an_bn_n_p(x, p, q, n):
     t1 = x * x
     t2 = 1.0 - x
     t3 = t2 * t2
@@ -815,6 +807,7 @@ def incompleBeta_an_bn_p(
         - t9 * t12 * t19 * t46
     )
     an2 = t105
+
     bn0 = t123 * t127
     bn1 = t133 * t127 - t123 * t135 - t123 * t139
     bn2 = (
@@ -825,12 +818,11 @@ def incompleBeta_an_bn_p(
         + 2.0 * t123 * t18 * t138
         + 2.0 * t123 * t124 / t137 / t125
     )
-    return [an0, an1, an2], [bn0, bn1, bn2]
+    return an0, an1, an2, bn0, bn1, bn2
 
 
-def incompleBeta_an_bn_q(
-    x: float, p: float, q: float, n: int
-) -> Tuple[List[float], List[float]]:
+@njit(cache=True)
+def _an_bn_n_q(x, p, q, n):
     t1 = x * x
     t2 = 1.0 - x
     t3 = t2 * t2
@@ -868,6 +860,7 @@ def incompleBeta_an_bn_q(
     an0 = t9 * t10 * t11 * t15 * t18 * t21
     an1 = t5 * t6 * t10 * t11 * t15 * t28 + t9 * t32
     an2 = 2.0 * t5 * t6 * t32
+
     bn0 = t53 * t54 * t59
     bn1 = t70 * t54 * t59 - t53 * t74 * t59
     bn2 = (
@@ -875,166 +868,232 @@ def incompleBeta_an_bn_q(
         - 2.0 * t70 * t74 * t59
         + 2.0 * t53 / t73 / q * t59
     )
-    return [an0, an1, an2], [bn0, bn1, bn2]
+    return an0, an1, an2, bn0, bn1, bn2
 
 
-# ------------------------------ inbeder ------------------------------
+@njit(cache=True, parallel=True)
+def _inbeder_core_vec(
+    x, p, q, flipped,
+    c0log, c0exp, c1, c2,
+    err, minappx, maxappx
+):
+    """
+    Compiled iterative core. All special-function work must be precomputed outside.
+    x,p,q are already the (possibly flipped) values.
+    Returns der0, der1, der2 (still un-flipped; final flip correction is done outside or inside).
+    """
+    n_elem = x.size
+    der0 = np.empty(n_elem, dtype=np.float64)
+    der1 = np.empty(n_elem, dtype=np.float64)
+    der2 = np.empty(n_elem, dtype=np.float64)
+
+    for idx in prange(n_elem):
+        xi = x[idx]
+        pi = p[idx]
+        qi = q[idx]
+
+        # 3-vectors stored as scalars
+        an1_0, an1_1, an1_2 = 1.0, 0.0, 0.0
+        an2_0, an2_1, an2_2 = 1.0, 0.0, 0.0
+        bn1_0, bn1_1, bn1_2 = 1.0, 0.0, 0.0
+        bn2_0, bn2_1, bn2_2 = 0.0, 0.0, 0.0
+
+        der_old0, der_old1, der_old2 = 0.0, 0.0, 0.0
+
+        # iterate
+        n = 0
+        while True:
+            n += 1
+
+            if n == 1:
+                if flipped[idx]:
+                    an0, an1v, an2v, bn0, bn1v, bn2v = _an_bn_1_q(xi, pi, qi)
+                else:
+                    an0, an1v, an2v, bn0, bn1v, bn2v = _an_bn_1_p(xi, pi, qi)
+            else:
+                if flipped[idx]:
+                    an0, an1v, an2v, bn0, bn1v, bn2v = _an_bn_n_q(xi, pi, qi, n)
+                else:
+                    an0, an1v, an2v, bn0, bn1v, bn2v = _an_bn_n_p(xi, pi, qi, n)
+
+            # dan = an*an2 + bn*an1 ; dbn = an*bn2 + bn*bn1
+            dan0 = an0 * an2_0 + bn0 * an1_0
+            dbn0 = an0 * bn2_0 + bn0 * bn1_0
+
+            dan1 = an1v * an2_0 + an0 * an2_1 + bn1v * an1_0 + bn0 * an1_1
+            dbn1 = an1v * bn2_0 + an0 * bn2_1 + bn1v * bn1_0 + bn0 * bn1_1
+
+            dan2 = (
+                an2v * an2_0
+                + 2.0 * an1v * an2_1
+                + an0 * an2_2
+                + bn2v * an1_0
+                + 2.0 * bn1v * an1_1
+                + bn0 * an1_2
+            )
+            dbn2 = (
+                an2v * bn2_0
+                + 2.0 * an1v * bn2_1
+                + an0 * bn2_2
+                + bn2v * bn1_0
+                + 2.0 * bn1v * bn1_1
+                + bn0 * bn1_2
+            )
+
+            # Rn = max(|dan0|, |dbn0|)
+            Rn = dan0
+            if abs(dbn0) > abs(dan0):
+                Rn = dbn0
+
+            # scale an1,bn1 and dan/dbn components
+            an1_0 /= Rn; an1_1 /= Rn; an1_2 /= Rn
+            bn1_0 /= Rn; bn1_1 /= Rn; bn1_2 /= Rn
+            dan1 /= Rn; dan2 /= Rn
+            dbn1 /= Rn; dbn2 /= Rn
+
+            # normalize dan0/dbn0
+            if abs(dbn0) > abs(dan0):
+                dan0 = dan0 / dbn0
+                dbn0 = 1.0
+            else:
+                dbn0 = dbn0 / dan0
+                dan0 = 1.0
+
+            # dr = dan/dbn
+            dr0 = dan0 / dbn0
+            dbn0_sq = dbn0 * dbn0
+            dr1 = (dan1 - dr0 * dbn1) / dbn0
+            dr2 = (-2.0 * dan1 * dbn1 + 2.0 * dr0 * dbn1 * dbn1) / dbn0_sq + (dan2 - dr0 * dbn2) / dbn0
+
+            # shift history
+            an2_0, an2_1, an2_2 = an1_0, an1_1, an1_2
+            an1_0, an1_1, an1_2 = dan0, dan1, dan2
+            bn2_0, bn2_1, bn2_2 = bn1_0, bn1_1, bn1_2
+            bn1_0, bn1_1, bn1_2 = dbn0, dbn1, dbn2
+
+            # pr and derivatives
+            pr = 0.0
+            if dr0 > 0.0:
+                pr = np.exp(c0log[idx] + np.log(dr0))
+
+            d0 = pr
+            d1v = pr * c1[idx] + c0exp[idx] * dr1
+            d2v = pr * c2[idx] + 2.0 * c0exp[idx] * c1[idx] * dr1 + c0exp[idx] * dr2
+
+            # convergence
+            denom0 = max(err, abs(d0))
+            denom1 = max(err, abs(d1v))
+            denom2 = max(err, abs(d2v))
+
+            r0 = abs(der_old0 - d0) / denom0
+            r1 = abs(der_old1 - d1v) / denom1
+            r2 = abs(der_old2 - d2v) / denom2
+
+            der_old0, der_old1, der_old2 = d0, d1v, d2v
+
+            dmax = r0
+            if r1 > dmax: dmax = r1
+            if r2 > dmax: dmax = r2
+
+            if n < minappx:
+                dmax = 1.0
+            if n >= maxappx:
+                dmax = 0.0
+
+            if dmax <= err:
+                der0[idx] = d0
+                der1[idx] = d1v
+                der2[idx] = d2v
+                break
+
+    return der0, der1, der2
 
 
-def inbeder(
-    x_in: float,
-    p_in: float,
-    q_in: float,
+def inbeder_vec_numba(
+    x_in, p_in, q_in,
     err: float = 1e-12,
     minappx: int = 3,
     maxappx: int = 200,
-) -> Tuple[float, float, float]:
+):
     """
-    Incomplete Beta I(x; p, q) and derivatives wrt p (first, second).
-    Returns (I, dI/dp, d²I/dp²).
-    """
-    EPS = 1e-12
-    if x_in > p_in / (p_in + q_in):
-        x = 1.0 - x_in
-        p = q_in
-        q = p_in
-        flipped = True
-    else:
-        x = x_in
-        p = p_in
-        q = q_in
-        flipped = False
+    Vectorized + Numba-accelerated inbeder.
 
+    Returns
+    -------
+    I, dI_dp, d2I_dp2 : np.ndarray
+        Same shape as broadcast(x_in, p_in, q_in).
+    """
+
+    x_in = np.asarray(x_in, dtype=float)
+    p_in = np.asarray(p_in, dtype=float)
+    q_in = np.asarray(q_in, dtype=float)
+    x_in, p_in, q_in = np.broadcast_arrays(x_in, p_in, q_in)
+
+    shp = x_in.shape
+    x0 = x_in.ravel()
+    p0 = p_in.ravel()
+    q0 = q_in.ravel()
+
+    EPS = 1e-12
+    # flip decision (vectorized)
+    flipped = x0 > (p0 / (p0 + q0))
+
+    # apply flip (vectorized)
+    x = np.where(flipped, 1.0 - x0, x0)
+    p = np.where(flipped, q0, p0)
+    q = np.where(flipped, p0, q0)
+
+    # clamp
+    x = np.clip(x, EPS, 1.0 - EPS)
+    p = np.maximum(p, EPS)
+    # (q can be <=0? in your use it's 0.5 so fine; keep as is)
+
+    # -------- special functions (SciPy, vectorized) --------
     lbet = sp.betaln(p, q)
     pa = sp.digamma(p)
-    pa1 = trigamma(p)
+    pa1 = sp.polygamma(1, p)
     pb = sp.digamma(q)
-    pb1 = trigamma(q)
+    pb1 = sp.polygamma(1, q)
     pab = sp.digamma(p + q)
-    pab1 = trigamma(p + q)
-    x = max(EPS, min(1.0 - EPS, x))
-    p = max(EPS, p)
+    pab1 = sp.polygamma(1, p + q)
+
     omx = 1.0 - x
-    logx = log(x)
-    logomx = log(omx)
+    logx = np.log(x)
+    logomx = np.log(omx)
 
-    c = [0.0, 0.0, 0.0]
-    c[0] = p * logx + (q - 1.0) * logomx - lbet - log(p)
-    c0 = np.exp(c[0])
-    if flipped:
-        c[1] = logomx - pb + pab
-        c[2] = c[1] * c[1] - pb1 + pab1
-    else:
-        c[1] = logx - 1.0 / p - pa + pab
-        c[2] = c[1] * c[1] + 1.0 / (p * p) - pa1 + pab1
+    # c0log is your c[0]
+    c0log = p * logx + (q - 1.0) * logomx - lbet - np.log(p)
+    c0exp = np.exp(c0log)
 
-    an = [0.0, 0.0, 0.0]
-    bn = [0.0, 0.0, 0.0]
-    an1 = [1.0, 0.0, 0.0]
-    an2 = [1.0, 0.0, 0.0]
-    bn1 = [1.0, 0.0, 0.0]
-    bn2 = [0.0, 0.0, 0.0]
-    der_old = [0.0, 0.0, 0.0]
-    dan = [0.0, 0.0, 0.0]
-    dbn = [0.0, 0.0, 0.0]
-    dr = [0.0, 0.0, 0.0]
-    d1 = [0.0, 0.0, 0.0]
+    # c1/c2 depend on flipped
+    c1 = np.empty_like(x)
+    c2 = np.empty_like(x)
 
-    n = 0
-    der = [0.0, 0.0, 0.0]
+    # not flipped: c1 = logx - 1/p - digamma(p) + digamma(p+q)
+    # flipped:     c1 = logomx - digamma(q) + digamma(p+q)
+    nf = ~flipped
+    f = flipped
 
-    while True:
-        n += 1
-        if n == 1:
-            if flipped:
-                an[:], bn[:] = incompleBeta_an1_bn1_q(x, p, q)
-            else:
-                an[:], bn[:] = incompleBeta_an1_bn1_p(x, p, q)
-        else:
-            if flipped:
-                an[:], bn[:] = incompleBeta_an_bn_q(x, p, q, n)
-            else:
-                an[:], bn[:] = incompleBeta_an_bn_p(x, p, q, n)
+    c1[nf] = logx[nf] - 1.0 / p[nf] - pa[nf] + pab[nf]
+    c2[nf] = c1[nf] * c1[nf] + 1.0 / (p[nf] * p[nf]) - pa1[nf] + pab1[nf]
 
-        dan[0] = an[0] * an2[0] + bn[0] * an1[0]
-        dbn[0] = an[0] * bn2[0] + bn[0] * bn1[0]
-        dan[1] = an[1] * an2[0] + an[0] * an2[1] + bn[1] * an1[0] + bn[0] * an1[1]
-        dbn[1] = an[1] * bn2[0] + an[0] * bn2[1] + bn[1] * bn1[0] + bn[0] * bn1[1]
-        dan[2] = (
-            an[2] * an2[0]
-            + 2 * an[1] * an2[1]
-            + an[0] * an2[2]
-            + bn[2] * an1[0]
-            + 2 * bn[1] * an1[1]
-            + bn[0] * an1[2]
-        )
-        dbn[2] = (
-            an[2] * bn2[0]
-            + 2 * an[1] * bn2[1]
-            + an[0] * bn2[2]
-            + bn[2] * bn1[0]
-            + 2 * bn[1] * bn1[1]
-            + bn[0] * bn1[2]
-        )
+    c1[f] = logomx[f] - pb[f] + pab[f]
+    c2[f] = c1[f] * c1[f] - pb1[f] + pab1[f]
 
-        Rn = dan[0]
-        if fabs(dbn[0]) > fabs(dan[0]):
-            Rn = dbn[0]
-        for i in range(3):
-            an1[i] /= Rn
-            bn1[i] /= Rn
-        dan[1] /= Rn
-        dan[2] /= Rn
-        dbn[1] /= Rn
-        dbn[2] /= Rn
+    # -------- compiled iterative core --------
+    d0, d1v, d2v = _inbeder_core_vec(
+        x, p, q, flipped,
+        c0log, c0exp, c1, c2,
+        err, minappx, maxappx
+    )
 
-        if fabs(dbn[0]) > fabs(dan[0]):
-            dan[0] = dan[0] / dbn[0]
-            dbn[0] = 1.0
-        else:
-            dbn[0] = dbn[0] / dan[0]
-            dan[0] = 1.0
+    # final flip correction (as in your scalar code)
+    d0 = np.where(flipped, 1.0 - d0, d0)
+    d1v = np.where(flipped, -d1v, d1v)
+    d2v = np.where(flipped, -d2v, d2v)
 
-        dr[0] = dan[0] / dbn[0]
-        Rn = dr[0]
-        dbn0_sq = dbn[0] * dbn[0]
-        dr[1] = (dan[1] - Rn * dbn[1]) / dbn[0]
-        dr[2] = (-2 * dan[1] * dbn[1] + 2 * Rn * dbn[1] * dbn[1]) / dbn0_sq + (
-            dan[2] - Rn * dbn[2]
-        ) / dbn[0]
+    return d0.reshape(shp), d1v.reshape(shp), d2v.reshape(shp)
 
-        an2[:] = an1[:]
-        an1[:] = dan[:]
-        bn2[:] = bn1[:]
-        bn1[:] = dbn[:]
-
-        pr = 0.0
-        if dr[0] > 0.0:
-            pr = exp(c[0] + log(dr[0]))
-        der[0] = pr
-        der[1] = pr * c[1] + c0 * dr[1]
-        der[2] = pr * c[2] + 2 * c0 * c[1] * dr[1] + c0 * dr[2]
-
-        for i in range(3):
-            denom = max(err, fabs(der[i]))
-            d1[i] = fabs(der_old[i] - der[i]) / denom
-            der_old[i] = der[i]
-        d = max(d1)
-
-        if n < minappx:
-            d = 1.0
-        if n >= maxappx:
-            d = 0.0
-
-        if d <= err:
-            break
-
-    if flipped:
-        der[0] = 1.0 - der[0]
-        der[1] = -der[1]
-        der[2] = -der[2]
-
-    return tuple(der)
 
 
 # ------------------------------ Derivative helpers ------------------------------
@@ -1062,9 +1121,7 @@ def diff_t_nu_nu(x, nu):
     flat_xmax = np.ravel(xmax)
     flat_t2 = np.ravel(t2)
     flat_Ipp = np.empty_like(flat_xmax, dtype=float)
-    for i in range(flat_xmax.size):
-        # inbeder returns (I, dI/dp, d2I/dp2); we need the third
-        flat_Ipp[i] = inbeder(float(flat_xmax[i]), float(flat_t2[i]), 0.5)[2]
+    _, _, Ipp = inbeder_vec_numba(xmax, t2, 0.5)
     Ipp[...] = flat_Ipp.reshape(x_b.shape)
 
     # Remaining terms (vectorized)
@@ -1178,8 +1235,7 @@ def _diff_quantile_nu(x, nu):
     # Compute dI/dp via inbeder for masked positions
     idxs = np.flatnonzero(mask)
     dIdp_vals = np.empty(idxs.size, dtype=float)
-    for i, j in enumerate(idxs):
-        dIdp_vals[i] = inbeder(float(xmax.flat[j]), float(t2.flat[j]), 0.5)[1]
+    _, dIdp, _ = inbeder_vec_numba(xmax, t2, 0.5)
 
     dIdp = np.zeros_like(x_b, dtype=float)
     dIdp.flat[idxs] = dIdp_vals
