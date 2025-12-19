@@ -230,9 +230,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
 
         h = np.where(
             finite_mask,
-            np.array([st.t.cdf(x[i, 0], df=nu[i]) for i in range(len(x))]).reshape(
-                -1, 1
-            ),
+            st.t.cdf(x[:, 0], df=nu).reshape(-1, 1),
             h,
         )
         h = np.where(neg_mask, 0, h)
