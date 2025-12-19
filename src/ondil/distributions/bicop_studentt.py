@@ -13,6 +13,9 @@ from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
 from ..links import FisherZLink, KendallsTauToParameter, LogShiftTwo
 from ..types import ParameterShapes
 
+UMIN = 1e-12
+UMAX = 1 - 1e-12
+
 
 class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
     corresponding_gamlss: str = None
@@ -178,7 +181,9 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
     ) -> Dict[int, np.ndarray]:
         raise NotImplementedError("Not implemented")
 
-    def hfunc(self, u: np.ndarray, v: np.ndarray, theta: Dict, un: int, family_code = 2) -> np.ndarray:
+    def hfunc(
+        self, u: np.ndarray, v: np.ndarray, theta: Dict, un: int, family_code=2
+    ) -> np.ndarray:
         """
         Conditional distribution function h(u|v) for the bivariate t copula.
 
@@ -193,9 +198,6 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         """
 
         rho, nu = self.theta_to_params(theta)
-
-        UMIN = 1e-12
-        UMAX = 1 - 1e-12
 
         # Apply clipping using masks
         u_mask_low = u < UMIN
@@ -244,7 +246,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         return h.squeeze()
 
     def hinv(
-        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code = 2
+        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code=2
     ) -> np.ndarray:
         """
         Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
@@ -259,9 +261,6 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
             np.ndarray: Array of shape (n,) with inverse conditional probabilities.
         """
 
-        UMIN = 1e-12
-        UMAX = 1 - 1e-12
-
         # Apply clipping using masks
         u_mask_low = u < UMIN
         u_mask_high = u > UMAX
@@ -275,20 +274,12 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
 
         rho, nu = self.theta_to_params(theta)
 
-        qt_u = np.array([
-            st.t.ppf(u[i], df=nu[i] + 1.0) for i in range(len(u))
-        ]).reshape(-1, 1)
-        qt_v = np.array([st.t.ppf(v[i], df=nu[i]) for i in range(len(v))]).reshape(
-            -1, 1
-        )
+        qt_u = st.t.ppf(u, df=nu + 1.0).reshape(-1, 1)
+        qt_v = st.t.ppf(v, df=nu).reshape(-1, 1)
 
         mu = rho * qt_v
         var = ((nu + qt_v**2) * (1.0 - rho**2)) / (nu + 1.0)
-
-        hinv = np.array([
-            st.t.cdf((np.sqrt(var[i]) * qt_u[i] + mu[i])[0], df=nu[i])
-            for i in range(len(u))
-        ]).reshape(-1, 1)
+        hinv = st.t.cdf((np.sqrt(var) * qt_u + mu), df=nu).reshape(-1, 1)
 
         # Clip output for numerical stability
         # Ensure results are in [0,1] using masks
@@ -388,16 +379,10 @@ def stable_gamma_division(x1, x2):
 def _log_likelihood_t(y, rho, nu):
     """Log-likelihood for bivariate t copula"""
 
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)
 
-    t1 = np.array([
-        st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y_clipped))
-    ]).reshape(-1, 1)
-    t2 = np.array([
-        st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y_clipped))
-    ]).reshape(-1, 1)
+    t1 = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
+    t2 = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
 
     # Bivariate t copula density (following C code structure)
     # f = StableGammaDivision((nu+2)/2, nu/2) / (nu*pi*sqrt(1-rho^2)*dt(t1,nu)*dt(t2,nu))
@@ -428,16 +413,10 @@ def _log_likelihood_t(y, rho, nu):
 def _derivative_1st_rho(y, rho, nu):
     """First derivative wrt rho for t copula"""
 
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)
 
-    t1 = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
-    t2 = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
+    t1 = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
+    t2 = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
 
     t3 = -(nu + 2.0) / 2.0
     t10 = nu * (1.0 - rho * rho)
@@ -454,19 +433,11 @@ def _derivative_1st_rho(y, rho, nu):
 def _derivative_1st_rho_l(y, rho, nu):
     """First derivative wrt rho for t copula"""
 
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
-
     y_clipped = np.clip(y, UMIN, UMAX)
 
     c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
-
-    t1 = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
-    t2 = np.array([st.t.ppf(y_clipped[i, 1], df=nu[i]) for i in range(len(y))]).reshape(
-        -1, 1
-    )
+    t1 = st.t.ppf(y_clipped[:, 0], df=nu).reshape(-1, 1)
+    t2 = st.t.ppf(y_clipped[:, 1], df=nu).reshape(-1, 1)
 
     # Calculate current likelihood
     t3 = -(nu + 2.0) / 2.0
@@ -582,74 +553,9 @@ def _derivative_1st_nu_l(y, rho, nu):
     return deriv.squeeze()
 
 
-# from autograd import grad
-# import autograd.numpy as anp
-# import numpy as np  # only for final .squeeze() shape, optional
-
-# def _derivative_1st_nu(y, rho, nu):
-#     """First derivative wrt nu for t copula using autograd.
-
-#     Notes
-#     -----
-#     - `_log_likelihood_t(y_slice, rho_scalar, nu_scalar)` must be autograd-compatible.
-#     - If `nu` or `rho` are vectors, they are used row-wise (one value per observation).
-#     - Returns shape (M,) via .squeeze(), matching the original behavior.
-#     """
-#     y = anp.asarray(y)
-#     M = y.shape[0]
-#     deriv = anp.empty((M, 1))
-
-#     rho_is_vec = hasattr(rho, "__len__")
-#     nu_is_vec  = hasattr(nu, "__len__")
-
-#     for m in range(M):
-#         rho_m = rho[m] if rho_is_vec else rho
-#         nu_m  = nu[m]  if nu_is_vec  else nu
-
-#         # Define a scalar function of nu to differentiate
-#         def scalar_loglik(nu_scalar):
-#             # keep df positive for stability (soft clip)
-#             nu_pos = anp.maximum(nu_scalar, 1e-8)
-#             ll = _log_likelihood_t(y[m:m+1], rho_m, nu_pos)
-#             ll = anp.asarray(ll)
-#             # if ll is an array, sum to get a scalar
-#             return anp.log(ll).sum()
-
-#         d_ll_d_nu = grad(scalar_loglik)
-#         deriv[m, 0] = d_ll_d_nu(nu_m)
-
-#     return np.asarray(deriv).squeeze()
-
-
-# def _derivative_1st_nu(y, rho, nu):
-#     """First derivative wrt nu for t copula using numerical differentiation"""
-#     M = y.shape[0]
-#     deriv = np.empty((M, 1), dtype=np.float64)
-#     eps = 1e-8  # Small epsilon for numerical differentiation
-
-#     for m in range(M):
-#         rho_m = rho[m] if hasattr(rho, '__len__') else rho
-#         nu_m = nu[m] if hasattr(nu, '__len__') else nu
-
-#         # Create parameter dictionaries for nu +/- epsilon
-#         nu1 = nu_m - eps
-#         nu2 = nu_m + eps
-
-#         # Calculate log-likelihood at nu +/- epsilon
-#         ll1 = np.log(_log_likelihood_t(y[m:m+1], rho_m, nu1))
-#         ll2 = np.log(_log_likelihood_t(y[m:m+1], rho_m, nu2))
-
-#         # Numerical derivative: (f(x+h) - f(x-h)) / (2*h)
-#         deriv[m] = (ll2 - ll1) / (2.0 * eps)
-
-#     return deriv.squeeze()
-
-
 def _derivative_2nd_rho(y, rho, nu):
     """Second derivative wrt rho for t copula"""
 
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)
 
     u = np.array([st.t.ppf(y_clipped[i, 0], df=nu[i]) for i in range(len(y))]).reshape(
@@ -768,31 +674,6 @@ def _derivative_2nd_nu(y, rho, nu):
     )
 
     return deriv.squeeze()
-
-
-# def _derivative_2nd_nu(y, rho, nu):
-#     """Second derivative wrt nu for t copula using numerical differentiation"""
-#     M = y.shape[0]
-#     deriv = np.empty((M, 1), dtype=np.float64)
-#     eps = 1e-8  # Small epsilon for numerical differentiation
-
-#     for m in range(M):
-#         rho_m = rho[m] if hasattr(rho, '__len__') else rho
-#         nu_m = nu[m] if hasattr(nu, '__len__') else nu
-
-#         # Create parameter values for nu +/- epsilon
-#         nu1 = nu_m - eps
-#         nu2 = nu_m + eps
-
-#         # Calculate log-likelihood at nu-eps, nu, and nu+eps
-#         ll1 = np.log(_log_likelihood_t(y[m:m+1], rho_m, nu1))
-#         ll2 = np.log(_log_likelihood_t(y[m:m+1], rho_m, nu_m))
-#         ll3 = np.log(_log_likelihood_t(y[m:m+1], rho_m, nu2))
-
-#         # Second derivative: (f(x+h) - 2*f(x) + f(x-h)) / h²
-#         deriv[m] = (ll3 - 2.0 * ll2 + ll1) / (eps * eps)
-
-#     return deriv.squeeze()
 
 
 # Make st.beta a function (alias to scipy.special.beta) so your function works unchanged
