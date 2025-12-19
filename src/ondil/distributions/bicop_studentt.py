@@ -217,12 +217,8 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         h = np.where((v == 0) | (u == 0), 0, np.nan)
         h = np.where(v == 1, u, h).reshape(-1, 1)
 
-        qt_u = np.array([st.t.ppf(u[i], df=nu[i]) for i in range(len(u))]).reshape(
-            -1, 1
-        )
-        qt_v = np.array([st.t.ppf(v[i], df=nu[i]) for i in range(len(v))]).reshape(
-            -1, 1
-        )
+        qt_u = st.t.ppf(u, df=nu + 1.0).reshape(-1, 1)
+        qt_v = st.t.ppf(v, df=nu).reshape(-1, 1)
 
         denom = np.sqrt((nu + qt_v**2) * (1 - rho**2) / (nu + 1))
         x = (qt_u - rho * qt_v) / denom
