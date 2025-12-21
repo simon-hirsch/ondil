@@ -79,3 +79,6 @@ class Poisson(ScipyMixin, Distribution):
 
     def initial_values(self, y: np.ndarray) -> np.ndarray:
         return (y + y.mean() / 2).reshape(-1, 1)
+
+    def constant_initial_values(self, y: np.ndarray) -> np.ndarray:
+        return np.full((y.shape[0], 1), y.mean())
