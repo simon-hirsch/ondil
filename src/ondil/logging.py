@@ -1,6 +1,5 @@
-from typing import Callable, Literal, Optional, Union, get_args
-from uuid import UUID
 import sys
+from typing import Literal, Optional, get_args
 
 from loguru._logger import Core as _Core, Logger as _Logger
 

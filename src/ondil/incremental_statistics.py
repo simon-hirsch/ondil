@@ -1,8 +1,8 @@
-import copy
 from dataclasses import dataclass
 
-from .gram import init_forget_vector
 import numpy as np
+
+from .gram import init_forget_vector
 
 
 @dataclass(frozen=True)
