@@ -284,7 +284,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         for outer_iteration in range(self.max_outer_iterations):
             message = (
                 f"Outer iteration {outer_iteration + 1}, "
-                f"deviance: {self._deviance_outer[outer_iteration, +1]:.3f}"
+                f"deviance: {self._deviance_outer[outer_iteration, -1]:.3f}"
             )
             logger.info(message)
 
