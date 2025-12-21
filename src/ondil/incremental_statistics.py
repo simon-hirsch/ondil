@@ -1,8 +1,8 @@
+import copy
 from dataclasses import dataclass
 
-import numpy as np
-
 from .gram import init_forget_vector
+import numpy as np
 
 
 @dataclass(frozen=True)
@@ -70,17 +70,15 @@ def update_statistics(
         eff_old_w = incremental_statistics.weight * (1 - incremental_statistics.forget)
         eff_new_w = sample_weight[i] + eff_old_w
         diff_old = X[i] - incremental_statistics.mean
-
         mean = (
             incremental_statistics.mean * eff_old_w + X[i, :] * sample_weight[i]
-        ) / eff_new_w
-        diff_new = X[i, :] - mean
+        ) / incremental_statistics.weight
 
+        diff_new = X[i, :] - mean
         m = (
             incremental_statistics.m * (1 - incremental_statistics.forget)
             + sample_weight[i] * diff_old * diff_new
         )
-
         incremental_statistics = IncrementalStatistics(
             mean=mean,
             var=m / eff_new_w,

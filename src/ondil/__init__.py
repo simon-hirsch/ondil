@@ -17,6 +17,7 @@ if find_spec("matplotlib") is not None:
     HAS_MPL = True
 
 from . import (
+    logging,
     base,
     diagnostics,
     distributions,
@@ -31,6 +32,8 @@ from . import (
     utils,
     warnings,
 )
+
+logging.set_log_level("INFO")
 
 __version__ = version("ondil")
 

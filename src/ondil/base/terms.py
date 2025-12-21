@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from .distribution import Distribution
+from ..logging import logger
 
 
 class Term(ABC):
@@ -103,9 +104,10 @@ class Term(ABC):
             self.remove = self.remove.union(mc_cols)
 
         if len(self.remove) > 0:
-            print(
+            logger.debug(
                 f"Removing columns due to zero variance: {sorted(list(zv_cols))}, "
-                f"multicollinearity: {sorted(list(mc_cols))}, total removed: {sorted(list(self.remove))}"
+                f"multicollinearity: {sorted(list(mc_cols))}, "
+                f"total removed: {sorted(list(self.remove))}"
             )
 
         return np.delete(X, sorted(list(self.remove)), axis=1)

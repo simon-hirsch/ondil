@@ -12,6 +12,7 @@ from ..distributions import Normal
 from ..gram import init_forget_vector
 from ..scaler import OnlineScaler
 from ..terms.linear_terms import LinearTerm
+from ..logging import logger
 
 if HAS_PANDAS:
     pass
@@ -208,7 +209,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                 f"deviance: {deviance_new:.3f}"
                 f" (improvement: {deviance_old - deviance_new:.3f})"
             )
-            self._print_message(message=message, level=2)
+            logger.info(message)
 
             if self._check_convergence(
                 old_deviance=deviance_old,
@@ -222,12 +223,12 @@ class OnlineStructuredAdditiveDistributionRegressor(
                     f"Deviance increased from {deviance_old:.3f} to {deviance_new:.3f}. "
                     f"Stopping inner optimization for param {param}."
                 )
-                self._print_message(message, level=2)
+                logger.info(message)
                 if step_decrease_counter < 5:
                     step_decrease_counter += 1
                     step = step / 2
                     message = f"Reducing step size to {step:.5f} and retrying."
-                    self._print_message(message, level=2)
+                    logger.debug(message)
                 else:
                     break
 
@@ -272,7 +273,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                 f"Outer iteration {outer_iteration + 1}, "
                 f"deviance: {self._deviance_outer[outer_iteration, +1]:.3f}"
             )
-            self._print_message(message, level=1)
+            logger.info(message)
 
             for param in range(self.distribution.n_params):
                 # We want to keep the old fitted values if deviance does not improve
@@ -318,7 +319,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                     f"param {param}, "
                     f"deviance: {self._deviance_outer[outer_iteration + 1, param]:.3f}"
                 )
-                self._print_message(message, level=1)
+                logger.info(message)
 
             if self._check_convergence(
                 old_deviance=self._deviance_outer[outer_iteration, -1],
@@ -360,6 +361,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         )
         self._deviance_final = result.deviance
         self.terms_ = result.terms
+        logger.success("Model fit completed.")
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -391,6 +393,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         )
         self.terms_.update(result.terms)
         self._deviance_final = result.deviance
+        logger.success("Model update completed.")
         return self
 
     def predict(
@@ -454,7 +457,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                 f"Outer iteration {outer_iteration + 1}, "
                 f"deviance: {self._deviance_outer[outer_iteration, +1]:.3f}"
             )
-            self._print_message(message, level=1)
+            logger.info(message)
 
             for param in range(self.distribution.n_params):
                 # We want to keep the old fitted values if deviance does not improve
@@ -498,7 +501,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                     f"param {param}, "
                     f"deviance: {self._deviance_outer[outer_iteration + 1, param]:.3f}"
                 )
-                self._print_message(message, level=1)
+                logger.info(message)
 
             if self._check_convergence(
                 old_deviance=self._deviance_outer[outer_iteration, -1],
@@ -593,7 +596,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                 f"deviance: {deviance_new:.3f}"
                 f" (improvement: {deviance_old - deviance_new:.3f})"
             )
-            self._print_message(message=message, level=2)
+            logger.info(message)
 
             if self._check_convergence(
                 old_deviance=deviance_old,
@@ -607,14 +610,17 @@ class OnlineStructuredAdditiveDistributionRegressor(
                     f"Deviance increased from {deviance_old:.3f} to {deviance_new:.3f}. "
                     f"Stopping inner optimization for param {param}."
                 )
-                self._print_message(message, level=2)
+                logger.info(message)
                 if step_decrease_counter < 5:
                     step_decrease_counter += 1
                     step = step / 2
                     message = f"Reducing step size to {step:.5f} and retrying."
-                    self._print_message(message, level=2)
+                    logger.info(message)
                     # Reset fitted values and terms
                 else:
+                    logger.info(
+                        "Maximum step size reductions reached. Stopping inner update."
+                    )
                     break
 
         return InnerFitResult(
