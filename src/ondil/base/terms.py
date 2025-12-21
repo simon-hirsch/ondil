@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from .distribution import Distribution
 from ..logging import logger
+from .distribution import Distribution
 
 
 class Term(ABC):

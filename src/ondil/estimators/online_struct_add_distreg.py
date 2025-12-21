@@ -10,9 +10,9 @@ from .. import HAS_PANDAS, HAS_POLARS
 from ..base import Distribution, EstimationMethod, OndilEstimatorMixin
 from ..distributions import Normal
 from ..gram import init_forget_vector
+from ..logging import logger
 from ..scaler import OnlineScaler
 from ..terms.linear_terms import LinearTerm
-from ..logging import logger
 
 if HAS_PANDAS:
     pass
