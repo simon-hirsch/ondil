@@ -20,6 +20,7 @@ class ScikitLearnEstimatorTerm(Term):
         self.features = features
 
     def _prepare_term(self):
+        self.method = self.sklearn_estimator.__class__.__name__
         return self
 
     def fit(

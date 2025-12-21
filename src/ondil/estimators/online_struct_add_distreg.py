@@ -100,8 +100,15 @@ class OnlineStructuredAdditiveDistributionRegressor(
             self.terms_ = copy.deepcopy(self.terms)
 
         for p in range(self.distribution.n_params):
+            methods = set()
             for t, term in enumerate(self.terms_[p]):
                 self.terms_[p][t] = term._prepare_term()
+                set.add(methods, self.terms_[p][t].method)
+            if len(methods) < len(self.terms_[p]):
+                logger.warning(
+                    f"Multiple terms with the same method for parameter {p}. "
+                    f"Consider combining terms of the same method into a single term for improved accuracy and performance."
+                )
 
     def _prepare_scaler(self):
         if self.scale_inputs:
