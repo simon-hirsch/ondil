@@ -5,6 +5,7 @@ import numpy as np
 from ..base import EstimationMethod
 from ..coordinate_descent import online_coordinate_descent_path
 from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
+from ..logging import logger
 
 
 class ElasticNetPath(EstimationMethod):
@@ -135,7 +136,7 @@ class ElasticNetPath(EstimationMethod):
         lambda_path = np.geomspace(
             lambda_max, lambda_max * self.lambda_eps, self.lambda_n
         )
-        print(kwargs.keys())
+        logger.debug(f"Got following kwargs: {kwargs.keys()}")
         regularization_weights = kwargs.get("regularization_weights", None)
 
         beta_path = np.zeros((self.lambda_n, x_gram.shape[0]))
@@ -160,7 +161,7 @@ class ElasticNetPath(EstimationMethod):
     def update_beta_path(self, x_gram, y_gram, beta_path, is_regularized, **kwargs):
         self._validate_bounds(x_gram=x_gram)
 
-        print(kwargs.keys())
+        logger.debug(f"Got following kwargs: {kwargs.keys()}")
         regularization_weights = kwargs.get("regularization_weights", None)
 
         lambda_max = self._get_lambda_max(

@@ -85,7 +85,13 @@ class OnlineStructuredAdditiveDistributionRegressor(
         self.verbose = verbose
 
     def _prepare_terms(self):
+        logger.trace(
+            "Preparing terms for fitting. Fitted terms will be stored in self.terms_",
+        )
         if self.terms is None:
+            logger.info(
+                "No terms specified. Using default linear terms for all distribution parameters."
+            )
             self.terms_ = {
                 p: [LinearTerm(features="all", method="ols")]
                 for p in range(self.distribution.n_params)
@@ -204,7 +210,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
             deviance_old = deviance_iteration[inner_iteration]
 
             message = (
-                f"  Inner iteration {inner_iteration + 1}, "
+                f"Inner iteration {inner_iteration + 1}, "
                 f"param {param}, "
                 f"deviance: {deviance_new:.3f}"
                 f" (improvement: {deviance_old - deviance_new:.3f})"
@@ -228,7 +234,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
                     step_decrease_counter += 1
                     step = step / 2
                     message = f"Reducing step size to {step:.5f} and retrying."
-                    logger.debug(message)
+                    logger.info(message)
                 else:
                     break
 
@@ -591,7 +597,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
             deviance_old = deviance_iteration[inner_iteration]
 
             message = (
-                f"  Inner iteration {inner_iteration + 1}, "
+                f"Inner iteration {inner_iteration + 1}, "
                 f"param {param}, "
                 f"deviance: {deviance_new:.3f}"
                 f" (improvement: {deviance_old - deviance_new:.3f})"
