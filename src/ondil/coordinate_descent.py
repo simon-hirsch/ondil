@@ -102,10 +102,6 @@ def online_coordinate_descent(
     return beta_now, i
 
 
-# @nb.njit([
-#     "(float64[:, :])(float64[:, :], float64[:], float64[:, :], float64[:], bool[:], str, float64, int64)",
-#     "(float32[:, :])(float32[:, :], float32[:], float32[:, :], float32[:], bool[:], str, float32, int32)",
-# ])
 @nb.njit()
 def online_coordinate_descent_path(
     x_gram: np.ndarray,
