@@ -2,14 +2,13 @@ from typing import Literal
 
 import numpy as np
 
-
-from ..logging import logger
 from ..base import EstimationMethod
 from ..coordinate_descent import (
-    online_coordinate_descent,
     linear_constrained_coordinate_descent,
+    online_coordinate_descent,
 )
 from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
+from ..logging import logger
 
 
 class Ridge(EstimationMethod):
