@@ -3,6 +3,9 @@ from typing import Literal, Tuple
 import numba as nb
 import numpy as np
 
+# TODO (SH): Linear constraint lasso needs to return the dual gap
+# TODO (SH): Add tests for linear constraint coordinate descent
+
 
 @nb.njit()
 def soft_threshold(value: float, threshold: float):

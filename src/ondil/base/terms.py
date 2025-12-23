@@ -76,7 +76,7 @@ class Term(ABC):
 
     def remove_problematic_columns(
         self,
-        X: np.ndarray,
+        X: np.ndarray | None,
     ) -> np.ndarray:
         """Remove both zero-variance and multicollinear columns from the design matrix X.
 
@@ -86,9 +86,8 @@ class Term(ABC):
         Returns:
             np.ndarray: The design matrix without problematic columns.
         """
-
-        # self.find_zero_variance_columns(X)
-        # self.find_multicollinear_columns(X)
+        if X is None:
+            return X
 
         self.remove = set()
         zv_cols = set()

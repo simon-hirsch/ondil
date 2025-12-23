@@ -69,7 +69,9 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
         fit_intercept: bool = True,
         forget: float = 0.0,
         is_regularized: bool = False,
-        regularize_intercept: None | bool = None,
+        regularize_intercept: None | bool = False,
+        constraint_matrix: np.ndarray | None = None,
+        constraint_vector: np.ndarray | None = None,
     ):
         super().__init__(
             fit_intercept=fit_intercept,
@@ -77,6 +79,8 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
             forget=forget,
             is_regularized=is_regularized,
             regularize_intercept=regularize_intercept,
+            constraint_matrix=constraint_matrix,
+            constraint_vector=constraint_vector,
         )
         self.effects = effects
 
