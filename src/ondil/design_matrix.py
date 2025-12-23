@@ -1,5 +1,7 @@
 import numpy as np
 
+from .logging import logger
+
 
 def add_intercept(X: np.ndarray):
     return np.hstack((np.ones((X.shape[0], 1)), X))
@@ -32,11 +34,18 @@ def make_lags(
     """
 
     if isinstance(lags, int):
-        lags = np.linspace(1, lags, lags, dtype=int).tolist()
+        logger.trace(f"Got integer lags, converting to list. Lags: {lags}")
+        lags = np.linspace(1, lags, lags, dtype=int)
+        logger.trace(f"Converted lags: {lags}")
     n_lags = len(lags)
 
+    if n_lags == 0:
+        logger.warning("No lags specified. Expect a crash.")
+    if np.any(lags < 1):
+        logger.warning("We have lags smaller than 1. Are you sure?")
+
     X = np.hstack([np.roll(y[:, None], i) for i in lags])
-    X[np.triu_indices(n_lags, k=1)] = np.mean(y)
+    X[np.triu_indices(n_lags, k=0)] = np.mean(y)
 
     return X
 
