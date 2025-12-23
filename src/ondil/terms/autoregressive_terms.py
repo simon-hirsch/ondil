@@ -304,6 +304,8 @@ class RegularizedJointEstimationTimeSeriesTerm(
         regularize_intercept: bool = False,
         weighted_regularization: bool = False,
         ic: str = "aic",
+        constraint_matrix: np.ndarray | None = None,
+        constraint_vector: np.ndarray | None = None,
     ):
         super().__init__(
             method=method,
@@ -313,6 +315,8 @@ class RegularizedJointEstimationTimeSeriesTerm(
             regularize_intercept=regularize_intercept,
             weighted_regularization=weighted_regularization,
             ic=ic,
+            constraint_matrix=constraint_matrix,
+            constraint_vector=constraint_vector,
         )
         self.effects = effects
 
