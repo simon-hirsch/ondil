@@ -2,6 +2,7 @@ from typing import Optional
 
 import numpy as np
 
+from ..logging import logger
 from ..base import EstimationMethod
 from ..gram import init_inverted_gram, init_y_gram, update_inverted_gram, update_y_gram
 
@@ -43,7 +44,11 @@ class OrdinaryLeastSquares(EstimationMethod):
         return update_y_gram(gram, X, y, forget=forget, w=weights)
 
     def fit_beta_path(
-        self, x_gram: np.ndarray, y_gram: np.ndarray, is_regularized: np.ndarray
+        self,
+        x_gram: np.ndarray,
+        y_gram: np.ndarray,
+        is_regularized: np.ndarray,
+        **kwargs,
     ) -> np.ndarray:
         return super().fit_beta_path(x_gram, y_gram, is_regularized)
 
@@ -53,6 +58,7 @@ class OrdinaryLeastSquares(EstimationMethod):
         y_gram: np.ndarray,
         beta_path: np.ndarray,
         is_regularized: np.ndarray,
+        **kwargs,
     ) -> np.ndarray:
         return super().update_beta_path(x_gram, y_gram, beta_path, is_regularized)
 
@@ -60,8 +66,11 @@ class OrdinaryLeastSquares(EstimationMethod):
         self,
         x_gram: np.ndarray,
         y_gram: np.ndarray,
-        is_regularized: Optional[np.ndarray] = None,
+        **kwargs,
     ) -> np.ndarray:
+        logger.debug(
+            f"Got following kwargs: {[*kwargs.keys()]}. RLS does not use kwargs."
+        )
         return (x_gram @ y_gram).squeeze(-1)
 
     def update_beta(
@@ -69,6 +78,9 @@ class OrdinaryLeastSquares(EstimationMethod):
         x_gram: np.ndarray,
         y_gram: np.ndarray,
         beta: np.ndarray,
-        is_regularized: Optional[np.ndarray] = None,
+        **kwargs,
     ) -> np.ndarray:
+        logger.debug(
+            f"Got following kwargs: {[*kwargs.keys()]}. RLS does not use kwargs."
+        )
         return (x_gram @ y_gram).squeeze(-1)
