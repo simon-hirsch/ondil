@@ -5,6 +5,7 @@ import numpy as np
 from ..base import EstimationMethod
 from ..coordinate_descent import online_coordinate_descent_path
 from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
+from ..logging import logger
 
 
 class ElasticNetPath(EstimationMethod):
@@ -48,7 +49,7 @@ class ElasticNetPath(EstimationMethod):
         selection: Literal["cyclic", "random"] = "cyclic",
         beta_lower_bound: np.ndarray | None = None,
         beta_upper_bound: np.ndarray | None = None,
-        regularization_weights: np.ndarray | None = None,
+        # regularization_weights: np.ndarray | None = None,
         tolerance: float = 1e-4,
         max_iterations: int = 1000,
     ):
@@ -84,7 +85,7 @@ class ElasticNetPath(EstimationMethod):
         self.selection = selection
         self.tolerance = tolerance
         self.max_iterations = max_iterations
-        self.regularization_weights = regularization_weights
+        # self.regularization_weights = regularization_weights
         self._path_length = self.lambda_n
 
     @staticmethod
@@ -127,7 +128,7 @@ class ElasticNetPath(EstimationMethod):
     def update_y_gram(gram, X, y, weights, forget):
         return update_y_gram(gram, X, y, forget=forget, w=weights)
 
-    def fit_beta_path(self, x_gram, y_gram, is_regularized):
+    def fit_beta_path(self, x_gram, y_gram, is_regularized, **kwargs):
         self._validate_bounds(x_gram=x_gram)
         lambda_max = self._get_lambda_max(
             x_gram=x_gram, y_gram=y_gram, is_regularized=is_regularized
@@ -135,6 +136,9 @@ class ElasticNetPath(EstimationMethod):
         lambda_path = np.geomspace(
             lambda_max, lambda_max * self.lambda_eps, self.lambda_n
         )
+        logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
+        regularization_weights = kwargs.get("regularization_weights", None)
+
         beta_path = np.zeros((self.lambda_n, x_gram.shape[0]))
         beta_path, _ = online_coordinate_descent_path(
             x_gram=x_gram,
@@ -147,14 +151,19 @@ class ElasticNetPath(EstimationMethod):
             beta_lower_bound=self.beta_lower_bound,
             beta_upper_bound=self.beta_upper_bound,
             which_start_value=self.start_value_initial,
-            regularization_weights=self.regularization_weights,
+            regularization_weights=regularization_weights,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,
         )
         return beta_path
 
-    def update_beta_path(self, x_gram, y_gram, beta_path, is_regularized):
+    def update_beta_path(self, x_gram, y_gram, beta_path, is_regularized, **kwargs):
+        self._validate_bounds(x_gram=x_gram)
+
+        logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
+        regularization_weights = kwargs.get("regularization_weights", None)
+
         lambda_max = self._get_lambda_max(
             x_gram=x_gram, y_gram=y_gram, is_regularized=is_regularized
         )
@@ -172,15 +181,15 @@ class ElasticNetPath(EstimationMethod):
             beta_lower_bound=self.beta_lower_bound,
             beta_upper_bound=self.beta_upper_bound,
             which_start_value=self.start_value_update,
-            regularization_weights=self.regularization_weights,
+            regularization_weights=regularization_weights,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,
         )
         return beta_path
 
-    def fit_beta(self, x_gram, y_gram, is_regularized):
+    def fit_beta(self, x_gram, y_gram, **kwargs):
         pass
 
-    def update_beta(self, x_gram, y_gram, is_regularized):
+    def update_beta(self, x_gram, y_gram, **kwargs):
         pass
