@@ -1,10 +1,8 @@
-from typing import Optional
-
 import numpy as np
 
-from ..logging import logger
 from ..base import EstimationMethod
 from ..gram import init_inverted_gram, init_y_gram, update_inverted_gram, update_y_gram
+from ..logging import logger
 
 
 class OrdinaryLeastSquares(EstimationMethod):
