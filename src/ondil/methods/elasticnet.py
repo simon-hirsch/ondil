@@ -15,7 +15,9 @@ class ElasticNetPath(EstimationMethod):
     We automatically calculate the maximum regularization strength for which all (not-regularized) coefficients are 0.
     The lower end of the lambda grid is defined as $$\\lambda_\min = \\lambda_\max * \\varepsilon_\\lambda.$$
 
-    The elastic net method is a combination of LASSO and Ridge regression. Parameter $\alpha$ controls the balance between LASSO and Ridge. Thereby, $\alpha=0$ corresponds to Ridge regression and $\alpha=1$ corresponds to LASSO regression.
+    The elastic net method is a combination of LASSO and Ridge regression. Parameter $\alpha$ controls the balance
+    between LASSO and Ridge. Thereby, $\alpha=0$ corresponds to Ridge regression and $\alpha=1$ corresponds to LASSO
+            regression.
 
     We allow to pass user-defined lower and upper bounds for the coefficients.
     The coefficient bounds must be an `numpy` array of the length of `X` respectively of the number of variables in the
@@ -49,11 +51,22 @@ class ElasticNetPath(EstimationMethod):
         beta_lower_bound: np.ndarray | None = None,
         beta_upper_bound: np.ndarray | None = None,
         regularization_weights: np.ndarray | None = None,
+        auto_regularization_weights: bool = False,
         tolerance: float = 1e-4,
         max_iterations: int = 1000,
     ):
-        """
+        r"""
         Initializes the ElasticNet method with the specified parameters.
+
+
+        !!! note
+            For automatic regularization weights, we compute the standard deviation of each feature based on the Gram
+            matrix. We assume that an intercept is being fitted, then we can recover the variance of each feature
+            from the Gram matrix by using the decomposition as:
+            $G = X^TX = \left( \matrix{N & S^T \\ S & M}\right)$
+            and the formula is
+            $\sigma_j = \sqrt{\frac{1}{N} \left( M_{jj} - \frac{S_j^2}{N} \right)}$
+            where $M_{jj}$ is the j-th diagonal element of the Gram matrix and $S_j$ is the sum of the j-th feature.
 
         Args:
             alpha (float): Mixing parameter between the L1 and L2 loss. Alpha = 0 corresponds to the Rigde, Alpha = 1 corresponds to the LASSO.
@@ -65,9 +78,12 @@ class ElasticNetPath(EstimationMethod):
             selection (Literal["cyclic", "random"]): Method to select features during the path. Default is "cyclic".
             beta_lower_bound (np.ndarray | None): Lower bound for the coefficients. Default is None.
             beta_upper_bound (np.ndarray | None): Upper bound for the coefficients. Default is None.
+            regularization_weights (np.ndarray | None): Weights for the regularization term. Default is None.
+            auto_regularization_weights (bool): Whether to automatically compute regularization weights based on the data. Default is False. Note that this requires fitting an intercept.
             tolerance (float): Tolerance for the optimization. Default is 1e-4.
             max_iterations (int): Maximum number of iterations for the optimization. Default is 1000.
         """
+
         super().__init__(
             _path_based_method=True,
             _accepts_bounds=True,
@@ -85,22 +101,29 @@ class ElasticNetPath(EstimationMethod):
         self.tolerance = tolerance
         self.max_iterations = max_iterations
         self.regularization_weights = regularization_weights
+        self.auto_regularization_weights = auto_regularization_weights
         self._path_length = self.lambda_n
 
-    @staticmethod
-    def _get_lambda_max(x_gram, y_gram, is_regularized):
+    def _get_lambda_max(self, x_gram, y_gram, is_regularized):
         if np.all(is_regularized):
-            lambda_max = np.max(y_gram)
+            abs_gram = np.abs(y_gram)
         elif np.sum(~is_regularized) == 1:
             intercept = y_gram[~is_regularized] / np.diag(x_gram)[~is_regularized]
-            lambda_max = np.max(
-                np.abs(y_gram.flatten() - x_gram[~is_regularized, :] * intercept)
-            )
+            abs_gram = np.abs(y_gram.flatten() - x_gram[~is_regularized, :] * intercept)
         else:
             raise NotImplementedError(
                 "More than one not regularized value is currently not supported."
             )
-        return lambda_max
+
+        if self.auto_regularization_weights or (
+            self.regularization_weights is not None
+        ):
+            weights = self._calcuate_regularization_weights(x_gram=x_gram)
+            abs_gram = abs_gram.squeeze(0)[is_regularized] / np.abs(
+                weights[is_regularized]
+            )
+
+        return np.max(abs_gram)
 
     def _validate_bounds(self, x_gram: np.ndarray) -> None:
         J = x_gram.shape[1]
@@ -110,6 +133,18 @@ class ElasticNetPath(EstimationMethod):
         if self.beta_upper_bound is not None:
             if len(self.beta_upper_bound) != J:
                 raise ValueError("Upper bound does not have correct length")
+
+    def _calcuate_regularization_weights(self, x_gram: np.ndarray) -> np.ndarray:
+        if self.auto_regularization_weights:
+            N = x_gram[0, 0]
+            vec_s = x_gram[1:, 0]
+            vec_g = np.diag(x_gram[1:, 1:])
+            variance = 1 / N * (vec_g - (vec_s**2) / N)
+            reg_weights = np.concat(([1], np.sqrt(variance)))
+        else:
+            reg_weights = self.regularization_weights
+
+        return reg_weights
 
     @staticmethod
     def init_x_gram(X, weights, forget):
@@ -129,12 +164,20 @@ class ElasticNetPath(EstimationMethod):
 
     def fit_beta_path(self, x_gram, y_gram, is_regularized):
         self._validate_bounds(x_gram=x_gram)
+        weights = self._calcuate_regularization_weights(x_gram=x_gram)
+
+        if self.auto_regularization_weights:
+            reg_weights = weights
+        else:
+            reg_weights = self.regularization_weights
+
         lambda_max = self._get_lambda_max(
             x_gram=x_gram, y_gram=y_gram, is_regularized=is_regularized
         )
         lambda_path = np.geomspace(
             lambda_max, lambda_max * self.lambda_eps, self.lambda_n
         )
+
         beta_path = np.zeros((self.lambda_n, x_gram.shape[0]))
         beta_path, _ = online_coordinate_descent_path(
             x_gram=x_gram,
@@ -147,7 +190,7 @@ class ElasticNetPath(EstimationMethod):
             beta_lower_bound=self.beta_lower_bound,
             beta_upper_bound=self.beta_upper_bound,
             which_start_value=self.start_value_initial,
-            regularization_weights=self.regularization_weights,
+            regularization_weights=reg_weights,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,
@@ -161,6 +204,15 @@ class ElasticNetPath(EstimationMethod):
         lambda_path = np.geomspace(
             lambda_max, lambda_max * self.lambda_eps, self.lambda_n
         )
+        if self.auto_regularization_weights:
+            N = x_gram[0, 0]
+            vec_s = x_gram[1:, 0]
+            vec_g = np.diag(x_gram[1:, 1:])
+            variance = 1 / N * (vec_g - (vec_s**2) / N)
+            reg_weights = np.sqrt(variance)
+        else:
+            reg_weights = self.regularization_weights
+
         beta_path, _ = online_coordinate_descent_path(
             x_gram=x_gram,
             y_gram=y_gram.squeeze(-1),
@@ -172,7 +224,7 @@ class ElasticNetPath(EstimationMethod):
             beta_lower_bound=self.beta_lower_bound,
             beta_upper_bound=self.beta_upper_bound,
             which_start_value=self.start_value_update,
-            regularization_weights=self.regularization_weights,
+            regularization_weights=reg_weights,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,
