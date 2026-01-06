@@ -69,7 +69,7 @@ class ElasticNetPath(EstimationMethod):
             where $M_{jj}$ is the j-th diagonal element of the Gram matrix and $S_j$ is the sum of the j-th feature.
 
         Args:
-            alpha (float): Mixing parameter between the L1 and L2 loss. Alpha = 0 corresponds to the Rigde, Alpha = 1 corresponds to the LASSO.
+            alpha (float): Mixing parameter between the L1 and L2 loss. Alpha = 0 corresponds to the Ridge, Alpha = 1 corresponds to the LASSO.
             lambda_n (int): Number of lambda values to use in the path. Default is 100.
             lambda_eps (float): Minimum lambda value as a fraction of the maximum lambda. Default is 1e-4.
             early_stop (int): Early stopping criterion. Will stop if the number of non-zero parameters is reached. Default is 0 (no early stopping).
