@@ -40,6 +40,7 @@ class LassoPath(ElasticNetPath):
             "previous_lambda", "previous_fit", "average"
         ] = "previous_fit",
         selection: Literal["cyclic", "random"] = "cyclic",
+        auto_regularization_weights: bool = False,
         beta_lower_bound: np.ndarray | None = None,
         beta_upper_bound: np.ndarray | None = None,
         tolerance: float = 1e-4,
@@ -55,6 +56,7 @@ class LassoPath(ElasticNetPath):
             start_value_initial (Literal["previous_lambda", "previous_fit", "average"]): Method to initialize the start value for the first lambda. Default is "previous_lambda".
             start_value_update (Literal["previous_lambda", "previous_fit", "average"]): Method to update the start value for subsequent lambdas. Default is "previous_fit".
             selection (Literal["cyclic", "random"]): Method to select features during the path. Default is "cyclic".
+            auto_regularization_weights (bool): Whether to automatically compute regularization weights. Default is False.
             beta_lower_bound (np.ndarray | None): Lower bound for the coefficients. Default is None.
             beta_upper_bound (np.ndarray | None): Upper bound for the coefficients. Default is None.
             tolerance (float): Tolerance for the optimization. Default is 1e-4.
@@ -71,5 +73,6 @@ class LassoPath(ElasticNetPath):
             beta_lower_bound=beta_lower_bound,
             beta_upper_bound=beta_upper_bound,
             tolerance=tolerance,
+            auto_regularization_weights=auto_regularization_weights,
             max_iterations=max_iterations,
         )
