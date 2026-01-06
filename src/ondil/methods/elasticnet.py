@@ -140,7 +140,7 @@ class ElasticNetPath(EstimationMethod):
             vec_s = x_gram[1:, 0]
             vec_g = np.diag(x_gram[1:, 1:])
             variance = 1 / N * (vec_g - (vec_s**2) / N)
-            reg_weights = np.concat(([1], np.sqrt(variance)))
+            reg_weights = np.concatenate(([1], np.sqrt(variance)))
         else:
             reg_weights = self.regularization_weights
 
