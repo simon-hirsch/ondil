@@ -23,4 +23,4 @@ gist.githubusercontent*
 .envrc
 default.nix
 *.vscode
-.vsls.json
+*.vsls.json
