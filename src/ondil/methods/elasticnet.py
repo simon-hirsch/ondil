@@ -118,7 +118,7 @@ class ElasticNetPath(EstimationMethod):
         if self.auto_regularization_weights or (
             self.regularization_weights is not None
         ):
-            weights = self._calcuate_regularization_weights(x_gram=x_gram)
+            weights = self._calculate_regularization_weights(x_gram=x_gram)
             abs_gram = abs_gram.squeeze(0)[is_regularized] / np.abs(
                 weights[is_regularized]
             )
@@ -134,7 +134,7 @@ class ElasticNetPath(EstimationMethod):
             if len(self.beta_upper_bound) != J:
                 raise ValueError("Upper bound does not have correct length")
 
-    def _calcuate_regularization_weights(self, x_gram: np.ndarray) -> np.ndarray:
+    def _calculate_regularization_weights(self, x_gram: np.ndarray) -> np.ndarray:
         if self.auto_regularization_weights:
             N = x_gram[0, 0]
             vec_s = x_gram[1:, 0]
@@ -164,7 +164,7 @@ class ElasticNetPath(EstimationMethod):
 
     def fit_beta_path(self, x_gram, y_gram, is_regularized):
         self._validate_bounds(x_gram=x_gram)
-        weights = self._calcuate_regularization_weights(x_gram=x_gram)
+        weights = self._calculate_regularization_weights(x_gram=x_gram)
 
         if self.auto_regularization_weights:
             reg_weights = weights
