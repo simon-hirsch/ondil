@@ -74,8 +74,8 @@ def test_distribution_derivatives(distribution):
     for i in range(distribution.n_params):
         param_names = ["m", "d", "v", "t"]
         if i < len(param_names):
-            derivative_mapping[f"d2ld{param_names[i]}2"] = (
-                lambda i=i: distribution.dl2_dp2(y, theta=theta, param=i)
+            derivative_mapping[f"d2ld{param_names[i]}2"] = lambda i=i: (
+                distribution.dl2_dp2(y, theta=theta, param=i)
             )
 
     # Second derivatives (cross terms)
@@ -91,10 +91,8 @@ def test_distribution_derivatives(distribution):
 
     for name1, name2, idx1, idx2 in cross_derivatives:
         if idx1 < distribution.n_params and idx2 < distribution.n_params:
-            derivative_mapping[f"d2ld{name1}d{name2}"] = (
-                lambda idx1=idx1, idx2=idx2: distribution.dl2_dpp(
-                    y, theta=theta, params=(idx1, idx2)
-                )
+            derivative_mapping[f"d2ld{name1}d{name2}"] = lambda idx1=idx1, idx2=idx2: (
+                distribution.dl2_dpp(y, theta=theta, params=(idx1, idx2))
             )
 
     # Compare R and Python derivatives - only for available derivatives
