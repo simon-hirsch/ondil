@@ -17,7 +17,7 @@ class ElasticNetPath(EstimationMethod):
 
     The elastic net method is a combination of LASSO and Ridge regression. Parameter $\alpha$ controls the balance
     between LASSO and Ridge. Thereby, $\alpha=0$ corresponds to Ridge regression and $\alpha=1$ corresponds to LASSO
-            regression.
+    regression.
 
     We allow to pass user-defined lower and upper bounds for the coefficients.
     The coefficient bounds must be an `numpy` array of the length of `X` respectively of the number of variables in the
