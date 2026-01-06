@@ -164,10 +164,9 @@ class ElasticNetPath(EstimationMethod):
 
     def fit_beta_path(self, x_gram, y_gram, is_regularized):
         self._validate_bounds(x_gram=x_gram)
-        weights = self._calculate_regularization_weights(x_gram=x_gram)
 
         if self.auto_regularization_weights:
-            reg_weights = weights
+            reg_weights = self._calculate_regularization_weights(x_gram=x_gram)
         else:
             reg_weights = self.regularization_weights
 
@@ -205,11 +204,7 @@ class ElasticNetPath(EstimationMethod):
             lambda_max, lambda_max * self.lambda_eps, self.lambda_n
         )
         if self.auto_regularization_weights:
-            N = x_gram[0, 0]
-            vec_s = x_gram[1:, 0]
-            vec_g = np.diag(x_gram[1:, 1:])
-            variance = 1 / N * (vec_g - (vec_s**2) / N)
-            reg_weights = np.sqrt(variance)
+            reg_weights = self._calculate_regularization_weights(x_gram=x_gram)
         else:
             reg_weights = self.regularization_weights
 
