@@ -1075,7 +1075,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                             and (outer_iteration == 0)
                             and not issubclass(self.distribution.__class__, CopulaMixin)
                         ):
-                            theta[a] = self.distribution.set_initial_guess(theta[a], p)
+                            theta[a] = self.distribution.set_initial_guess(y, theta[a], p)
 
                         eta = self.distribution.link_function(theta[a][p], p)
                         eta = self.distribution.cube_to_flat(eta, param=p)
@@ -1887,7 +1887,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                             and (outer_iteration == 0)
                             and not issubclass(self.distribution.__class__, CopulaMixin)
                         ):
-                            theta[a] = self.distribution.set_initial_guess(theta[a], p)
+                            theta[a] = self.distribution.set_initial_guess(y, theta[a], p)
 
                         eta = self.distribution.link_function(theta[a][p], p)
                         eta = self.distribution.cube_to_flat(eta, param=p)
