@@ -90,6 +90,7 @@ class Ridge(EstimationMethod):
         self._validate_bounds(x_gram=x_gram)
 
         # beta = (x_gram @ y_gram).squeeze(-1)
+        regularization_weights = kwargs.get("regularization_weights", None)
 
         if self.start_beta is not None:
             # Use user-defined start value
@@ -118,6 +119,7 @@ class Ridge(EstimationMethod):
             regularization=self.lambda_reg,
             is_regularized=is_regularized,
             alpha=0.0,
+            regularization_weights=regularization_weights,
             beta_lower_bound=self.beta_lower_bound,
             beta_upper_bound=self.beta_upper_bound,
             selection=self.selection,
@@ -127,6 +129,7 @@ class Ridge(EstimationMethod):
         return beta
 
     def update_beta(self, x_gram, y_gram, beta, is_regularized, **kwargs):
+        regularization_weights = kwargs.get("regularization_weights", None)
         beta, _ = online_coordinate_descent(
             x_gram=x_gram,
             y_gram=y_gram.squeeze(-1),
@@ -136,6 +139,7 @@ class Ridge(EstimationMethod):
             is_regularized=is_regularized,
             beta_lower_bound=self.beta_lower_bound,
             beta_upper_bound=self.beta_upper_bound,
+            regularization_weights=regularization_weights,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,
