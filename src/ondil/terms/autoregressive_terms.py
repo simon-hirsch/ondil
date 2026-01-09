@@ -672,7 +672,7 @@ class LaggedResidual(TimeSeriesFeature):
             state.memory_fitted_values,
             fitted_values,
         ))
-        residual = (target - distribution.mean(fv)) ** 2
+        residual = target - distribution.mean(fv)
 
         X_mat = make_lags(
             y=residual,
