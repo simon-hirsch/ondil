@@ -86,7 +86,7 @@ class Ridge(EstimationMethod):
     def update_y_gram(gram, X, y, weights, forget):
         return update_y_gram(gram, X, y, forget=forget, w=weights)
 
-    def fit_beta(self, x_gram, y_gram, is_regularized):
+    def fit_beta(self, x_gram, y_gram, is_regularized, **kwargs):
         self._validate_bounds(x_gram=x_gram)
 
         # beta = (x_gram @ y_gram).squeeze(-1)
@@ -126,7 +126,7 @@ class Ridge(EstimationMethod):
         )
         return beta
 
-    def update_beta(self, x_gram, y_gram, beta, is_regularized):
+    def update_beta(self, x_gram, y_gram, beta, is_regularized, **kwargs):
         beta, _ = online_coordinate_descent(
             x_gram=x_gram,
             y_gram=y_gram.squeeze(-1),
@@ -142,10 +142,10 @@ class Ridge(EstimationMethod):
         )
         return beta
 
-    def fit_beta_path(self, x_gram, y_gram, is_regularized):
+    def fit_beta_path(self, x_gram, y_gram, is_regularized, **kwargs):
         return super().fit_beta_path(x_gram, y_gram, is_regularized)
 
-    def update_beta_path(self, x_gram, y_gram, beta_path, is_regularized):
+    def update_beta_path(self, x_gram, y_gram, beta_path, is_regularized, **kwargs):
         return super().update_beta_path(x_gram, y_gram, beta_path, is_regularized)
 
 
