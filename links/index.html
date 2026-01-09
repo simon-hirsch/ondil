@@ -1,0 +1,2464 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../distributions/">
+      
+      
+        <link rel="next" href="../coordinate_descent/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Link Functions - ondil: Online Distributional Learning</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#link-functions" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="ondil: Online Distributional Learning" class="md-header__button md-logo" aria-label="ondil: Online Distributional Learning" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            ondil: Online Distributional Learning
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Link Functions
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="ondil: Online Distributional Learning" class="md-nav__button md-logo" aria-label="ondil: Online Distributional Learning" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    ondil: Online Distributional Learning
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modeling_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tips & Tricks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../estimators_and_methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estimators and Methods
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../estimators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estimators
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Methods
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scaler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Preprocessing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../distributions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distributions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Link Functions
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Link Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#link-functions_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Link functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview-of-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview of Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shifted-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shifted Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#base-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base Class
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LinkFunction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LinkFunction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.link_support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        link_support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.link" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        link
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.inverse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        inverse
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.link_derivative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        link_derivative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.link_second_derivative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        link_second_derivative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.inverse_derivative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        inverse_derivative
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.Identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#log-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log-Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.Log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.LogShiftValue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LogShiftValue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.LogShiftTwo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LogShiftTwo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.LogIdent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LogIdent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LogIdent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logit-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logit Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.Logit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#square-root-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Square Root Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.Sqrt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sqrt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.SqrtShiftValue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SqrtShiftValue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.SqrtShiftTwo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SqrtShiftTwo
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SqrtShiftTwo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inverse-softplus-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inverse SoftPlus Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.InverseSoftPlus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InverseSoftPlus
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.InverseSoftPlusShiftValue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InverseSoftPlusShiftValue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.InverseSoftPlusShiftTwo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InverseSoftPlusShiftTwo
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coordinate_descent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coordinate Descent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../diagnostics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diagnostics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gram/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gramian Matrix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model_selection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Selection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multivariate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multivariate Distributional Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/simon-hirsch/ondil/issues" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issues [Github]
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/simon-hirsch/ondil/tree/main" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Source [Github]
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/simon-hirsch/ondil/tree/main?tab=MIT-1-ov-file#readme" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Licence [Github]
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#link-functions_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Link functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview-of-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview of Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shifted-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shifted Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#base-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base Class
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LinkFunction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LinkFunction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.link_support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        link_support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.link" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        link
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.inverse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        inverse
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.link_derivative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        link_derivative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.link_second_derivative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        link_second_derivative
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.base.LinkFunction.inverse_derivative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        inverse_derivative
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.Identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identity
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#log-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log-Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.Log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.LogShiftValue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LogShiftValue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.LogShiftTwo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LogShiftTwo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.LogIdent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LogIdent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LogIdent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logit-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logit Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.Logit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#square-root-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Square Root Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.Sqrt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sqrt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.SqrtShiftValue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SqrtShiftValue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.SqrtShiftTwo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SqrtShiftTwo
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SqrtShiftTwo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inverse-softplus-link-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inverse SoftPlus Link Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.InverseSoftPlus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InverseSoftPlus
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.InverseSoftPlusShiftValue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InverseSoftPlusShiftValue
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.links.InverseSoftPlusShiftTwo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InverseSoftPlusShiftTwo
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="link-functions">Link functions</h1>
+<h2 id="link-functions_1">Link functions</h2>
+<p>A link function <span class="arithmatex">\(g(x)\)</span> is a smooth, monotonic function of <span class="arithmatex">\(x\)</span>. </p>
+<p>For all link functions, we implement </p>
+<ul>
+<li>the link <span class="arithmatex">\(g(x)\)</span></li>
+<li>the inverse <span class="arithmatex">\(g^{-1}(x)\)</span></li>
+<li>the derivative of the link function <span class="arithmatex">\(\frac{\partial g(x)}{\partial x}\)</span>.</li>
+<li>the first derivative <em>of the inverse</em> of the link function <span class="arithmatex">\(\frac{\partial g(x)^{-1}}{\partial x}\)</span>. The choice of the inverse is justified by Equation (7) in Hirsch, Berrisch &amp; Ziel (<a href="https://github.com/simon-hirsch/ondil/blob/main/paper.pdf">2024</a>). </li>
+</ul>
+<p>The link functions implemented in <code>ondil</code> implemenent these as class methods each. Currently, we have implemented the identity-link, log-link and  shifted log-link functions.</p>
+<h2 id="overview-of-link-functions">Overview of Link Functions</h2>
+<table>
+<thead>
+<tr>
+<th>Link Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Identity</code></td>
+<td>Implements the identity link function <span class="arithmatex">\(g(x) = x\)</span>.</td>
+</tr>
+<tr>
+<td><code>Log</code></td>
+<td>Implements the logarithmic link function <span class="arithmatex">\(g(x) = \log(x)\)</span>.</td>
+</tr>
+<tr>
+<td><code>LogShiftValue</code></td>
+<td>Log link function with a shift value added to the inverse transformation.</td>
+</tr>
+<tr>
+<td><code>LogShiftTwo</code></td>
+<td>Log link function ensuring <span class="arithmatex">\(\hat{\theta} &gt; 2\)</span>.</td>
+</tr>
+<tr>
+<td><code>LogIdent</code></td>
+<td>Combines identity and log transformations.</td>
+</tr>
+<tr>
+<td><code>Logit</code></td>
+<td>Implements the logit link function <span class="arithmatex">\(g(x) = \log(x/(1-x))\)</span>.</td>
+</tr>
+<tr>
+<td><code>Sqrt</code></td>
+<td>Implements the square root link function <span class="arithmatex">\(g(x) = \sqrt{x}\)</span>.</td>
+</tr>
+<tr>
+<td><code>SqrtShiftValue</code></td>
+<td>Square root link function with a shift value added to the inverse transformation.</td>
+</tr>
+<tr>
+<td><code>SqrtShiftTwo</code></td>
+<td>Square root link function ensuring <span class="arithmatex">\(\hat{\theta} &gt; 2\)</span>.</td>
+</tr>
+<tr>
+<td><code>InverseSoftPlus</code></td>
+<td>Implements the inverse softplus link function.</td>
+</tr>
+<tr>
+<td><code>InverseSoftPlusShiftValue</code></td>
+<td>Inverse softplus link function with a shift value added to the inverse transformation.</td>
+</tr>
+<tr>
+<td><code>InverseSoftPlusShiftTwo</code></td>
+<td>Inverse softplus link function ensuring <span class="arithmatex">\(\hat{\theta} &gt; 2\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="shifted-link-functions">Shifted Link Functions</h2>
+<p>Some link functions implement <em>shifted</em> versions. The shifted link function is implemented in the sense that the shift is added to the inverse transformation. This way, we can ensure that distribution parameters can be modelled on the continuous space of the <span class="arithmatex">\(\eta = g(\theta)\)</span>, but in the inverse transform fullfill certain additional constraints. A common example is the <span class="arithmatex">\(t\)</span> distribution, where we can use a <code>LogShift2</code> or <code>SqrtShift2Link</code> to ensure that <span class="arithmatex">\(\hat{\theta} = g^-1(\eta) &gt; 2\)</span> and the variance exists.</p>
+<h2 id="base-class">Base Class</h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.base.LinkFunction" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.base.LinkFunction</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="abc.ABC">ABC</span></code></p>
+
+
+
+        <p>The base class for the link functions.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="ondil.base.LinkFunction.link_support" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">link_support</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">link_support</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The support of the distribution.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.base.LinkFunction.link" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">link</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">link</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the Link</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.base.LinkFunction.inverse" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">inverse</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">inverse</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the inverse of the link function</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.base.LinkFunction.link_derivative" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">link_derivative</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">link_derivative</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the first derivative of the link function</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.base.LinkFunction.link_second_derivative" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">link_second_derivative</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">link_second_derivative</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the second derivative for the link function</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.base.LinkFunction.inverse_derivative" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">inverse_derivative</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">inverse_derivative</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the first derivative for the inverse link function</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="api-reference">API Reference</h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.Identity" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.Identity</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.base.LinkFunction" href="#ondil.base.LinkFunction">LinkFunction</a></code></p>
+
+
+
+        <p>The identity link function.</p>
+<p>The identity link is defined as <span class="arithmatex">\(g(x) = x\)</span>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h3 id="log-link-functions">Log-Link Functions</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.Log" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.Log</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.base.LinkFunction" href="#ondil.base.LinkFunction">LinkFunction</a></code></p>
+
+
+
+        <p>The log-link function.</p>
+<p>The log-link function is defined as <span class="arithmatex">\(g(x) = \log(x)\)</span>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.LogShiftValue" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.LogShiftValue</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.base.LinkFunction" href="#ondil.base.LinkFunction">LinkFunction</a></code></p>
+
+
+
+        <p>The Log-Link function shifted to a value <span class="arithmatex">\(v\)</span>.</p>
+<p>This link function is defined as <span class="arithmatex">\(g(x) = \log(x - v)\)</span>. It can be used
+to ensure that certain distribution paramters don't fall below lower
+bounds, e.g. ensuring that the degrees of freedom of a Student's t distribtuion
+don't fall below 2, hence ensuring that the variance exists.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.LogShiftTwo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.LogShiftTwo</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.links.LogShiftValue (ondil.links.loglinks.LogShiftValue)" href="#ondil.links.LogShiftValue">LogShiftValue</a></code></p>
+
+
+
+        <p>The Log-Link function shifted to 2.</p>
+<p>This link function is defined as <span class="arithmatex">\(g(x) = \log(x - 2)\)</span>. It can be used
+to ensure that certain distribution paramters don't fall below lower
+bounds, e.g. ensuring that the degrees of freedom of a Student's t distribtuion
+don't fall below 2, hence ensuring that the variance exists.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.LogIdent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.LogIdent</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.base.LinkFunction" href="#ondil.base.LinkFunction">LinkFunction</a></code></p>
+
+
+
+        <p>The Logident Link function.</p>
+<p>The LogIdent Link function has been introduced by <a href="https://arxiv.org/pdf/2005.01365">Narajewski &amp; Ziel 2020</a> and can be
+used to avoid the exponential inverse for large values while keeping the log-behaviour in small ranges. This can stabilize
+the estimation procedure.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h3 id="logit-link-functions">Logit Link Functions</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.Logit" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.Logit</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.base.LinkFunction" href="#ondil.base.LinkFunction">LinkFunction</a></code></p>
+
+
+
+        <p>The Logit Link function.</p>
+<p>The logit-link function is defined as <span class="arithmatex">\(g(x) = \log (x/ (1-x))\)</span>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h3 id="square-root-link-functions">Square Root Link Functions</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.Sqrt" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.Sqrt</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.base.LinkFunction" href="#ondil.base.LinkFunction">LinkFunction</a></code></p>
+
+
+
+        <p>The square root Link function.</p>
+<p>The square root link function is defined as $<span class="arithmatex">\(g(x) = \sqrt(x)\)</span>$.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.SqrtShiftValue" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.SqrtShiftValue</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.base.LinkFunction" href="#ondil.base.LinkFunction">LinkFunction</a></code></p>
+
+
+
+        <p>The Sqrt-Link function shifted to a value <span class="arithmatex">\(v\)</span>.</p>
+<p>This link function is defined as $<span class="arithmatex">\(g(x) = \sqrt(x - v)\)</span>$. It can be used
+to ensure that certain distribution paramters don't fall below lower
+bounds, e.g. ensuring that the degrees of freedom of a Student's t distribtuion
+don't fall below 2, hence ensuring that the variance exists.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.SqrtShiftTwo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.SqrtShiftTwo</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.links.SqrtShiftValue (ondil.links.sqrtlinks.SqrtShiftValue)" href="#ondil.links.SqrtShiftValue">SqrtShiftValue</a></code></p>
+
+
+
+        <p>The Sqrt-Link function shifted to 2.</p>
+<p>This link function is defined as $<span class="arithmatex">\(g(x) = \sqrt(x - 2)\)</span>$. It can be used
+to ensure that certain distribution paramters don't fall below lower
+bounds, e.g. ensuring that the degrees of freedom of a Student's t distribtuion
+don't fall below 2, hence ensuring that the variance exists.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h3 id="inverse-softplus-link-functions">Inverse SoftPlus Link Functions</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.InverseSoftPlus" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.InverseSoftPlus</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.base.LinkFunction" href="#ondil.base.LinkFunction">LinkFunction</a></code></p>
+
+
+
+        <p>The softplus is defined as $$
+    \operatorname{SoftPlus(x)} = \log(1 + \exp(x))
+$$ and hence the inverse is defined as $$
+    \log(\exp(x) - 1)
+$$ which can be used as link function for the parameters on the
+positive real line. The behavior of the inverse softplus is more
+graceful on large values as it avoids the exp of the log-link and
+converges towards a linear behaviour.</p>
+<p>The softplus is the smooth approximation of <span class="arithmatex">\(\max(x, 0)\)</span>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.InverseSoftPlusShiftValue" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.InverseSoftPlusShiftValue</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.base.LinkFunction" href="#ondil.base.LinkFunction">LinkFunction</a></code></p>
+
+
+
+        <p>The Inverse SoftPlus function shifted to a value <span class="arithmatex">\(v\)</span>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.links.InverseSoftPlusShiftTwo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.links.InverseSoftPlusShiftTwo</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.links.InverseSoftPlusShiftValue (ondil.links.softpluslinks.InverseSoftPlusShiftValue)" href="#ondil.links.InverseSoftPlusShiftValue">InverseSoftPlusShiftValue</a></code></p>
+
+
+
+        <p>The Inverse SoftPlus function shifted to 2.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["search.share", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      
+        <script src="../javascripts/katex.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>
