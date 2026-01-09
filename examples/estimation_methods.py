@@ -51,13 +51,13 @@ model = OnlineLinearModel(
 )
 model.fit(X[:-10, :], y[:-10])
 plt.plot(model.beta_path)
-plt.show(block=False)
+# plt.show(block=False)
 print(model.beta)
 
 
 model.update(X[-10:, :], y[-10:])
 plt.plot(model.beta_path)
-plt.show(block=False)
+# plt.show(block=False)
 print(model.beta)
 
 print("############################ LASSO CONSTRAINED ##########################")
@@ -74,10 +74,10 @@ model = OnlineLinearModel(
 )
 model.fit(X[:-10, :], y[:-10])
 plt.plot(model.beta_path)
-plt.show(block=False)
+# plt.show(block=False)
 print(model.beta)
 
 model.update(X[-10:, :], y[-10:])
 plt.plot(model.beta_path)
-plt.show(block=False)
+# plt.show(block=False)
 print(model.beta)

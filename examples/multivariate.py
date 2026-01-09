@@ -142,7 +142,7 @@ axs[2].legend(["Predicted Covariance", "True Covariance"])
 
 plt.tight_layout()
 # plt.savefig(f"./docs/assets/figure_multivariate_cd_{D}_{M}.png", dpi=300)
-plt.show(block=False)
+# plt.show(block=False)
 
 # Now fit the same model but using the modified Cholesky parameterization
 distribution_mcd = MultivariateNormalInverseModifiedCholesky()
@@ -213,4 +213,4 @@ axs[2].legend(["Predicted Covariance", "True Covariance"])
 
 plt.tight_layout()
 # plt.savefig(f"./docs/assets/figure_multivariate_mcd_{D}_{M}.png", dpi=300)
-plt.show(block=False)
+# plt.show(block=False)
