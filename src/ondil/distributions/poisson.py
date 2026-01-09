@@ -9,7 +9,7 @@ from ..types import ParameterShapes
 
 
 class Poisson(ScipyMixin, Distribution):
-    """The Poisson Distribution for GAMLSS.
+    r"""The Poisson Distribution for GAMLSS.
 
     The distribution function is defined as in GAMLSS as:
     $$
