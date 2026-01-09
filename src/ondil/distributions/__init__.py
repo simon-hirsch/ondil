@@ -24,8 +24,10 @@ from .skew_t import SkewT, SkewTMeanStd
 from .studentt import StudentT
 from .weibull import Weibull
 from .zeroadjustedgamma import ZeroAdjustedGamma
+from .negative_binomial import NegativeBinomial
 
 __all__ = [
+    "NegativeBinomial",
     "Normal",
     "NormalMeanVariance",
     "StudentT",
