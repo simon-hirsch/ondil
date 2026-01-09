@@ -74,6 +74,6 @@ PITHistogramDisplay.from_estimator(
     ax=axes[2],
 )
 plt.tight_layout()
-plt.show(block=False)
+# plt.show(block=False)
 
 # %%
