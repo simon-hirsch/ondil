@@ -419,7 +419,10 @@ class _LinearPathModelSelectionIC(Term):
         )
 
         if self.weighted_regularization:
-            regularization_weights = 1 / self.X_mat_stats.var
+            regularization_weights = np.ones(X_mat.shape[1])
+            regularization_weights[is_regularized] = (
+                1 / self.X_mat_stats.var[is_regularized]
+            )
         else:
             regularization_weights = None
 
