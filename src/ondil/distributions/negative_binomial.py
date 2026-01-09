@@ -1,13 +1,13 @@
 from typing import Dict, Tuple
 
 import numpy as np
-import scipy.stats as st
 import scipy.special as spc
+import scipy.stats as st
 
 from ..base import Distribution, LinkFunction, ScipyMixin
 from ..links import Log
-from ..types import ParameterShapes
 from ..robust_math import SMALL_NUMBER
+from ..types import ParameterShapes
 
 
 class NegativeBinomial(ScipyMixin, Distribution):

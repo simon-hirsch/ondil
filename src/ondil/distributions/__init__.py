@@ -16,6 +16,7 @@ from .mv_normal_modchol import MultivariateNormalInverseModifiedCholesky
 from .mv_t_chol import MultivariateStudentTInverseCholesky
 from .mv_t_low_rank import MultivariateStudentTInverseLowRank
 from .mv_t_modchol import MultivariateStudentTInverseModifiedCholesky
+from .negative_binomial import NegativeBinomial
 from .normal import Normal, NormalMeanVariance
 from .poisson import Poisson
 from .powerexponential import PowerExponential
@@ -24,7 +25,6 @@ from .skew_t import SkewT, SkewTMeanStd
 from .studentt import StudentT
 from .weibull import Weibull
 from .zeroadjustedgamma import ZeroAdjustedGamma
-from .negative_binomial import NegativeBinomial
 
 __all__ = [
     "NegativeBinomial",
