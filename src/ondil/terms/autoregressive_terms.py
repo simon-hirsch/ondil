@@ -478,31 +478,47 @@ class LaggedTheta(TimeSeriesFeature):
         self,
         param: int,
         lags: np.ndarray | list[int] | int = 1,
+        on_link_space: bool = False,
     ):
         super().__init__(
             lags=lags,
         )
         self.param = param
+        self.on_link_space = on_link_space
 
     def make_design_matrix_in_sample_during_fit(
         self,
         X: np.ndarray,
         fitted_values: np.ndarray,
+        distribution: Distribution,
         **kwargs,
     ):
-        X_mat = make_lags(y=fitted_values[:, self.param], lags=self.lags)
-        return X_mat
+        if self.on_link_space:
+            values = distribution.link_function(
+                fitted_values[:, self.param], param=self.param
+            )
+        else:
+            values = fitted_values[:, self.param]
+        return make_lags(y=values, lags=self.lags)
 
     def make_design_matrix_in_sample_during_update(
         self,
         fitted_values: np.ndarray,
         target_values: np.ndarray,
+        distribution: Distribution,
         state: ARTermState,
         **kwargs,
     ):
+        if self.on_link_space:
+            values = distribution.link_function(
+                fitted_values[:, self.param], param=self.param
+            )
+        else:
+            values = fitted_values[:, self.param]
+
         lagged_value = np.concatenate((
             state.memory_fitted_values[:, self.param],
-            fitted_values[:, self.param],
+            values,
         ))
 
         X_mat = make_lags(
