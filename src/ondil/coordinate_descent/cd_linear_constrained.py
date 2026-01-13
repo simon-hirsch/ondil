@@ -145,7 +145,6 @@ def online_linear_constrained_coordinate_descent(
     stepsize = dual_stepsize
 
     for i in range(max_dual_iterations):
-        beta_old = np.copy(beta)
         beta, k = online_coordinate_descent_lagrange_relaxed(
             x_gram=x_gram,
             y_gram=y_gram,
