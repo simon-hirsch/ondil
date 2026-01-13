@@ -63,7 +63,6 @@ class OnlineStructuredAdditiveDistributionRegressor(
         distribution: Distribution = Normal(),
         terms: Optional[Dict[str, Any]] = None,
         scale_inputs: bool = True,
-        verbose: int = 0,
         learning_rate: float = 0.0,
         max_outer_iterations: int = 10,
         max_inner_iterations: int = 10,
@@ -71,6 +70,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         rel_tol_inner: float = 1e-3,
         abs_tol_outer: float = 1e-3,
         abs_tol_inner: float = 1e-3,
+        step_size: float = 1.0,
     ):
         self.distribution = distribution
         self.terms = terms
@@ -82,7 +82,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         self.rel_tol_inner = rel_tol_inner
         self.abs_tol_outer = abs_tol_outer
         self.abs_tol_inner = abs_tol_inner
-        self.verbose = verbose
+        self.step_size = step_size
 
     def _prepare_terms(self):
         logger.trace(
@@ -134,7 +134,7 @@ class OnlineStructuredAdditiveDistributionRegressor(
         param: int,
     ):
         step_decrease_counter = 0
-        step = 1.0
+        step = float(self.step_size)
         forget_weight = init_forget_vector(
             size=y.shape[0],
             forget=self.learning_rate,
@@ -231,7 +231,18 @@ class OnlineStructuredAdditiveDistributionRegressor(
             ):
                 break
 
-            if deviance_new > deviance_old:
+            # If we have the first iteration, we want to allow for some increase
+            # as we might start from very good initial values
+
+            if outer_iteration == 0:
+                slack = int(np.ceil(1 / self.step_size))
+                logger.info(
+                    f"Allowing for {slack} inner iterations without deviance improvement in first outer iteration."
+                )
+            else:
+                slack = 0
+
+            if (deviance_new > deviance_old) & (inner_iteration >= slack):
                 message = (
                     f"Deviance increased from {deviance_old:.3f} to {deviance_new:.3f}. "
                     f"Stopping inner optimization for param {param}."
