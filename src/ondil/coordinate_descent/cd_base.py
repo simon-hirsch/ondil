@@ -6,6 +6,11 @@ import numpy as np
 
 
 @nb.njit()
+def beta_update(x_gram, y_gram, beta_now, j):
+    return y_gram[j] - (x_gram[j, :] @ beta_now) + x_gram[j, j] * beta_now[j]
+
+
+@nb.njit()
 def online_coordinate_descent(
     x_gram: np.ndarray,
     y_gram: np.ndarray,
@@ -53,9 +58,7 @@ def online_coordinate_descent(
             JJ = np.random.permutation(J)
         for j in JJ:
             if (i < 2) | (beta_now[j] != 0):
-                update = (
-                    y_gram[j] - (x_gram[j, :] @ beta_now) + x_gram[j, j] * beta_now[j]
-                )
+                update = beta_update(x_gram, y_gram, beta_now, j)
 
                 if is_regularized[j]:
                     update = soft_threshold(
