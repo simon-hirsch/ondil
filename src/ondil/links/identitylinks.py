@@ -38,10 +38,12 @@ class LowerTruncatedIdentity(LinkFunction):
     The lower truncacted identity link is defined as $$g(x) = \max(x, value)$$.
     """
 
-    link_support = (-np.inf, np.inf)
-
     def __init__(self, lower: float):
         self.lower = lower
+
+    @property
+    def link_support(self):
+        return (self.lower, np.inf)
 
     def link(self, x: np.ndarray) -> np.ndarray:
         return x
