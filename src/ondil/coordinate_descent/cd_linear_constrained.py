@@ -19,8 +19,9 @@ def online_coordinate_descent_lagrange_relaxed(
     beta_upper_bound: np.ndarray | None,
     dual_penalty: np.ndarray | None,
     constraint_matrix: np.ndarray | None,
+    constraint_bounds: np.ndarray | None,
     dual_stepsize: float = 1.0,
-    relaxation_method: Literal["alm", "dpga"] = "alm",
+    relaxation_method: Literal["alm", "pdga"] = "alm",
     selection: Literal["cyclic", "random"] = "cyclic",
     tolerance: float = 1e-4,
     max_iterations: int = 1000,
@@ -54,6 +55,7 @@ def online_coordinate_descent_lagrange_relaxed(
         regularization_weights = np.ones(J)
 
     constraint_participation = np.where(constraint_matrix != 0, 1, 0)
+    constraint_gram = constraint_matrix.T @ constraint_matrix
 
     while True:
         i += 1
@@ -64,11 +66,25 @@ def online_coordinate_descent_lagrange_relaxed(
             if (i < 2) | (beta_now[j] != 0):
                 update = (
                     y_gram[j] - (x_gram[j, :] @ beta_now) + x_gram[j, j] * beta_now[j]
-                ) - np.sum(
-                    dual_penalty
-                    * constraint_participation[:, j]
-                    * constraint_matrix[:, j]
                 )
+                if relaxation_method == "pdga":
+                    update -= np.sum(dual_penalty * constraint_matrix[:, j])
+                elif relaxation_method == "alm":
+                    tilde_mu = dual_penalty + dual_stepsize * (
+                        constraint_matrix @ beta_now - constraint_bounds
+                    )
+                    update -= np.sum(tilde_mu * constraint_matrix[:, j])
+                    # mask = np.arange(J) != j
+                    # update += -np.sum(
+                    #     dual_penalty * constraint_matrix[:, j]
+                    # ) + dual_stepsize * (
+                    #     +(constraint_matrix[:, j] @ constraint_bounds)
+                    #     - constraint_gram[mask, j] @ beta_now[mask]
+                    # )
+                else:
+                    raise ValueError(
+                        f"Relaxation method {relaxation_method} not recognized."
+                    )
 
                 if is_regularized[j]:
                     update = soft_threshold(
@@ -81,9 +97,7 @@ def online_coordinate_descent_lagrange_relaxed(
                     denom = x_gram[j, j]
 
                 if relaxation_method == "alm":
-                    denom += dual_stepsize * np.sum(
-                        (constraint_participation[:, j] * constraint_matrix[:, j]) ** 2
-                    )
+                    denom += dual_stepsize * np.sum(constraint_matrix[:, j] ** 2)
 
                 beta_now[j] = update / denom
                 # Bounds
@@ -100,7 +114,7 @@ def online_coordinate_descent_lagrange_relaxed(
 
 
 @nb.njit()
-def linear_constrained_coordinate_descent(
+def online_linear_constrained_coordinate_descent(
     x_gram: np.ndarray,
     y_gram: np.ndarray,
     beta: np.ndarray,
@@ -112,7 +126,7 @@ def linear_constrained_coordinate_descent(
     constraint_bounds: np.ndarray,
     beta_lower_bound: np.ndarray | None = None,
     beta_upper_bound: np.ndarray | None = None,
-    relaxation_method: Literal["alm", "dpga"] = "alm",
+    relaxation_method: Literal["alm", "pdga"] = "alm",
     selection: Literal["cyclic", "random"] = "cyclic",
     tolerance: float = 1e-4,
     dual_tolerance: float = 1e-4,
@@ -128,7 +142,10 @@ def linear_constrained_coordinate_descent(
     dual_gap = np.sum(np.fmax(constraint_residuals, 0) ** 2)
     dual_gap_old = dual_gap + 1e-3
 
+    stepsize = dual_stepsize
+
     for i in range(max_dual_iterations):
+        beta_old = np.copy(beta)
         beta, k = online_coordinate_descent_lagrange_relaxed(
             x_gram=x_gram,
             y_gram=y_gram,
@@ -143,14 +160,23 @@ def linear_constrained_coordinate_descent(
             dual_penalty=dual_penalty,
             relaxation_method=relaxation_method,
             constraint_matrix=constraint_matrix,
-            dual_stepsize=dual_stepsize,
+            constraint_bounds=constraint_bounds,
+            dual_stepsize=stepsize,
             tolerance=tolerance,
             max_iterations=max_iterations,
         )
         # print(dual_penalty, constraint_residuals, dual_stepsize)
-
         constraint_residuals = constraint_matrix @ beta - constraint_bounds
-        dual_penalty = np.fmax(0, dual_penalty + dual_stepsize * constraint_residuals)
+        dual_penalty = np.fmax(0, dual_penalty + stepsize * constraint_residuals)
+
+        # for ALM we can have adaptive step sizes
+        # to ensure that we don't have the bias in the quadratic penalty
+        # if all constraints are satisfied
+        if relaxation_method == "alm":
+            if np.all(constraint_residuals <= 0):
+                stepsize = min(max(stepsize / 2, 0.0001), dual_stepsize)
+            else:
+                stepsize = min(max(stepsize * 2, 0.0001), dual_stepsize)
 
         if np.max(constraint_residuals) <= dual_tolerance:
             break
@@ -224,25 +250,27 @@ def online_linear_constrained_coordinate_descent_path(
             beta_path_new[i, :] = beta
             iterations[i] = 0
         else:
-            beta_path_new[i, :], iterations[i] = linear_constrained_coordinate_descent(
-                x_gram=x_gram,
-                y_gram=y_gram,
-                beta=beta,
-                regularization=regularization,
-                regularization_weights=regularization_weights,
-                is_regularized=is_regularized,
-                alpha=alpha,
-                constraint_matrix=constraint_matrix,
-                constraint_bounds=constraint_bounds,
-                beta_lower_bound=beta_lower_bound,
-                beta_upper_bound=beta_upper_bound,
-                relaxation_method=relaxation_method,
-                selection=selection,
-                tolerance=tolerance,
-                dual_tolerance=dual_tolerance,
-                dual_stepsize=dual_stepsize,
-                max_iterations=max_iterations,
-                max_dual_iterations=max_dual_iterations,
+            beta_path_new[i, :], iterations[i] = (
+                online_linear_constrained_coordinate_descent(
+                    x_gram=x_gram,
+                    y_gram=y_gram,
+                    beta=beta,
+                    regularization=regularization,
+                    regularization_weights=regularization_weights,
+                    is_regularized=is_regularized,
+                    alpha=alpha,
+                    constraint_matrix=constraint_matrix,
+                    constraint_bounds=constraint_bounds,
+                    beta_lower_bound=beta_lower_bound,
+                    beta_upper_bound=beta_upper_bound,
+                    relaxation_method=relaxation_method,
+                    selection=selection,
+                    tolerance=tolerance,
+                    dual_tolerance=dual_tolerance,
+                    dual_stepsize=dual_stepsize,
+                    max_iterations=max_iterations,
+                    max_dual_iterations=max_dual_iterations,
+                )
             )
 
     return beta_path_new, iterations
