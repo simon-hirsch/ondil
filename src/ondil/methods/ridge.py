@@ -4,8 +4,8 @@ import numpy as np
 
 from ..base import EstimationMethod
 from ..coordinate_descent import (
-    linear_constrained_coordinate_descent,
     online_coordinate_descent,
+    online_linear_constrained_coordinate_descent,
 )
 from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
 from ..logging import logger
@@ -161,8 +161,10 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
 
     def __init__(
         self,
-        start_beta: np.ndarray | None = None,
         selection: Literal["cyclic", "random"] = "cyclic",
+        constraint_matrix: np.ndarray | None = None,
+        constraint_bounds: np.ndarray | None = None,
+        relaxation_method: Literal["alm", "pgda"] = "alm",
         beta_lower_bound: np.ndarray | None = None,
         beta_upper_bound: np.ndarray | None = None,
         tolerance: float = 1e-4,
@@ -189,7 +191,7 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         self.selection = selection
         self.tolerance = tolerance
         self.max_iterations = max_iterations
-        self.start_beta = start_beta
+        self.relaxation_method = relaxation_method
 
     def _validate_bounds(self, x_gram: np.ndarray) -> None:
         J = x_gram.shape[1]
@@ -230,6 +232,13 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         constraint_matrix = kwargs.get("constraint_matrix", None)
         constraint_bounds = kwargs.get("constraint_bounds", None)
 
+        if constraint_matrix is not None:
+            constraint_matrix = self.constraint_matrix
+            logger.debug("Using constraint matrix from class attribute.")
+        if constraint_bounds is not None:
+            constraint_bounds = self.constraint_bounds
+            logger.debug("Using constraint bounds from class attribute.")
+
         # Ensure that beta is a column vector
         if beta.ndim > 1:
             raise ValueError(
@@ -254,7 +263,7 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
             return beta
 
         else:
-            beta, _ = linear_constrained_coordinate_descent(
+            beta, _ = online_linear_constrained_coordinate_descent(
                 x_gram=x_gram,
                 y_gram=y_gram.squeeze(-1),
                 beta=beta,
@@ -269,6 +278,7 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
                 max_iterations=self.max_iterations,
                 constraint_matrix=constraint_matrix,
                 constraint_bounds=constraint_bounds,
+                relaxation_method=self.relaxation_method,
             )
         return beta
 
@@ -277,8 +287,15 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         constraint_matrix = kwargs.get("constraint_matrix", None)
         constraint_bounds = kwargs.get("constraint_bounds", None)
 
+        if constraint_matrix is not None:
+            constraint_matrix = self.constraint_matrix
+            logger.debug("Using constraint matrix from class attribute.")
+        if constraint_bounds is not None:
+            constraint_bounds = self.constraint_bounds
+            logger.debug("Using constraint bounds from class attribute.")
+
         if constraint_matrix is not None and constraint_bounds is not None:
-            beta, _ = linear_constrained_coordinate_descent(
+            beta, _ = online_linear_constrained_coordinate_descent(
                 x_gram=x_gram,
                 y_gram=y_gram.squeeze(-1),
                 beta=beta,
@@ -293,6 +310,7 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
                 max_iterations=self.max_iterations,
                 constraint_matrix=constraint_matrix,
                 constraint_bounds=constraint_bounds,
+                relaxation_method=self.relaxation_method,
             )
             return beta
         else:
