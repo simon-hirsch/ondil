@@ -1,37 +1,13 @@
 from typing import Literal, Tuple
 
-import numba as nb
 import numpy as np
+import numba as nb
 
-# TODO (SH): Linear constraint lasso needs to return the dual gap
-# TODO (SH): Add tests for linear constraint coordinate descent
+from .utils import soft_threshold, get_start_beta
 
 
 @nb.njit()
-def soft_threshold(value: float, threshold: float):
-    r"""The soft thresholding function.
-
-    For value \(x\) and threshold \(\\lambda\), the soft thresholding function \(S(x, \\lambda)\) is
-    defined as:
-
-    $$S(x, \\lambda) = sign(x)(|x| - \\lambda)$$
-
-    Args:
-        value (float): The value
-        threshold (float): The threshold
-
-    Returns:
-        out (float): The thresholded value
-    """
-    return np.sign(value) * np.maximum(np.abs(value) - threshold, 0)
-
-
-# @nb.njit([
-#     "(float64[:,:], float64[:], float64[:], float64, bool[:], str, float64, int64)",
-#    "(float32[:,:], float32[:], float32[:], float32, bool[:], str, float32, int32)",
-# ])
-@nb.njit()
-def online_coordinate_descent(
+def online_coordinate_descent_lagrange_relaxed(
     x_gram: np.ndarray,
     y_gram: np.ndarray,
     beta: np.ndarray,
@@ -41,9 +17,11 @@ def online_coordinate_descent(
     alpha: float,
     beta_lower_bound: np.ndarray | None,
     beta_upper_bound: np.ndarray | None,
+    dual_penalty: np.ndarray | None,
+    constraint_matrix: np.ndarray | None,
+    dual_stepsize: float = 1.0,
+    relaxation_method: Literal["alm", "dpga"] = "alm",
     selection: Literal["cyclic", "random"] = "cyclic",
-    dual_penalty: np.ndarray | None = None,
-    constraint_matrix: np.ndarray | None = None,
     tolerance: float = 1e-4,
     max_iterations: int = 1000,
 ) -> Tuple[np.ndarray, int]:
@@ -57,6 +35,8 @@ def online_coordinate_descent(
         is_regularized (bool): Vector of bools indicating whether the coefficient is regularized
         beta_lower_bound (np.ndarray): Lower bounds for beta
         beta_upper_bound (np.ndarray): Upper bounds for beta
+        constraint_matrix (np.ndarray): Constraint matrix for linear constraints
+        constraint_bounds (np.ndarray): Constraint bounds for linear constraints
         selection (Literal['cyclic', 'random'], optional): Apply cyclic or random coordinate descent. Defaults to "cyclic".
         tolerance (float, optional): Tolerance for the beta update. Defaults to 1e-4.
         max_iterations (int, optional): Maximum iterations. Defaults to 1000.
@@ -73,8 +53,7 @@ def online_coordinate_descent(
     if regularization_weights is None:
         regularization_weights = np.ones(J)
 
-    if dual_penalty is not None:
-        constraint_participation = np.where(constraint_matrix != 0, 1, 0)
+    constraint_participation = np.where(constraint_matrix != 0, 1, 0)
 
     while True:
         i += 1
@@ -85,13 +64,11 @@ def online_coordinate_descent(
             if (i < 2) | (beta_now[j] != 0):
                 update = (
                     y_gram[j] - (x_gram[j, :] @ beta_now) + x_gram[j, j] * beta_now[j]
+                ) - np.sum(
+                    dual_penalty
+                    * constraint_participation[:, j]
+                    * constraint_matrix[:, j]
                 )
-                if dual_penalty is not None:
-                    update -= np.sum(
-                        dual_penalty
-                        * constraint_participation[:, j]
-                        * constraint_matrix[:, j]
-                    )
 
                 if is_regularized[j]:
                     update = soft_threshold(
@@ -103,8 +80,8 @@ def online_coordinate_descent(
                 else:
                     denom = x_gram[j, j]
 
-                if dual_penalty is not None:
-                    denom += np.sum(
+                if relaxation_method == "alm":
+                    denom += dual_stepsize * np.sum(
                         (constraint_participation[:, j] * constraint_matrix[:, j]) ** 2
                     )
 
@@ -135,11 +112,11 @@ def linear_constrained_coordinate_descent(
     constraint_bounds: np.ndarray,
     beta_lower_bound: np.ndarray | None = None,
     beta_upper_bound: np.ndarray | None = None,
+    relaxation_method: Literal["alm", "dpga"] = "alm",
     selection: Literal["cyclic", "random"] = "cyclic",
     tolerance: float = 1e-4,
     dual_tolerance: float = 1e-4,
     dual_stepsize: float = 1.0,
-    adaptive_dual_stepsize: bool = False,
     max_iterations: int = 1000,
     max_dual_iterations: int = 100,
 ) -> Tuple[np.ndarray, int]:
@@ -152,7 +129,7 @@ def linear_constrained_coordinate_descent(
     dual_gap_old = dual_gap + 1e-3
 
     for i in range(max_dual_iterations):
-        beta, k = online_coordinate_descent(
+        beta, k = online_coordinate_descent_lagrange_relaxed(
             x_gram=x_gram,
             y_gram=y_gram,
             beta=beta,
@@ -164,7 +141,9 @@ def linear_constrained_coordinate_descent(
             alpha=alpha,
             selection=selection,
             dual_penalty=dual_penalty,
+            relaxation_method=relaxation_method,
             constraint_matrix=constraint_matrix,
+            dual_stepsize=dual_stepsize,
             tolerance=tolerance,
             max_iterations=max_iterations,
         )
@@ -176,91 +155,7 @@ def linear_constrained_coordinate_descent(
         if np.max(constraint_residuals) <= dual_tolerance:
             break
 
-        if adaptive_dual_stepsize:
-            dual_gap = np.sum(np.fmax(constraint_residuals, 0) ** 2)
-            dual_stepsize = dual_stepsize * dual_gap_old / (dual_gap + 1e-3)
-            dual_gap_old = dual_gap
-
     return beta, i
-
-
-@nb.njit()
-def online_coordinate_descent_path(
-    x_gram: np.ndarray,
-    y_gram: np.ndarray,
-    beta_path: np.ndarray,
-    lambda_path: np.ndarray,
-    is_regularized: np.ndarray,
-    alpha: float,
-    early_stop: int,
-    regularization_weights: np.ndarray | None,
-    beta_lower_bound: np.ndarray | None,
-    beta_upper_bound: np.ndarray | None,
-    which_start_value: Literal[
-        "previous_lambda", "previous_fit", "average"
-    ] = "previous_lambda",
-    selection: Literal["cyclic", "random"] = "cyclic",
-    tolerance: float = 1e-4,
-    max_iterations: int = 1000,
-) -> Tuple[np.ndarray, np.ndarray]:
-    r"""Run coordinate descent on a grid of regularization values.
-
-    Args:
-        x_gram (np.ndarray): X-Gramian $$X^TX$$
-        y_gram (np.ndarray): Y-Gramian $$X^TY$$
-        beta_path (np.ndarray): The current coefficent path
-        lambda_path (np.ndarray): The lambda grid
-        is_regularized (bool): Vector of bools indicating whether the coefficient is regularized
-        alpha (float): The elastic net mixing parameter
-        early_stop (int, optional): Early stopping criterion. 0 implies no early stopping. Defaults to 0.
-        beta_lower_bound (np.ndarray): Lower bounds for beta
-        beta_upper_bound (np.ndarray): Upper bounds for beta.
-        constraint_matrix (np.ndarray): The constraint matrix A
-        constraint_bounds (np.ndarray): The constraint bounds b
-        which_start_value (Literal['previous_lambda', 'previous_fit', 'average'], optional): Values to warm-start the coordinate descent. Defaults to "previous_lambda".
-        selection (Literal['cyclic', 'random'], optional): Apply cyclic or random coordinate descent. Defaults to "cyclic".
-        tolerance (float, optional): Tolerance for the beta update. Will be passed through to the parameter update. Defaults to 1e-4.
-        max_iterations (int, optional): Maximum iterations. Will be passed through to the parameter update. Defaults to 1000.
-
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: Tuple with the updated coefficient path and the iteration count.
-    """
-
-    beta_path_new = np.zeros_like(beta_path)
-    iterations = np.zeros_like(lambda_path)
-
-    if regularization_weights is None:
-        regularization_weights = np.ones(beta_path.shape[1])
-
-    for i, regularization in enumerate(lambda_path):
-        # Select the according start values for the next CD update
-        if which_start_value == "average":
-            beta = (beta_path_new[max(i - 1, 0), :] + beta_path[max(i, 0), :]) / 2
-        if which_start_value == "previous_lambda":
-            beta = beta_path_new[max(i - 1, 0), :]
-        else:
-            beta = beta_path[max(i, 0), :]
-
-        if (early_stop > 0) and np.count_nonzero(beta) >= early_stop:
-            beta_path_new[i, :] = beta
-            iterations[i] = 0
-        else:
-            beta_path_new[i, :], iterations[i] = online_coordinate_descent(
-                x_gram=x_gram,
-                y_gram=y_gram,
-                beta=beta,
-                regularization=regularization,
-                regularization_weights=regularization_weights,
-                is_regularized=is_regularized,
-                alpha=alpha,
-                beta_lower_bound=beta_lower_bound,
-                beta_upper_bound=beta_upper_bound,
-                selection=selection,
-                tolerance=tolerance,
-                max_iterations=max_iterations,
-            )
-
-    return beta_path_new, iterations
 
 
 @nb.njit()
@@ -277,6 +172,7 @@ def online_linear_constrained_coordinate_descent_path(
     beta_upper_bound: np.ndarray | None,
     constraint_matrix: np.ndarray | None,
     constraint_bounds: np.ndarray | None,
+    relaxation_method: Literal["alm", "dpga"] = "alm",
     which_start_value: Literal[
         "previous_lambda", "previous_fit", "average"
     ] = "previous_lambda",
@@ -285,7 +181,6 @@ def online_linear_constrained_coordinate_descent_path(
     max_iterations: int = 1000,
     dual_tolerance: float = 1e-4,
     dual_stepsize: float = 1.0,
-    adaptive_dual_stepsize: bool = False,
     max_dual_iterations: int = 100,
 ) -> Tuple[np.ndarray, np.ndarray]:
     r"""Run coordinate descent on a grid of regularization values.
@@ -323,13 +218,7 @@ def online_linear_constrained_coordinate_descent_path(
         )
 
     for i, regularization in enumerate(lambda_path):
-        # Select the according start values for the next CD update
-        if which_start_value == "average":
-            beta = (beta_path_new[max(i - 1, 0), :] + beta_path[max(i, 0), :]) / 2
-        if which_start_value == "previous_lambda":
-            beta = beta_path_new[max(i - 1, 0), :]
-        else:
-            beta = beta_path[max(i, 0), :]
+        beta = get_start_beta(beta_path, beta_path_new, i, which_start_value)
 
         if (early_stop > 0) and np.count_nonzero(beta) >= early_stop:
             beta_path_new[i, :] = beta
@@ -347,11 +236,11 @@ def online_linear_constrained_coordinate_descent_path(
                 constraint_bounds=constraint_bounds,
                 beta_lower_bound=beta_lower_bound,
                 beta_upper_bound=beta_upper_bound,
+                relaxation_method=relaxation_method,
                 selection=selection,
                 tolerance=tolerance,
                 dual_tolerance=dual_tolerance,
                 dual_stepsize=dual_stepsize,
-                adaptive_dual_stepsize=adaptive_dual_stepsize,
                 max_iterations=max_iterations,
                 max_dual_iterations=max_dual_iterations,
             )
