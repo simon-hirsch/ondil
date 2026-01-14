@@ -188,10 +188,13 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         )
         self.beta_lower_bound = beta_lower_bound
         self.beta_upper_bound = beta_upper_bound
+        self.constraint_matrix = constraint_matrix
+        self.constraint_bounds = constraint_bounds
+        self.relaxation_method = relaxation_method
+        # CD parameters
         self.selection = selection
         self.tolerance = tolerance
         self.max_iterations = max_iterations
-        self.relaxation_method = relaxation_method
 
     def _validate_bounds(self, x_gram: np.ndarray) -> None:
         J = x_gram.shape[1]
@@ -232,10 +235,10 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         constraint_matrix = kwargs.get("constraint_matrix", None)
         constraint_bounds = kwargs.get("constraint_bounds", None)
 
-        if constraint_matrix is not None:
+        if constraint_matrix is None:
             constraint_matrix = self.constraint_matrix
             logger.debug("Using constraint matrix from class attribute.")
-        if constraint_bounds is not None:
+        if constraint_bounds is None:
             constraint_bounds = self.constraint_bounds
             logger.debug("Using constraint bounds from class attribute.")
 
@@ -287,10 +290,10 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         constraint_matrix = kwargs.get("constraint_matrix", None)
         constraint_bounds = kwargs.get("constraint_bounds", None)
 
-        if constraint_matrix is not None:
+        if constraint_matrix is None:
             constraint_matrix = self.constraint_matrix
             logger.debug("Using constraint matrix from class attribute.")
-        if constraint_bounds is not None:
+        if constraint_bounds is None:
             constraint_bounds = self.constraint_bounds
             logger.debug("Using constraint bounds from class attribute.")
 
