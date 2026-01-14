@@ -248,41 +248,28 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
                 "The beta vector must be a column vector. Please check the input data."
             )
 
-        if constraint_matrix is None or constraint_bounds is None:
-            beta, _ = online_coordinate_descent(
-                x_gram=x_gram,
-                y_gram=y_gram.squeeze(-1),
-                beta=beta,
-                regularization=0.0,
-                is_regularized=is_regularized,
-                regularization_weights=None,
-                alpha=0.0,
-                beta_lower_bound=self.beta_lower_bound,
-                beta_upper_bound=self.beta_upper_bound,
-                selection=self.selection,
-                tolerance=self.tolerance,
-                max_iterations=self.max_iterations,
+        if (constraint_matrix is None) or (constraint_bounds is None):
+            raise ValueError(
+                "Constraint matrix and constraint bounds must be provided for linear constrained coordinate descent."
             )
-            return beta
 
-        else:
-            beta, _ = online_linear_constrained_coordinate_descent(
-                x_gram=x_gram,
-                y_gram=y_gram.squeeze(-1),
-                beta=beta,
-                regularization=0.0,
-                regularization_weights=None,
-                is_regularized=is_regularized,
-                alpha=0.0,
-                beta_lower_bound=self.beta_lower_bound,
-                beta_upper_bound=self.beta_upper_bound,
-                selection=self.selection,
-                tolerance=self.tolerance,
-                max_iterations=self.max_iterations,
-                constraint_matrix=constraint_matrix,
-                constraint_bounds=constraint_bounds,
-                relaxation_method=self.relaxation_method,
-            )
+        beta, _ = online_linear_constrained_coordinate_descent(
+            x_gram=x_gram,
+            y_gram=y_gram.squeeze(-1),
+            beta=beta,
+            regularization=0.0,
+            regularization_weights=None,
+            is_regularized=is_regularized,
+            alpha=0.0,
+            beta_lower_bound=self.beta_lower_bound,
+            beta_upper_bound=self.beta_upper_bound,
+            selection=self.selection,
+            tolerance=self.tolerance,
+            max_iterations=self.max_iterations,
+            constraint_matrix=constraint_matrix,
+            constraint_bounds=constraint_bounds,
+            relaxation_method=self.relaxation_method,
+        )
         return beta
 
     def update_beta(self, x_gram, y_gram, beta, is_regularized, **kwargs):
@@ -297,40 +284,28 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
             constraint_bounds = self.constraint_bounds
             logger.debug("Using constraint bounds from class attribute.")
 
-        if constraint_matrix is not None and constraint_bounds is not None:
-            beta, _ = online_linear_constrained_coordinate_descent(
-                x_gram=x_gram,
-                y_gram=y_gram.squeeze(-1),
-                beta=beta,
-                regularization=0.0,
-                regularization_weights=None,
-                is_regularized=is_regularized,
-                alpha=0.0,
-                beta_lower_bound=self.beta_lower_bound,
-                beta_upper_bound=self.beta_upper_bound,
-                selection=self.selection,
-                tolerance=self.tolerance,
-                max_iterations=self.max_iterations,
-                constraint_matrix=constraint_matrix,
-                constraint_bounds=constraint_bounds,
-                relaxation_method=self.relaxation_method,
+        if (constraint_matrix is None) or (constraint_bounds is None):
+            raise ValueError(
+                "Constraint matrix and constraint bounds must be provided for linear constrained coordinate descent."
             )
-            return beta
-        else:
-            beta, _ = online_coordinate_descent(
-                x_gram=x_gram,
-                y_gram=y_gram.squeeze(-1),
-                beta=beta,
-                regularization=self.lambda_reg,
-                alpha=0.0,
-                regularization_weights=None,
-                is_regularized=is_regularized,
-                beta_lower_bound=self.beta_lower_bound,
-                beta_upper_bound=self.beta_upper_bound,
-                selection=self.selection,
-                tolerance=self.tolerance,
-                max_iterations=self.max_iterations,
-            )
+
+        beta, _ = online_linear_constrained_coordinate_descent(
+            x_gram=x_gram,
+            y_gram=y_gram.squeeze(-1),
+            beta=beta,
+            regularization=0.0,
+            regularization_weights=None,
+            is_regularized=is_regularized,
+            alpha=0.0,
+            beta_lower_bound=self.beta_lower_bound,
+            beta_upper_bound=self.beta_upper_bound,
+            selection=self.selection,
+            tolerance=self.tolerance,
+            max_iterations=self.max_iterations,
+            constraint_matrix=constraint_matrix,
+            constraint_bounds=constraint_bounds,
+            relaxation_method=self.relaxation_method,
+        )
         return beta
 
     def fit_beta_path(self, x_gram, y_gram, is_regularized):
