@@ -46,8 +46,9 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
     def fitted_elements(dim: int):
         return {0: 1}
 
-    def theta_to_params(self, theta):
-        return theta[0]
+    def theta_to_params(self, theta) -> np.ndarray:
+        val = theta[0]
+        return np.asarray(val).reshape(-1, 1)
 
     def set_initial_guess(self, theta, param):
         return theta
