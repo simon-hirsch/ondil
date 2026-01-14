@@ -81,7 +81,7 @@ class _LinearBaseTerm(Term):
         is_regularized: np.ndarray | None = None,
         regularize_intercept: None | bool = None,
         constraint_matrix: np.ndarray | None = None,
-        constraint_vector: np.ndarray | None = None,
+        constraint_bounds: np.ndarray | None = None,
     ):
         self.method = method
         self.fit_intercept = fit_intercept
@@ -89,7 +89,7 @@ class _LinearBaseTerm(Term):
         self.regularize_intercept = regularize_intercept
         self.forget = forget
         self.constraint_matrix = constraint_matrix
-        self.constraint_vector = constraint_vector
+        self.constraint_bounds = constraint_bounds
 
     def _fit(
         self,
@@ -136,7 +136,7 @@ class _LinearBaseTerm(Term):
             y_gram=h,
             is_regularized=is_regularized,
             constraint_matrix=self.remove_problematic_columns(self.constraint_matrix),
-            constraint_vector=self.constraint_vector,
+            constraint_bounds=self.constraint_bounds,
         )
         return g, h, coef_, is_regularized
 
@@ -176,7 +176,7 @@ class _LinearBaseTerm(Term):
             y_gram=h,
             is_regularized=self._state.is_regularized,
             constraint_matrix=self.remove_problematic_columns(self.constraint_matrix),
-            constraint_vector=self.constraint_vector,
+            constraint_bounds=self.constraint_bounds,
         )
         return g, h, coef_
 
@@ -195,7 +195,7 @@ class LinearTerm(_LinearBaseTerm):
         is_regularized: bool = False,
         regularize_intercept: None | bool = None,
         constraint_matrix: np.ndarray | None = None,
-        constraint_vector: np.ndarray | None = None,
+        constraint_bounds: np.ndarray | None = None,
     ):
         super().__init__(
             method=method,
@@ -204,7 +204,7 @@ class LinearTerm(_LinearBaseTerm):
             regularize_intercept=regularize_intercept,
             forget=forget,
             constraint_matrix=constraint_matrix,
-            constraint_vector=constraint_vector,
+            constraint_bounds=constraint_bounds,
         )
         self.features = features
 
@@ -335,7 +335,7 @@ class _LinearPathModelSelectionIC(Term):
         regularize_intercept: None | bool = None,
         weighted_regularization: bool = False,
         constraint_matrix: np.ndarray | None = None,
-        constraint_vector: np.ndarray | None = None,
+        constraint_bounds: np.ndarray | None = None,
     ):
         self.fit_intercept = fit_intercept
         self.method = method
@@ -345,7 +345,7 @@ class _LinearPathModelSelectionIC(Term):
         self.weighted_regularization = weighted_regularization
         self.ic = ic
         self.constraint_matrix = constraint_matrix
-        self.constraint_vector = constraint_vector
+        self.constraint_bounds = constraint_bounds
 
     def _prepare_term(self):
         self._method = get_estimation_method(self.method)
@@ -442,7 +442,7 @@ class _LinearPathModelSelectionIC(Term):
             y_gram=h,
             is_regularized=is_regularized,
             regularization_weights=regularization_weights,
-            constraint_vector=self.constraint_vector,
+            constraint_bounds=self.constraint_bounds,
             constraint_matrix=self.remove_problematic_columns(self.constraint_matrix),
         )
 
@@ -533,7 +533,7 @@ class _LinearPathModelSelectionIC(Term):
             y_gram=h,
             is_regularized=self._state.is_regularized,
             regularization_weights=regularization_weights,
-            constraint_vector=self.constraint_vector,
+            constraint_bounds=self.constraint_bounds,
             constraint_matrix=self.remove_problematic_columns(self.constraint_matrix),
         )
         n_observations = self._state.n_observations + y.shape[0]

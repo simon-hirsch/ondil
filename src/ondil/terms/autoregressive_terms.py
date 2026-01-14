@@ -71,7 +71,7 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
         is_regularized: bool = False,
         regularize_intercept: None | bool = False,
         constraint_matrix: np.ndarray | None = None,
-        constraint_vector: np.ndarray | None = None,
+        constraint_bounds: np.ndarray | None = None,
     ):
         super().__init__(
             fit_intercept=fit_intercept,
@@ -80,7 +80,7 @@ class JointEstimationTimeSeriesTerm(_LinearBaseTerm):
             is_regularized=is_regularized,
             regularize_intercept=regularize_intercept,
             constraint_matrix=constraint_matrix,
-            constraint_vector=constraint_vector,
+            constraint_bounds=constraint_bounds,
         )
         self.effects = effects
 
@@ -305,7 +305,7 @@ class RegularizedJointEstimationTimeSeriesTerm(
         weighted_regularization: bool = False,
         ic: str = "aic",
         constraint_matrix: np.ndarray | None = None,
-        constraint_vector: np.ndarray | None = None,
+        constraint_bounds: np.ndarray | None = None,
     ):
         super().__init__(
             method=method,
@@ -316,7 +316,7 @@ class RegularizedJointEstimationTimeSeriesTerm(
             weighted_regularization=weighted_regularization,
             ic=ic,
             constraint_matrix=constraint_matrix,
-            constraint_vector=constraint_vector,
+            constraint_bounds=constraint_bounds,
         )
         self.effects = effects
 
