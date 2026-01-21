@@ -409,8 +409,7 @@ class ScipyMixin(ABC):
 
     def rvs(self, size: int, theta: np.ndarray) -> np.ndarray:
         return (
-            self
-            .scipy_dist(**self.theta_to_scipy_params(theta))
+            self.scipy_dist(**self.theta_to_scipy_params(theta))
             .rvs((size, theta.shape[0]))
             .T
         )
@@ -425,6 +424,17 @@ class ScipyMixin(ABC):
             np.ndarray: An array of means corresponding to the parameters in `theta`.
         """
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).mean()
+
+    def variance(self, theta: np.ndarray) -> np.ndarray:
+        """Compute the variance of the distribution for the given parameters.
+
+        Args:
+            theta (np.ndarray): An array of parameters for the distribution.
+
+        Returns:
+            np.ndarray: An array of variances corresponding to the parameters in `theta`.
+        """
+        return self.scipy_dist(**self.theta_to_scipy_params(theta)).var()
 
     def _scipy_mle_objective(
         self,
