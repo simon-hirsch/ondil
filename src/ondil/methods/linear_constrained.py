@@ -25,6 +25,7 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         selection: Literal["cyclic", "random"] = "cyclic",
         tolerance: float = 1e-4,
         max_iterations: int = 1000,
+        max_dual_iterations: int = 100,
     ):
         """Linear constrained coordinate descent method for linear models.
 
@@ -67,6 +68,7 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         self.constraint_matrix = constraint_matrix
         self.constraint_bounds = constraint_bounds
         self.relaxation_method = relaxation_method
+        self.max_dual_iterations = max_dual_iterations
 
         # CD parameters
         self.selection = selection
@@ -82,6 +84,7 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
             if len(self.beta_upper_bound) != J:
                 raise ValueError("Upper bound does not have correct length")
 
+    @staticmethod
     def _raise_missing_constraint(constraint_matrix, constraint_bounds):
         if (constraint_matrix is None) or (constraint_bounds is None):
             raise ValueError(
@@ -149,6 +152,7 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
             constraint_matrix=constraint_matrix,
             constraint_bounds=constraint_bounds,
             relaxation_method=self.relaxation_method,
+            max_dual_iterations=self.max_dual_iterations,
         )
         return beta
 
@@ -182,6 +186,7 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
             constraint_matrix=constraint_matrix,
             constraint_bounds=constraint_bounds,
             relaxation_method=self.relaxation_method,
+            max_dual_iterations=self.max_dual_iterations,
         )
         return beta
 
@@ -240,6 +245,7 @@ class LinearConstrainedElasticNetPath(ElasticNetPath):
         selection: Literal["cyclic", "random"] = "cyclic",
         tolerance: float = 1e-4,
         max_iterations: int = 1000,
+        max_dual_iterations: int = 100,
     ):
         r"""
         Initializes the LinearConstrainedElasticNetPath method with the specified parameters.
@@ -280,7 +286,9 @@ class LinearConstrainedElasticNetPath(ElasticNetPath):
         self.constraint_matrix = constraint_matrix
         self.constraint_bounds = constraint_bounds
         self.relaxation_method = relaxation_method
+        self.max_dual_iterations = max_dual_iterations
 
+    @staticmethod
     def _raise_missing_constraint(constraint_matrix, constraint_bounds):
         if (constraint_matrix is None) or (constraint_bounds is None):
             raise ValueError(
@@ -343,6 +351,7 @@ class LinearConstrainedElasticNetPath(ElasticNetPath):
             constraint_matrix=constraint_matrix,
             constraint_bounds=constraint_bounds,
             relaxation_method=self.relaxation_method,
+            max_dual_iterations=self.max_dual_iterations,
         )
         return beta_path
 
@@ -401,5 +410,6 @@ class LinearConstrainedElasticNetPath(ElasticNetPath):
             constraint_matrix=constraint_matrix,
             constraint_bounds=constraint_bounds,
             relaxation_method=self.relaxation_method,
+            max_dual_iterations=self.max_dual_iterations,
         )
         return beta_path
