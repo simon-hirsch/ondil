@@ -596,6 +596,16 @@ class LaggedTarget(TimeSeriesFeature):
 class LaggedSquaredResidual(TimeSeriesFeature):
     """Autoregressive term using fitted values for lagged predictors."""
 
+    def __init__(
+        self,
+        lags: np.ndarray | list[int] | int = 1,
+        standardize: bool = False,
+    ):
+        super().__init__(
+            lags=lags,
+        )
+        self.standardize = standardize
+
     def make_design_matrix_in_sample_during_fit(
         self,
         fitted_values: np.ndarray,
@@ -603,7 +613,11 @@ class LaggedSquaredResidual(TimeSeriesFeature):
         distribution: Distribution,
         **kwargs,
     ):
-        squared_residuals = (target_values - distribution.mean(fitted_values)) ** 2
+        residuals = target_values - distribution.mean(fitted_values)
+        if self.standardize:
+            residuals = residuals / distribution.variance(fitted_values) ** 0.5
+        squared_residuals = residuals**2
+
         X_mat = make_lags(y=squared_residuals, lags=self.lags)
         return X_mat
 
@@ -623,7 +637,10 @@ class LaggedSquaredResidual(TimeSeriesFeature):
             state.memory_fitted_values,
             fitted_values,
         ))
-        squared_residuals = (target - distribution.mean(fv)) ** 2
+        residuals = target - distribution.mean(fv)
+        if self.standardize:
+            residuals = residuals / distribution.variance(fv) ** 0.5
+        squared_residuals = residuals**2
 
         X_mat = make_lags(
             y=squared_residuals,
@@ -643,12 +660,99 @@ class LaggedSquaredResidual(TimeSeriesFeature):
                 "one step ahead.",
             )
 
-        squared_residuals = (
-            state.memory_target_values - distribution.mean(state.memory_fitted_values)
-        ) ** 2
+        residuals = state.memory_target_values - distribution.mean(
+            state.memory_fitted_values
+        )
+        if self.standardize:
+            residuals = (
+                residuals / distribution.variance(state.memory_fitted_values) ** 0.5
+            )
+        squared_residuals = residuals**2
 
         X_mat = make_lags(
             y=squared_residuals,
+            lags=self.lags,
+        )
+        return X_mat[[-1], :]
+
+
+class LaggedAbsoluteResidual(TimeSeriesFeature):
+    """Autoregressive term using fitted values for lagged predictors."""
+
+    def __init__(
+        self,
+        lags: np.ndarray | list[int] | int = 1,
+        standardize: bool = False,
+    ):
+        super().__init__(
+            lags=lags,
+        )
+        self.standardize = standardize
+
+    def make_design_matrix_in_sample_during_fit(
+        self,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        **kwargs,
+    ):
+        residuals = target_values - distribution.mean(fitted_values)
+        if self.standardize:
+            residuals = residuals / distribution.variance(fitted_values) ** 0.5
+        abs_residuals = np.abs(residuals)
+        X_mat = make_lags(y=abs_residuals, lags=self.lags)
+        return X_mat
+
+    def make_design_matrix_in_sample_during_update(
+        self,
+        X: np.ndarray,
+        fitted_values: np.ndarray,
+        target_values: np.ndarray,
+        distribution: Distribution,
+        state: ARTermState,
+    ):
+        target = np.concatenate((
+            state.memory_target_values,
+            target_values,
+        ))
+        fv = np.concatenate((
+            state.memory_fitted_values,
+            fitted_values,
+        ))
+        residuals = target - distribution.mean(fv)
+        if self.standardize:
+            residuals = residuals / distribution.variance(fv) ** 0.5
+        abs_residuals = np.abs(residuals)
+
+        X_mat = make_lags(
+            y=abs_residuals,
+            lags=self.lags,
+        )
+        return X_mat[-target_values.shape[0] :, :]
+
+    def make_design_matrix_out_of_sample(
+        self,
+        X,
+        distribution: Distribution,
+        state: ARTermState,
+    ):
+        if X.shape[0] > 1:
+            raise ValueError(
+                "Out-of-sample prediction for autoregressive terms can only be done "
+                "one step ahead.",
+            )
+
+        residuals = state.memory_target_values - distribution.mean(
+            state.memory_fitted_values
+        )
+        if self.standardize:
+            residuals = (
+                residuals / distribution.variance(state.memory_fitted_values) ** 0.5
+            )
+        abs_residuals = np.abs(residuals)
+
+        X_mat = make_lags(
+            y=abs_residuals,
             lags=self.lags,
         )
         return X_mat[[-1], :]

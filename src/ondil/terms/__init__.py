@@ -4,6 +4,7 @@ from .autoregressive_terms import (
     LaggedSquaredResidual,
     LaggedTarget,
     LaggedTheta,
+    LaggedAbsoluteResidual,
     RegularizedJointEstimationTimeSeriesTerm,
 )
 from .linear_terms import InterceptTerm, LinearTerm, RegularizedLinearTermIC
@@ -17,6 +18,7 @@ __all__ = [
     "InterceptTerm",
     "LaggedResidual",
     "LaggedSquaredResidual",
+    "LaggedAbsoluteResidual",
     "LaggedTheta",
     "LaggedTarget",
     "RegularizedJointEstimationTimeSeriesTerm",

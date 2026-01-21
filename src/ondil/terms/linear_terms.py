@@ -420,8 +420,8 @@ class _LinearPathModelSelectionIC(Term):
 
         if self.weighted_regularization:
             regularization_weights = np.ones(X_mat.shape[1])
-            regularization_weights[is_regularized] = (
-                1 / self.X_mat_stats.var[is_regularized]
+            regularization_weights[is_regularized] = np.sqrt(
+                self.X_mat_stats.var[is_regularized]
             )
         else:
             regularization_weights = None
@@ -512,19 +512,22 @@ class _LinearPathModelSelectionIC(Term):
         g = self._method.update_x_gram(
             gram=self._state.g,
             X=X_mat,
-            weights=sample_weight,
+            weights=sample_weight * estimation_weight,
             forget=self.forget,
         )
         h = self._method.update_y_gram(
             gram=self._state.h,
             X=X_mat,
             y=y,
-            weights=sample_weight,
+            weights=sample_weight * estimation_weight,
             forget=self.forget,
         )
 
         if self.weighted_regularization:
-            regularization_weights = 1 / self.X_mat_stats.var
+            regularization_weights = np.ones(X_mat.shape[1])
+            regularization_weights[self._state.is_regularized] = np.sqrt(
+                self.X_mat_stats.var[self._state.is_regularized]
+            )
         else:
             regularization_weights = None
 
