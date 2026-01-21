@@ -127,13 +127,18 @@ class ElasticNetPath(EstimationMethod):
 
         return np.max(abs_gram)
 
-    def _validate_bounds(self, x_gram: np.ndarray) -> None:
+    @staticmethod
+    def _validate_bounds(
+        beta_lower_bound: np.ndarray,
+        beta_upper_bound: np.ndarray,
+        x_gram: np.ndarray,
+    ) -> None:
         J = x_gram.shape[1]
-        if self.beta_lower_bound is not None:
-            if len(self.beta_lower_bound) != J:
+        if beta_lower_bound is not None:
+            if len(beta_lower_bound) != J:
                 raise ValueError("Lower bound does not have correct length")
-        if self.beta_upper_bound is not None:
-            if len(self.beta_upper_bound) != J:
+        if beta_upper_bound is not None:
+            if len(beta_upper_bound) != J:
                 raise ValueError("Upper bound does not have correct length")
 
     def _calculate_regularization_weights(self, x_gram: np.ndarray) -> np.ndarray:
@@ -161,10 +166,16 @@ class ElasticNetPath(EstimationMethod):
         return update_y_gram(gram, X, y, forget=forget, w=weights)
 
     def fit_beta_path(self, x_gram, y_gram, is_regularized, **kwargs):
-        self._validate_bounds(x_gram=x_gram)
-
         logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
         regularization_weights = kwargs.get("regularization_weights", None)
+
+        beta_lower_bound = kwargs.get("beta_lower_bound", self.beta_lower_bound)
+        beta_upper_bound = kwargs.get("beta_upper_bound", self.beta_upper_bound)
+        self._validate_bounds(
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            x_gram=x_gram,
+        )
 
         if self.auto_regularization_weights:
             if regularization_weights is not None:
@@ -195,8 +206,8 @@ class ElasticNetPath(EstimationMethod):
             lambda_path=lambda_path,
             alpha=self.alpha,
             is_regularized=is_regularized,
-            beta_lower_bound=self.beta_lower_bound,
-            beta_upper_bound=self.beta_upper_bound,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
             which_start_value=self.start_value_initial,
             regularization_weights=regularization_weights,
             selection=self.selection,
@@ -206,10 +217,16 @@ class ElasticNetPath(EstimationMethod):
         return beta_path
 
     def update_beta_path(self, x_gram, y_gram, beta_path, is_regularized, **kwargs):
-        self._validate_bounds(x_gram=x_gram)
-
         logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
         regularization_weights = kwargs.get("regularization_weights", None)
+
+        beta_lower_bound = kwargs.get("beta_lower_bound", self.beta_lower_bound)
+        beta_upper_bound = kwargs.get("beta_upper_bound", self.beta_upper_bound)
+        self._validate_bounds(
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            x_gram=x_gram,
+        )
 
         if self.auto_regularization_weights:
             if regularization_weights is not None:
@@ -239,8 +256,8 @@ class ElasticNetPath(EstimationMethod):
             alpha=self.alpha,
             early_stop=self.early_stop,
             is_regularized=is_regularized,
-            beta_lower_bound=self.beta_lower_bound,
-            beta_upper_bound=self.beta_upper_bound,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
             which_start_value=self.start_value_update,
             regularization_weights=regularization_weights,
             selection=self.selection,

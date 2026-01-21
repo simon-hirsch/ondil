@@ -61,13 +61,18 @@ class Ridge(EstimationMethod):
         self.max_iterations = max_iterations
         self.start_beta = start_beta
 
-    def _validate_bounds(self, x_gram: np.ndarray) -> None:
+    @staticmethod
+    def _validate_bounds(
+        beta_lower_bound: np.ndarray,
+        beta_upper_bound: np.ndarray,
+        x_gram: np.ndarray,
+    ) -> None:
         J = x_gram.shape[1]
-        if self.beta_lower_bound is not None:
-            if len(self.beta_lower_bound) != J:
+        if beta_lower_bound is not None:
+            if len(beta_lower_bound) != J:
                 raise ValueError("Lower bound does not have correct length")
-        if self.beta_upper_bound is not None:
-            if len(self.beta_upper_bound) != J:
+        if beta_upper_bound is not None:
+            if len(beta_upper_bound) != J:
                 raise ValueError("Upper bound does not have correct length")
 
     @staticmethod
@@ -87,7 +92,14 @@ class Ridge(EstimationMethod):
         return update_y_gram(gram, X, y, forget=forget, w=weights)
 
     def fit_beta(self, x_gram, y_gram, is_regularized, **kwargs):
-        self._validate_bounds(x_gram=x_gram)
+        logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
+        beta_lower_bound = kwargs.get("beta_lower_bound", self.beta_lower_bound)
+        beta_upper_bound = kwargs.get("beta_upper_bound", self.beta_upper_bound)
+        self._validate_bounds(
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            x_gram=x_gram,
+        )
 
         # beta = (x_gram @ y_gram).squeeze(-1)
         regularization_weights = kwargs.get("regularization_weights", None)
@@ -120,8 +132,8 @@ class Ridge(EstimationMethod):
             is_regularized=is_regularized,
             alpha=0.0,
             regularization_weights=regularization_weights,
-            beta_lower_bound=self.beta_lower_bound,
-            beta_upper_bound=self.beta_upper_bound,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,
@@ -129,7 +141,19 @@ class Ridge(EstimationMethod):
         return beta
 
     def update_beta(self, x_gram, y_gram, beta, is_regularized, **kwargs):
+        logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
+        # Bounds
+        beta_lower_bound = kwargs.get("beta_lower_bound", self.beta_lower_bound)
+        beta_upper_bound = kwargs.get("beta_upper_bound", self.beta_upper_bound)
+        self._validate_bounds(
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            x_gram=x_gram,
+        )
+
+        # Weights
         regularization_weights = kwargs.get("regularization_weights", None)
+
         beta, _ = online_coordinate_descent(
             x_gram=x_gram,
             y_gram=y_gram.squeeze(-1),
@@ -137,8 +161,8 @@ class Ridge(EstimationMethod):
             regularization=self.lambda_reg,
             alpha=0.0,
             is_regularized=is_regularized,
-            beta_lower_bound=self.beta_lower_bound,
-            beta_upper_bound=self.beta_upper_bound,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
             regularization_weights=regularization_weights,
             selection=self.selection,
             tolerance=self.tolerance,
@@ -196,13 +220,18 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         self.tolerance = tolerance
         self.max_iterations = max_iterations
 
-    def _validate_bounds(self, x_gram: np.ndarray) -> None:
+    @staticmethod
+    def _validate_bounds(
+        beta_lower_bound: np.ndarray,
+        beta_upper_bound: np.ndarray,
+        x_gram: np.ndarray,
+    ) -> None:
         J = x_gram.shape[1]
-        if self.beta_lower_bound is not None:
-            if len(self.beta_lower_bound) != J:
+        if beta_lower_bound is not None:
+            if len(beta_lower_bound) != J:
                 raise ValueError("Lower bound does not have correct length")
-        if self.beta_upper_bound is not None:
-            if len(self.beta_upper_bound) != J:
+        if beta_upper_bound is not None:
+            if len(beta_upper_bound) != J:
                 raise ValueError("Upper bound does not have correct length")
 
     @staticmethod
@@ -252,6 +281,13 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
             raise ValueError(
                 "Constraint matrix and constraint bounds must be provided for linear constrained coordinate descent."
             )
+        beta_lower_bound = kwargs.get("beta_lower_bound", self.beta_lower_bound)
+        beta_upper_bound = kwargs.get("beta_upper_bound", self.beta_upper_bound)
+        self._validate_bounds(
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            x_gram=x_gram,
+        )
 
         beta, _ = online_linear_constrained_coordinate_descent(
             x_gram=x_gram,
@@ -261,8 +297,8 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
             regularization_weights=None,
             is_regularized=is_regularized,
             alpha=0.0,
-            beta_lower_bound=self.beta_lower_bound,
-            beta_upper_bound=self.beta_upper_bound,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,
@@ -289,6 +325,14 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
                 "Constraint matrix and constraint bounds must be provided for linear constrained coordinate descent."
             )
 
+        beta_lower_bound = kwargs.get("beta_lower_bound", self.beta_lower_bound)
+        beta_upper_bound = kwargs.get("beta_upper_bound", self.beta_upper_bound)
+        self._validate_bounds(
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            x_gram=x_gram,
+        )
+
         beta, _ = online_linear_constrained_coordinate_descent(
             x_gram=x_gram,
             y_gram=y_gram.squeeze(-1),
@@ -297,8 +341,8 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
             regularization_weights=None,
             is_regularized=is_regularized,
             alpha=0.0,
-            beta_lower_bound=self.beta_lower_bound,
-            beta_upper_bound=self.beta_upper_bound,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,

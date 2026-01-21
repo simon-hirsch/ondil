@@ -75,13 +75,18 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         self.tolerance = tolerance
         self.max_iterations = max_iterations
 
-    def _validate_bounds(self, x_gram: np.ndarray) -> None:
+    @staticmethod
+    def _validate_bounds(
+        beta_lower_bound: np.ndarray,
+        beta_upper_bound: np.ndarray,
+        x_gram: np.ndarray,
+    ) -> None:
         J = x_gram.shape[1]
-        if self.beta_lower_bound is not None:
-            if len(self.beta_lower_bound) != J:
+        if beta_lower_bound is not None:
+            if len(beta_lower_bound) != J:
                 raise ValueError("Lower bound does not have correct length")
-        if self.beta_upper_bound is not None:
-            if len(self.beta_upper_bound) != J:
+        if beta_upper_bound is not None:
+            if len(beta_upper_bound) != J:
                 raise ValueError("Upper bound does not have correct length")
 
     @staticmethod
@@ -114,12 +119,18 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         is_regularized,
         **kwargs,
     ):
-        self._validate_bounds(x_gram=x_gram)
         beta = np.zeros(x_gram.shape[1])
 
         logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
         constraint_matrix = kwargs.get("constraint_matrix", None)
         constraint_bounds = kwargs.get("constraint_bounds", None)
+        beta_lower_bound = kwargs.get("beta_lower_bound", self.beta_lower_bound)
+        beta_upper_bound = kwargs.get("beta_upper_bound", self.beta_upper_bound)
+        self._validate_bounds(
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            x_gram=x_gram,
+        )
 
         if constraint_matrix is None:
             constraint_matrix = self.constraint_matrix
@@ -144,8 +155,8 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
             regularization_weights=None,
             is_regularized=is_regularized,
             alpha=0.0,
-            beta_lower_bound=self.beta_lower_bound,
-            beta_upper_bound=self.beta_upper_bound,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,
@@ -160,6 +171,13 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
         constraint_matrix = kwargs.get("constraint_matrix", None)
         constraint_bounds = kwargs.get("constraint_bounds", None)
+        beta_lower_bound = kwargs.get("beta_lower_bound", self.beta_lower_bound)
+        beta_upper_bound = kwargs.get("beta_upper_bound", self.beta_upper_bound)
+        self._validate_bounds(
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            x_gram=x_gram,
+        )
 
         if constraint_matrix is None:
             constraint_matrix = self.constraint_matrix
@@ -178,8 +196,8 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
             regularization_weights=None,
             is_regularized=is_regularized,
             alpha=0.0,
-            beta_lower_bound=self.beta_lower_bound,
-            beta_upper_bound=self.beta_upper_bound,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
             selection=self.selection,
             tolerance=self.tolerance,
             max_iterations=self.max_iterations,
@@ -296,12 +314,18 @@ class LinearConstrainedElasticNetPath(ElasticNetPath):
             )
 
     def fit_beta_path(self, x_gram, y_gram, is_regularized, **kwargs):
-        self._validate_bounds(x_gram=x_gram)
-
         logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
         regularization_weights = kwargs.get("regularization_weights", None)
         constraint_matrix = kwargs.get("constraint_matrix", None)
         constraint_bounds = kwargs.get("constraint_bounds", None)
+        beta_lower_bound = kwargs.get("beta_lower_bound", self.beta_lower_bound)
+        beta_upper_bound = kwargs.get("beta_upper_bound", self.beta_upper_bound)
+
+        self._validate_bounds(
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            x_gram=x_gram,
+        )
 
         if self.auto_regularization_weights:
             if regularization_weights is not None:
@@ -341,8 +365,8 @@ class LinearConstrainedElasticNetPath(ElasticNetPath):
             lambda_path=lambda_path,
             alpha=self.alpha,
             is_regularized=is_regularized,
-            beta_lower_bound=self.beta_lower_bound,
-            beta_upper_bound=self.beta_upper_bound,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
             which_start_value=self.start_value_initial,
             regularization_weights=regularization_weights,
             selection=self.selection,
@@ -356,12 +380,18 @@ class LinearConstrainedElasticNetPath(ElasticNetPath):
         return beta_path
 
     def update_beta_path(self, x_gram, y_gram, beta_path, is_regularized, **kwargs):
-        self._validate_bounds(x_gram=x_gram)
-
         logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
         regularization_weights = kwargs.get("regularization_weights", None)
         constraint_matrix = kwargs.get("constraint_matrix", None)
         constraint_bounds = kwargs.get("constraint_bounds", None)
+
+        beta_lower_bound = kwargs.get("beta_lower_bound", self.beta_lower_bound)
+        beta_upper_bound = kwargs.get("beta_upper_bound", self.beta_upper_bound)
+        self._validate_bounds(
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            x_gram=x_gram,
+        )
 
         if self.auto_regularization_weights:
             if regularization_weights is not None:
@@ -400,8 +430,8 @@ class LinearConstrainedElasticNetPath(ElasticNetPath):
             alpha=self.alpha,
             early_stop=self.early_stop,
             is_regularized=is_regularized,
-            beta_lower_bound=self.beta_lower_bound,
-            beta_upper_bound=self.beta_upper_bound,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
             which_start_value=self.start_value_update,
             regularization_weights=regularization_weights,
             selection=self.selection,
