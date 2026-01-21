@@ -142,12 +142,34 @@ class KendallsTauToParameterGumbel(LinkFunction):
 
     def __init__(self):
         pass
-
     def link(self, x: np.ndarray) -> np.ndarray:
-        return x / np.abs(x) - 1 / x
+        x = np.asarray(x, dtype=float)
+
+        # Choose a safety margin; sqrt(eps) is typically safer than eps
+        eps = float(self.eps) if getattr(self, "eps", None) is not None else float(np.sqrt(np.finfo(x.dtype).eps))
+
+        # Define sign robustly: treat 0 as +1 to avoid 0/0 in x/|x|
+        sign_x = np.sign(x)
+        sign_x = np.where(sign_x == 0, 1.0, sign_x)
+
+        # Avoid division by zero in 1/x by clipping magnitude away from 0
+        x_safe = np.where(np.abs(x) < eps, sign_x * eps, x)
+
+        # Now x_safe/|x_safe| == sign_x, but keep the original structure
+        return x_safe / np.abs(x_safe) - 1.0 / x_safe
 
     def inverse(self, x: np.ndarray) -> np.ndarray:
-        return x / ((1 - np.abs(x)) * np.abs(x))
+        x = np.asarray(x, dtype=float)
+
+        # Robustness: avoid |x| = 0 and |x| = 1 singularities
+        eps = np.finfo(x.dtype).eps  # ~2e-16 for float64
+        ax = np.abs(x)
+
+        ax_safe = np.clip(ax, eps, 1.0 - eps)
+        denom = (1.0 - ax_safe) * ax_safe
+
+        return x / denom
+
 
     def link_derivative(self, x: np.ndarray) -> np.ndarray:
         # Derivative of x/|x| - 1/x w.r.t x
@@ -167,7 +189,6 @@ class KendallsTauToParameterGumbel(LinkFunction):
         numerator = (1 - abs_x) * abs_x - x * sign_x * (1 - 2 * abs_x)
         denominator = ((1 - abs_x) * abs_x) ** 2
         return numerator / denominator
-
 
 class KendallsTauToParameterClayton(LinkFunction):
     """

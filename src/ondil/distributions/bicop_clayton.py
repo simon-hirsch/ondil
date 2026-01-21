@@ -360,9 +360,8 @@ def _hinv_numerical(
     temp_copula = BivariateCopulaClayton(family_code=family_code)
     # Evaluate at boundaries
 
-    fl = (temp_copula.hfunc(x0, v, theta, un, family_code) - u).reshape(-1, 1)
-    fh = (temp_copula.hfunc(x1, v, theta, un, family_code) - u).reshape(-1, 1)
-
+    fl = (temp_copula.hfunc(x0, v, theta.reshape(-1,1), un, family_code) - u)
+    fh = (temp_copula.hfunc(x1, v, theta.reshape(-1,1), un, family_code) - u)
     # Initialize result
     ans = (x0 + x1) / 2.0
 
@@ -371,7 +370,6 @@ def _hinv_numerical(
     at_upper = np.abs(fh) <= tol
     ans = np.where(at_lower, x0, ans)
     ans = np.where(at_upper, x1, ans)
-
     # Track which elements still need iteration
     active = ~(at_lower | at_upper).squeeze()
 
@@ -380,10 +378,9 @@ def _hinv_numerical(
         if not np.any(active):
             break
 
-        # Only update active elements
         ans[active] = (x0[active] + x1[active]) / 2.0
 
-        val = temp_copula.hfunc(ans, v, theta, un, family_code) - u
+        val = temp_copula.hfunc(ans, v, theta.reshape(-1, 1), un, family_code) - u
 
         # Check convergence
         converged = (np.abs(val) <= tol) | (np.abs(x1 - x0) <= tol)

@@ -998,7 +998,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                         tau[a][p] = self.distribution.param_link_function(
                             theta[a][p], p
                         )
-                        eta[a][p] = 2 * np.arctanh(tau[a][p])
+                        eta[a][p] = 2.0 * np.arctanh(np.clip(tau[a][p], -1 + 1e-12, 1 - 1e-12))
 
                         dl1dp1 = self.distribution.element_dl1_dp1(
                             y, theta=theta[a], param=p, k=k
@@ -1008,7 +1008,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                             y, theta=theta[a], param=p, k=k
                         )
 
-                        dl1_link = 1.0 / (1.0 + np.cosh(eta[a][p])).squeeze()
+                        dl1_link = 1.0 / (1.0 + np.cosh(np.clip(eta[a][p], -50, 50))).squeeze()
 
                         sinh_half = np.sinh(eta[a][p] / 2.0)
                         sinh_x = np.sinh(eta[a][p])
@@ -1139,7 +1139,14 @@ class MultivariateOnlineDistributionalRegressionPath(
                         )
                         .squeeze()
                     )
+                    ny = np.isnan(self._y_gram[p][k][a]).sum()
+                    nx = np.isnan(self._x_gram[p][k][a]).sum()
 
+                    if ny > 0 or nx > 0:
+                        raise ValueError(
+                            f"NaNs detected in gram matrices at p={p}, k={k}, a={a}: "
+                            f"y_gram NaNs={ny}, x_gram NaNs={nx}"
+                        )
                     if self._method[p][k]._path_based_method:
                         self.coef_path_[p][k][a] = self._method[p][k].fit_beta_path(
                             x_gram=self._x_gram[p][k][a],

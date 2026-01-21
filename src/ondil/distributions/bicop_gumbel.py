@@ -498,15 +498,19 @@ def _log_likelihood(y, theta, family_code=41):
 def _derivative_1st(y, theta, family_code=41):
     """
     First derivative of the Gumbel copula log-likelihood with respect to theta.
+    Robust version: clips/guards domains to avoid NaN/inf.
     """
+    y = np.asarray(y, dtype=float)
+    theta = np.asarray(theta, dtype=float).copy()
 
-    theta = np.asarray(theta).copy()  # <- prevents in-place mutation of caller's array
+    # ---- small constants ----
+    eps = 1e-12  # generic
+    eps_theta = 1e-8  # keep away from 0 for 1/theta, 1/theta^2
+    max_log_arg = 1e300  # cap arguments before log if needed
     sign = np.ones_like(theta)
 
-    y = y.copy()
-
-    u = np.clip(y[:, 0], 1e-12, 1 - 1e-12).reshape(-1, 1)
-    v = np.clip(y[:, 1], 1e-12, 1 - 1e-12).reshape(-1, 1)
+    u = np.clip(y[:, 0], eps, 1.0 - eps).reshape(-1, 1)
+    v = np.clip(y[:, 1], eps, 1.0 - eps).reshape(-1, 1)
 
     rotation = get_effective_rotation(theta, family_code)
 
@@ -514,72 +518,94 @@ def _derivative_1st(y, theta, family_code=41):
 
     # 180° rotation (survival)
     mask_1 = rotation == 1
-    u_rot[mask_1] = 1 - u[mask_1]
-    v_rot[mask_1] = 1 - v[mask_1]
+    u_rot[mask_1] = 1.0 - u[mask_1]
+    v_rot[mask_1] = 1.0 - v[mask_1]
     sign[mask_1] = 1.0
 
     mask_2 = rotation == 2
-    u_rot[mask_2] = 1 - u[mask_2]
+    u_rot[mask_2] = 1.0 - u[mask_2]
     theta[mask_2] = -theta[mask_2]
     sign[mask_2] = -1.0
 
     mask_3 = rotation == 3
-    v_rot[mask_3] = 1 - v[mask_3]
+    v_rot[mask_3] = 1.0 - v[mask_3]
     theta[mask_3] = -theta[mask_3]
     sign[mask_3] = -1.0
 
-    t1 = np.log(u_rot)
-    t2 = np.power(-t1, theta)
-    t3 = np.log(v_rot)
-    t4 = np.power(-t3, theta)
+    # ---- guard theta away from 0 (preserve sign) ----
+    theta = np.where(np.abs(theta) < eps_theta, np.sign(theta + 0.0) * eps_theta + (theta == 0) * eps_theta, theta)
+    # logs of u_rot, v_rot are negative because u_rot,v_rot in (0,1)
+    t1 = np.log(u_rot)                      # < 0
+    t3 = np.log(v_rot)                      # < 0
+    # -t1, -t3 are positive, but guard anyway
+    mt1 = np.maximum(-t1, eps)
+    mt3 = np.maximum(-t3, eps)
+    # power terms: (-log u)^theta, (-log v)^theta
+    t2 = np.power(mt1, theta)
+    t4 = np.power(mt3, theta)
     t5 = t2 + t4
+    t5_safe = np.maximum(t5, eps)           # for log(t5), 1/t5, power(t5, ...)
     t6 = 1.0 / theta
-    t7 = np.power(t5, t6)
+    t7 = np.power(t5_safe, t6)
     t8 = theta * theta
-    t10 = np.log(t5)
+    t10 = np.log(np.minimum(t5_safe, max_log_arg))
     t11 = (1.0 / t8) * t10
-    t12 = np.log(-t1)
-    t14 = np.log(-t3)
+    # log(-log u), log(-log v)
+    t12 = np.log(mt1)
+    t14 = np.log(mt3)
     t16 = t2 * t12 + t4 * t14
-    t18 = 1.0 / t5
+    t18 = 1.0 / t5_safe
+
     t20 = -t11 + t6 * t16 * t18
+    # exp(-t7) (safe enough; t7>=0)
     t22 = np.exp(-t7)
     t23 = -1.0 + t6
-    t24 = np.power(t5, 2.0 * t23)
+    # power(t5, 2*t23) can blow if t5~0 and exponent negative -> guard with t5_safe
+    t24 = np.power(t5_safe, 2.0 * t23)
     t25 = t22 * t24
-    t27 = t1 * t3
+    t27 = t1 * t3                          # positive (neg*neg), but guard
+    t27_safe = np.maximum(t27, eps)
+
     t28 = theta - 1.0
-    t29 = np.power(t27, t28)
-    t30 = np.power(t5, -t6)
+    t29 = np.power(t27_safe, t28)
+    t30 = np.power(t5_safe, -t6)
     t31 = t28 * t30
     t32 = 1.0 + t31
+    # avoid division by ~0 later
+    t32_safe = np.where(np.abs(t32) < eps, np.sign(t32 + 0.0) * eps + (t32 == 0) * eps, t32)
+
     t34 = 1.0 / u_rot
     t35 = 1.0 / v_rot
     t36 = t34 * t35
-    t37 = t29 * t32 * t36
+    t37 = t29 * t32_safe * t36
     t45 = t25 * t29
-    t46 = np.log(t27)
+    t46 = np.log(t27_safe)
 
-    # Create mask for valid calculations
-    mask = (t5 > 0) & (t27 > 0) & (t32 != 0)
-
-    # Initialize derivative array
+    # ---- validity mask (stronger) ----
+    mask = (
+        np.isfinite(theta)
+        & np.isfinite(t5_safe)
+        & np.isfinite(t27_safe)
+        & np.isfinite(t22)
+        & np.isfinite(t24)
+        & np.isfinite(t29)
+        & np.isfinite(t32_safe)
+        & (t5_safe > 0)
+        & (t27_safe > 0)
+        & (np.abs(t32_safe) > 0)
+    )
     deriv = np.zeros_like(theta)
 
-    # Calculate derivative only for valid entries
-    deriv[mask] = (
-        (
-            -t7[mask] * t20[mask] * t25[mask] * t37[mask]
-            + t25[mask]
-            * (-2.0 * t11[mask] + 2.0 * t23[mask] * t16[mask] * t18[mask])
-            * t37[mask]
-            + t45[mask] * t46[mask] * t32[mask] * t36[mask]
-            + t45[mask] * (t30[mask] - t31[mask] * t20[mask]) * t34[mask] * t35[mask]
-        )
-        / (t22[mask] * t24[mask] * t29[mask] * t32[mask])
-        * u_rot[mask]
-        * v_rot[mask]
+    # denominator: t22*t24*t29*t32 (guarded)
+    denom = t22 * t24 * t29 * t32_safe
+    denom_safe = np.where(np.abs(denom) < eps, np.sign(denom + 0.0) * eps + (denom == 0) * eps, denom)
+    numer = (
+        -t7 * t20 * t25 * t37
+        + t25 * (-2.0 * t11 + 2.0 * t23 * t16 * t18) * t37
+        + t45 * t46 * t32_safe * t36
+        + t45 * (t30 - t31 * t20) * t34 * t35
     )
+    deriv[mask] = (numer[mask] / denom_safe[mask]) * u_rot[mask] * v_rot[mask]
     deriv *= sign
     return deriv.squeeze()
 
@@ -587,76 +613,96 @@ def _derivative_1st(y, theta, family_code=41):
 def _derivative_2nd(y, theta, family_code=41):
     """
     Second derivative of the Gumbel copula log-likelihood with respect to theta.
+    Robust version: guards theta, logs/powers, and divisions to avoid NaN/inf.
     """
-    theta = np.asarray(theta).copy()  # <- prevents in-place mutation of caller's array
-    y = np.asarray(y).copy()
+    y = np.asarray(y, dtype=float)
+    theta = np.asarray(theta, dtype=float).copy()
 
-    u = np.clip(y[:, 0], 1e-12, 1 - 1e-12).reshape(-1, 1)
-    v = np.clip(y[:, 1], 1e-12, 1 - 1e-12).reshape(-1, 1)
+    eps = 1e-12
+    eps_theta = 1e-8
 
+    u = np.clip(y[:, 0], eps, 1.0 - eps).reshape(-1, 1)
+    v = np.clip(y[:, 1], eps, 1.0 - eps).reshape(-1, 1)
     rotation = get_effective_rotation(theta, family_code)
     u_rot, v_rot = u.copy(), v.copy()
 
     # 180° rotation (survival)
     mask_1 = rotation == 1
-    u_rot[mask_1] = 1 - u_rot[mask_1]
-    v_rot[mask_1] = 1 - v_rot[mask_1]
+    u_rot[mask_1] = 1.0 - u_rot[mask_1]
+    v_rot[mask_1] = 1.0 - v_rot[mask_1]
 
     # 90° rotation
     mask_2 = rotation == 2
-    v_rot[mask_2] = 1 - v_rot[mask_2]
+    v_rot[mask_2] = 1.0 - v_rot[mask_2]
     theta[mask_2] = -theta[mask_2]
 
     # 270° rotation
     mask_3 = rotation == 3
-    u_rot[mask_3] = 1 - u_rot[mask_3]
+    u_rot[mask_3] = 1.0 - u_rot[mask_3]
     theta[mask_3] = -theta[mask_3]
 
-    t3 = np.log(np.maximum(u_rot, 1e-12))
-    t4 = np.power(-t3, 1.0 * theta)
-    t5 = np.log(np.maximum(v_rot, 1e-12))
-    t6 = np.power(-t5, 1.0 * theta)
+    # guard theta away from 0 for 1/theta, 1/theta^k
+    theta = np.where(
+        np.abs(theta) < eps_theta,
+        np.sign(theta + 0.0) * eps_theta + (theta == 0) * eps_theta,
+        theta,
+    )
+    # core logs (u_rot,v_rot already clipped away from 0/1, but keep safe)
+    t3 = np.log(np.maximum(u_rot, eps))
+    t5 = np.log(np.maximum(v_rot, eps))
+    mt3 = np.maximum(-t3, eps)
+    mt5 = np.maximum(-t5, eps)
+    t4 = np.power(mt3, theta)
+    t6 = np.power(mt5, theta)
     t7 = t4 + t6
-    t8 = 1 / theta
-    t9 = np.power(np.maximum(t7, 1e-12), 1.0 * t8)
+    t7s = np.maximum(t7, eps)
+    t8 = 1.0 / theta
+    t9 = np.power(t7s, t8)
     t10 = theta * theta
-    t11 = 1 / t10
-    t12 = np.log(np.maximum(t7, 1e-12))
+    t11 = 1.0 / t10
+    t12 = np.log(t7s)
     t13 = t11 * t12
-    t14 = np.log(np.maximum(-t3, 1e-12))
-    t16 = np.log(np.maximum(-t5, 1e-12))
+    t14 = np.log(mt3)
+    t16 = np.log(mt5)
     t18 = t4 * t14 + t6 * t16
-    t20 = 1 / np.maximum(t7, 1e-12)
+    t20 = 1.0 / t7s
+
     t22 = -t13 + t8 * t18 * t20
     t23 = t22 * t22
     t25 = np.exp(-t9)
-    t27 = t25 / u_rot
-    t29 = 1 / v_rot
+    # divisions by u_rot, v_rot safe because clipped, but keep max
+    inv_u = 1.0 / np.maximum(u_rot, eps)
+    inv_v = 1.0 / np.maximum(v_rot, eps)
+    t27 = t25 * inv_u
+    t29 = inv_v
+
     t30 = -1.0 + t8
-    t31 = np.power(np.maximum(t7, 1e-12), 2.0 * t30)
+    t31 = np.power(t7s, 2.0 * t30)
     t32 = t29 * t31
     t33 = t3 * t5
+    t33s = np.maximum(np.abs(t33), eps)
     t34 = theta - 1.0
-    t35 = np.power(np.maximum(np.abs(t33), 1e-12), 1.0 * t34)
-    t36 = np.power(np.maximum(t7, 1e-12), -1.0 * t8)
+    t35 = np.power(t33s, t34)
+    t36 = np.power(t7s, -t8)
     t37 = t34 * t36
     t38 = 1.0 + t37
-    t39 = t35 * t38
+    t38s = np.where(np.abs(t38) < eps, np.sign(t38 + 0.0) * eps + (t38 == 0) * eps, t38)
+    t39 = t35 * t38s
     t40 = t32 * t39
-    t44 = 1 / t10 / theta * t12
+    t44 = (1.0 / t10) * (1.0 / theta) * t12
     t47 = t11 * t18 * t20
     t49 = t14 * t14
     t51 = t16 * t16
     t53 = t4 * t49 + t6 * t51
     t56 = t18 * t18
-    t58 = t7 * t7
-    t59 = 1 / np.maximum(t58, 1e-12)
+    t58 = t7s * t7s
+    t59 = 1.0 / np.maximum(t58, eps)
     t61 = 2.0 * t44 - 2.0 * t47 + t8 * t53 * t20 - t8 * t56 * t59
     t65 = t9 * t9
     t70 = t9 * t22 * t27
     t74 = -2.0 * t13 + 2.0 * t30 * t18 * t20
     t75 = t74 * t35
-    t80 = np.log(np.maximum(np.abs(t33), 1e-12))
+    t80 = np.log(t33s)
     t87 = t36 - t37 * t22
     t88 = t35 * t87
     t17 = t27 * t29
@@ -668,19 +714,21 @@ def _derivative_2nd(y, theta, family_code=41):
         -t9 * t23 * t27 * t40
         - t9 * t61 * t27 * t40
         + t65 * t23 * t27 * t40
-        - 2.0 * t70 * t32 * t75 * t38
-        - 2.0 * t70 * t32 * t35 * t80 * t38
+        - 2.0 * t70 * t32 * t75 * t38s
+        - 2.0 * t70 * t32 * t35 * t80 * t38s
         - 2.0 * t70 * t32 * t88
         + t17 * t31 * t15 * t39
         + t17
         * t31
         * (4.0 * t44 - 4.0 * t47 + 2.0 * t30 * t53 * t20 - 2.0 * t30 * t56 * t59)
         * t39
-        + 2.0 * t27 * t32 * t75 * t80 * t38
+        + 2.0 * t27 * t32 * t75 * t80 * t38s
         + 2.0 * t17 * t31 * t74 * t88
-        + t17 * t2 * t1 * t38
+        + t17 * t2 * t1 * t38s
         + 2.0 * t17 * t2 * t80 * t87
         + t17 * t2 * (-2.0 * t36 * t22 + t37 * t23 - t37 * t61)
     )
+    # if anything still went non-finite, neutralize those entries
+    deriv = np.where(np.isfinite(deriv), deriv, 0.0)
 
     return deriv.squeeze()
