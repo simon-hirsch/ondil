@@ -409,8 +409,7 @@ class ScipyMixin(ABC):
 
     def rvs(self, size: int, theta: np.ndarray) -> np.ndarray:
         return (
-            self
-            .scipy_dist(**self.theta_to_scipy_params(theta))
+            self.scipy_dist(**self.theta_to_scipy_params(theta))
             .rvs((size, theta.shape[0]))
             .T
         )
