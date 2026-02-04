@@ -43,8 +43,6 @@ def test_distribution_functions(distribution):
         np.clip(distribution.distribution_support[1], *clip_bounds),
         N,
     )
-    prob_grid = np.linspace(0.01, 1 - 0.01, N)
-
     # Generate random parameters within support bounds
     theta = np.array([
         np.random.uniform(
