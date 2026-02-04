@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
+import inspect
 from typing import Dict, Optional, Tuple
 import warnings
-import inspect
 
 import numpy as np
 import scipy.optimize as opt
