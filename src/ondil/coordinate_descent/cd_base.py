@@ -1,8 +1,9 @@
 from typing import Literal, Tuple
-from .utils import soft_threshold, get_start_beta
 
 import numba as nb
 import numpy as np
+
+from .utils import get_start_beta, soft_threshold
 
 
 @nb.njit()

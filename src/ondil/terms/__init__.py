@@ -1,10 +1,10 @@
 from .autoregressive_terms import (
     JointEstimationTimeSeriesTerm,
+    LaggedAbsoluteResidual,
     LaggedResidual,
     LaggedSquaredResidual,
     LaggedTarget,
     LaggedTheta,
-    LaggedAbsoluteResidual,
     RegularizedJointEstimationTimeSeriesTerm,
 )
 from .linear_terms import InterceptTerm, LinearTerm, RegularizedLinearTermIC

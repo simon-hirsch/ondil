@@ -2,7 +2,6 @@ from typing import Literal
 
 import numpy as np
 
-from .elasticnet import ElasticNetPath
 from ..base import EstimationMethod
 from ..coordinate_descent import (
     online_linear_constrained_coordinate_descent,
@@ -10,6 +9,7 @@ from ..coordinate_descent import (
 )
 from ..gram import init_gram, init_y_gram, update_gram, update_y_gram
 from ..logging import logger
+from .elasticnet import ElasticNetPath
 
 
 class LinearConstrainedCoordinateDescent(EstimationMethod):
