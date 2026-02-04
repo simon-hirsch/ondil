@@ -45,20 +45,18 @@ class OrdinaryLeastSquares(EstimationMethod):
         self,
         x_gram: np.ndarray,
         y_gram: np.ndarray,
-        is_regularized: np.ndarray,
         **kwargs,
     ) -> np.ndarray:
-        return super().fit_beta_path(x_gram, y_gram, is_regularized)
+        return super().fit_beta_path(x_gram, y_gram, **kwargs)
 
     def update_beta_path(
         self,
         x_gram: np.ndarray,
         y_gram: np.ndarray,
         beta_path: np.ndarray,
-        is_regularized: np.ndarray,
         **kwargs,
     ) -> np.ndarray:
-        return super().update_beta_path(x_gram, y_gram, beta_path, is_regularized)
+        return super().update_beta_path(x_gram, y_gram, beta_path, **kwargs)
 
     def fit_beta(
         self,
