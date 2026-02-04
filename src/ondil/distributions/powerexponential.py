@@ -85,25 +85,13 @@ class PowerExponential(Distribution):
     def ppf(self, q, theta):
         mu, sigma, nu = self.theta_to_params(theta)
         c = self._c(nu)
-
         q = np.asarray(q)
-
         # Output container
-        result = np.full_like(q, fill_value=np.nan, dtype=np.float64)
-
-        # Handling boundary conditions explicitly
-        result[q == 0] = -np.inf
-        result[q == 1] = np.inf
-
-        # Validating quantiles between 0 and 1 (excluding boundaries)
-        valid = (q > 0) & (q < 1)
-        p = q[valid]
-        sign = np.sign(p - 0.5)
-        gamma_q = gamma_dist.ppf(np.abs(2 * p - 1), a=1 / nu, scale=1)
+        sign = np.sign(q - 0.5)
+        gamma_q = gamma_dist.ppf(np.abs(2 * q - 1), a=1 / nu, scale=1)
         z = sign * (2 * gamma_q) ** (1 / nu) * c
-        result[valid] = mu + sigma * z
-
-        return result
+        return mu + sigma * z
+        # return result
 
     def calculate_conditional_initial_values(self, y, theta, param):
         if param == 0:

@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from ondil import HAS_SCORINGRULES
 import rpy2.robjects as robjects
 
 from .utils import get_distributions_with_gamlss
@@ -103,3 +104,9 @@ def test_distribution_functions(distribution):
                 f"Results: {np.round(R_list.rx2(key)[:10], 3)} (R)\n"
                 f"Results: {np.round(function_mapping[key]()[:10], 3)} (Python)"
             )
+
+    # Test CRPS if scoringrules is installed
+
+    if HAS_SCORINGRULES:
+        crps_values = distribution.crps(y=x, theta=theta)
+        assert crps_values.shape == x.shape, "Shape mismatch in CRPS output"

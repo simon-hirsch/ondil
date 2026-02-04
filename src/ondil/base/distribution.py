@@ -1,11 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Tuple
 import warnings
+import inspect
 
 import numpy as np
 import scipy.optimize as opt
 import scipy.stats as st
 
+from .. import HAS_SCORINGRULES
+from ..error import check_scoringrules
 from ..warnings import OutOfSupportWarning
 from .link import LinkFunction
 
@@ -27,6 +30,21 @@ class Distribution(ABC):
     def is_discrete(self) -> bool:
         """Whether the distribution is discrete or continuous."""
         return False
+
+    @property
+    def crps_function(self) -> str | None:
+        """The name of the corresponding CRPS function in 'scoringrules' package."""
+        return None
+
+    @property
+    def crps_names(self) -> dict | None:
+        """
+        The names of the parameters in the scoringrules CRPS function and the corresponding column in theta.
+
+        The mapping goes {"scoringrules_param_name": "scipy_param_name"}.
+
+        """
+        return None
 
     @property
     @abstractmethod
@@ -287,6 +305,23 @@ class Distribution(ABC):
         else:
             return self.logpdf(y, theta)
 
+    def crps(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
+        """Compute the CRPS for the given data points.
+
+        Args:
+            y (np.ndarray): An array of data points at which to evaluate the CRPS.
+            theta (np.ndarray): An array of parameters for the distribution.
+
+        Returns:
+            np.ndarray: An array of CRPS values corresponding to the data points in `y`.
+        """
+        check_scoringrules(HAS_SCORINGRULES)
+        from scoringrules import crps_quantile
+
+        alpha = np.linspace(0.01, 0.99, 99)
+        quantiles = self.ppf(q=alpha[:, None], theta=theta)
+        return crps_quantile(y, quantiles.T, alpha)
+
 
 class MultivariateDistributionMixin(ABC):
     # TODO: The element link functions should be defined here as well.
@@ -309,6 +344,9 @@ class MultivariateDistributionMixin(ABC):
         self, y: np.ndarray, theta: Dict, param: int = 0, k: int = 0, clip=False
     ):
         raise NotImplementedError("Not implemented in ABC")
+
+    def crps(self, y: np.ndarray, theta: Dict) -> np.ndarray:
+        raise ValueError("CRPS is not defined for multivariate distributions.")
 
 
 class ScipyMixin(ABC):
@@ -367,6 +405,28 @@ class ScipyMixin(ABC):
     def ppf(self, q: np.ndarray, theta: np.ndarray) -> np.ndarray:
         super().ppf(q, theta)
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).ppf(q)
+
+    def crps(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
+        if self.crps_function is None:
+            return super().crps(y, theta)
+        else:
+            check_scoringrules(HAS_SCORINGRULES)
+            import scoringrules as sr
+
+            scipy_params = self.theta_to_scipy_params(theta)
+            scoring_func = getattr(sr, self.crps_function)
+            sig = inspect.signature(scoring_func)
+            # Get all parameter names except 'y'
+            names = [
+                p.name
+                for p in sig.parameters.values()
+                if p.name in self.crps_names.keys()
+            ]
+            print(names)
+            # Build params list in the exact order required by the function signature
+            mapping = {name: self.crps_names.get(name, name) for name in names}
+            params = [scipy_params[mapping[name]] for name in names]
+            return scoring_func(y, *params)
 
     def logpmf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         """Compute the log of the probability mass function (PMF) for the given data points.
