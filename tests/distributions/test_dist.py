@@ -3,6 +3,8 @@ import pytest
 from ondil import HAS_SCORINGRULES
 import rpy2.robjects as robjects
 
+from ondil import HAS_SCORINGRULES
+
 from .utils import get_distributions_with_gamlss
 
 N = 100
