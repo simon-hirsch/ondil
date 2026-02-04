@@ -115,12 +115,12 @@ class LogNormal(ScipyMixin, Distribution):
         mu, sigma = self.theta_to_params(theta)
         return st.norm.cdf((np.log(y) - mu) / sigma)
 
-    def ppf(self, p: np.ndarray, theta: np.ndarray) -> np.ndarray:
+    def ppf(self, q: np.ndarray, theta: np.ndarray) -> np.ndarray:
         """
         Percent-point function (quantile function) of the Log-Normal distribution.
         """
         mu, sigma = self.theta_to_params(theta)
-        return np.exp(mu + sigma * st.norm.ppf(p))
+        return np.exp(mu + sigma * st.norm.ppf(q))
 
     def logpdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         """
