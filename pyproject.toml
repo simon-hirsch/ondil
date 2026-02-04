@@ -47,7 +47,8 @@ dependencies=[
 pandas = ["pandas >= 1.20"]
 polars = ["polars"]
 mpl = ["matplotlib >= 3.7"]
-all = ["ondil[pandas, polars, mpl]"]
+all = ["ondil[pandas, polars, mpl, sr]"]
+sr = ["scoringrules >= 0.6.1"]
 
 [dependency-groups]
 dev = ["ruff==0.12.4"]
