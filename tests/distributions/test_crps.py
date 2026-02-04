@@ -317,7 +317,7 @@ def test_crps_perfect_forecast():
 
 
 @pytest.mark.skipif(not SCORINGRULES_AVAILABLE, reason="scoringrules not installed")
-def test_normalmeamvariance_crps():
+def test_normalmeanvariance_crps():
     """Test NormalMeanVariance CRPS with variance parameterization."""
     dist = NormalMeanVariance()
     
