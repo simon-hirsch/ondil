@@ -1,0 +1,3966 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../estimators_and_methods/">
+      
+      
+        <link rel="next" href="../methods/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Estimators - ondil: Online Distributional Learning</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="https://unpkg.com/katex@0/dist/katex.min.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#estimators" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="ondil: Online Distributional Learning" class="md-header__button md-logo" aria-label="ondil: Online Distributional Learning" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            ondil: Online Distributional Learning
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Estimators
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="ondil: Online Distributional Learning" class="md-nav__button md-logo" aria-label="ondil: Online Distributional Learning" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    ondil: Online Distributional Learning
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modeling_tips/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tips & Tricks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../estimators_and_methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estimators and Methods
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estimators
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estimators
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#linear-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linear Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OnlineLinearModel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OnlineLinearModel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.score" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        score
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.predict_path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_path
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLasso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OnlineLasso
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OnlineLasso">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLasso.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#online-distributional-regression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Online Distributional Regression
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OnlineDistributionalRegression
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OnlineDistributionalRegression">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.predict_median" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_median
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.predict_distribution_parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_distribution_parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.predict_quantile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_quantile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.get_debug_information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_debug_information
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MultivariateOnlineDistributionalRegressionPath
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MultivariateOnlineDistributionalRegressionPath">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.count_coef_to_be_fitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        count_coef_to_be_fitted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="predict">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict_distribution_parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_distribution_parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict_all_adr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_all_adr
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.partial_fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        partial_fit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="partial_fit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.partial_fit--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="update">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.update--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Methods
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scaler/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Preprocessing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../distributions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distributions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Link Functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coordinate_descent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coordinate Descent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../diagnostics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diagnostics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gram/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gramian Matrix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model_selection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Selection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multivariate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multivariate Distributional Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/simon-hirsch/ondil/issues" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issues [Github]
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/simon-hirsch/ondil/tree/main" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Source [Github]
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/simon-hirsch/ondil/tree/main?tab=MIT-1-ov-file#readme" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Licence [Github]
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#linear-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linear Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OnlineLinearModel
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OnlineLinearModel">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.score" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        score
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLinearModel.predict_path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_path
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLasso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OnlineLasso
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OnlineLasso">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineLasso.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#online-distributional-regression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Online Distributional Regression
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OnlineDistributionalRegression
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="OnlineDistributionalRegression">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.predict_median" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_median
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.predict_distribution_parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_distribution_parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.predict_quantile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_quantile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.OnlineDistributionalRegression.get_debug_information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_debug_information
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MultivariateOnlineDistributionalRegressionPath
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MultivariateOnlineDistributionalRegressionPath">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.count_coef_to_be_fitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        count_coef_to_be_fitted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="predict">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict_distribution_parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_distribution_parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict_all_adr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predict_all_adr
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.partial_fit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        partial_fit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="partial_fit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.partial_fit--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        update
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="update">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath.update--parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="estimators">Estimators</h1>
+<p>Estimator classes provide an <code>sklearn</code>-like API to fit, predict and update models with the accordingly named methods. <code>ondil</code> provides a variety of estimators for different tasks, including linear regression, regularized regression, and distributional regression. These estimators are designed to handle online learning scenarios, allowing for efficient updates as new data arrives. The following sections provide an overview of the available estimators in <code>ondil</code>. We first cover the linear models, followed by distributional regression models. </p>
+<h2 id="linear-models">Linear Models</h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.estimators.OnlineLinearModel" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.estimators.OnlineLinearModel</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="ondil.base.OndilEstimatorMixin">OndilEstimatorMixin</span></code>, <code><span title="sklearn.base.RegressorMixin">RegressorMixin</span></code>, <code><span title="sklearn.base.BaseEstimator">BaseEstimator</span></code></p>
+
+
+
+        <p>Simple Online Linear Regression for the expected value.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineLinearModel.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__init__</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">forget</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">scale_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">ndarray</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">regularize_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">method</span><span class="p">:</span> <span class="n">EstimationMethod</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;ols&quot;</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">ic</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;aic&quot;</span><span class="p">,</span> <span class="s2">&quot;bic&quot;</span><span class="p">,</span> <span class="s2">&quot;hqc&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bic&quot;</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The basic linear model for many different estimation techniques.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>forget</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Exponential discounting of old observations. Defaults to 0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>scale_inputs</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>True</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to scale the <span class="arithmatex">\(X\)</span> matrix. Defaults to True.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>fit_intercept</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>True</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to add an intercept in the estimation. Defaults to True.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>regularize_intercept</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to regularize the intercept. Defaults to False.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>method</code></b>
+              (<code><span title="ondil.base.EstimationMethod">EstimationMethod</span> | <span title="str">str</span></code>, default:
+                  <code>&#39;ols&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The estimation method. Can be a string or <code>EstimationMethod</code> class. Defaults to "ols".</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>ic</code></b>
+              (<code><span title="typing.Literal">Literal</span>[&#39;aic&#39;, &#39;bic&#39;, &#39;hqc&#39;, &#39;max&#39;]</code>, default:
+                  <code>&#39;bic&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The information criteria for model selection. Defaults to "bic".</p>
+          </div>
+        </li>
+    </ul>
+        <p>Raises:
+    ValueError: Will raise if you try to regularize the intercept, but not fit it.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineLinearModel.fit" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">fit</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">fit</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">sample_weight</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OnlineLinearModel</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Initial fit of the online regression model.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>The design matrix <span class="arithmatex">\(X\)</span>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>y</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>The response vector <span class="arithmatex">\(y\)</span>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>sample_weight</code></b>
+              (<code><span title="typing.Optional">Optional</span>[<span title="numpy.ndarray">ndarray</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The sample weights. Defaults to None.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineLinearModel.update" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">update</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">update</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">sample_weight</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Update the regression model.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>The new row of the design matrix <span class="arithmatex">\(X\)</span>. Needs to be of shape 1 x n_features or n_obs_new x n_features.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>y</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>The new observation of <span class="arithmatex">\(y\)</span>. Needs to be the same shape as <code>X</code> or a single observation.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>sample_weight</code></b>
+              (<code><span title="typing.Optional">Optional</span>[<span title="numpy.ndarray">ndarray</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The weight for the new observations. <code>None</code> implies all observations have weight 1. Defaults to None.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineLinearModel.score" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">score</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the coefficient of determination <span class="arithmatex">\(R^2\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>The design matrix <span class="arithmatex">\(X\)</span>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>y</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>The response vector <span class="arithmatex">\(y\)</span>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>float</code></b> (              <code><span title="float">float</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>The coefficient of determination <span class="arithmatex">\(R^2\)</span>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineLinearModel.predict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">predict</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Predict using the optimal IC selection.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>The design matrix <span class="arithmatex">\(X\)</span>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: The predictions for the optimal IC.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineLinearModel.predict_path" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">predict_path</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_path</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Predict the full regularization path.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>The design matrix <span class="arithmatex">\(X\)</span>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: The predictions for the full path.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.estimators.OnlineLasso" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.estimators.OnlineLasso</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="ondil.estimators.OnlineLinearModel (ondil.estimators.online_linear_model.OnlineLinearModel)" href="#ondil.estimators.OnlineLinearModel">OnlineLinearModel</a></code></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineLasso.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__init__</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">forget</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">scale_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">regularize_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">ic</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;aic&quot;</span><span class="p">,</span> <span class="s2">&quot;bic&quot;</span><span class="p">,</span> <span class="s2">&quot;hqc&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bic&quot;</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">early_stop</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">beta_lower_bound</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">beta_upper_bound</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">lambda_n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">lambda_eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0001</span><span class="p">,</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">start_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;previous_fit&quot;</span><span class="p">,</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0001</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">selection</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cyclic&quot;</span><span class="p">,</span> <span class="s2">&quot;random&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cyclic&quot;</span><span class="p">,</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Online LASSO estimator class.</p>
+<p>This class initializes the online linear regression fitted using LASSO. The estimator object provides three main methods,
+<code>estimator.fit(X, y)</code>, <code>estimator.update(X, y)</code> and <code>estimator.predict(X)</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>forget</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Exponential discounting of old observations. Defaults to 0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>scale_inputs</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>True</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to scale the <span class="arithmatex">\(X\)</span> matrix. Defaults to True.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>fit_intercept</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>True</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to add an intercept in the estimation. Defaults to True.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>regularize_intercept</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to regularize the intercept. Defaults to False.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>ic</code></b>
+              (<code><span title="typing.Literal">Literal</span>[&#39;aic&#39;, &#39;bic&#39;, &#39;hqc&#39;, &#39;max&#39;]</code>, default:
+                  <code>&#39;bic&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The information criteria for model selection. Defaults to "bic".</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>early_stop</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Early stopping criterion. If we reach <code>early_stop</code> non-zero coefficients, we stop. Defaults to 0 (no early stopping).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>beta_lower_bound</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Lower bounds for beta. Keep in mind the size of X and whether you want to fit an intercept. None corresponds to unconstrained estimation.Defaults to None.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>beta_upper_bound</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Lower bounds for beta. Keep in mind the size of X and whether you want to fit an intercept. None corresponds to unconstrained estimation. Defaults to None.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>lambda_n</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>100</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Length of the regularization path. Defaults to 100.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>lambda_eps</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.0001</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The largest regularization is determined automatically such that the solution is fully regularized. The smallest regularization is taken as <span class="arithmatex">\(\varepsilon  \lambda^\max\)</span> and we will use an exponential grid. Defaults to 1e-4.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>start_value</code></b>
+              (<code><span title="str">str</span></code>, default:
+                  <code>&#39;previous_fit&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to choose the previous fit or the previous regularization as start value. Defaults to 100.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>tolerance</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.0001</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Tolerance for breaking the CD. Defaults to 1e-4.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>max_iterations</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>1000</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Max number of CD iterations. Defaults to 1000.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>selection</code></b>
+              (<code><span title="typing.Literal">Literal</span>[&#39;cyclic&#39;, &#39;random&#39;]</code>, default:
+                  <code>&#39;cyclic&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to cycle through all coordinates in order or random. For large problems, random might increase convergence. Defaults to 100.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="online-distributional-regression">Online Distributional Regression</h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.estimators.OnlineDistributionalRegression" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.estimators.OnlineDistributionalRegression</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="ondil.base.OndilEstimatorMixin">OndilEstimatorMixin</span></code>, <code><span title="sklearn.base.RegressorMixin">RegressorMixin</span></code>, <code><span title="sklearn.base.BaseEstimator">BaseEstimator</span></code></p>
+
+
+
+        <p>The online/incremental GAMLSS class.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineDistributionalRegression.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__init__</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">distribution</span><span class="p">:</span> <span class="n">Distribution</span> <span class="o">=</span> <span class="n">Normal</span><span class="p">(),</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">equation</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">forget</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">method</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="nb">str</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        <span class="n">EstimationMethod</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">EstimationMethod</span><span class="p">],</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ols&quot;</span><span class="p">,</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">scale_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">ndarray</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">fit_intercept</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">regularize_intercept</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        <span class="nb">bool</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">ic</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;aic&quot;</span><span class="p">,</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="n">model_selection</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>        <span class="s2">&quot;local_rss&quot;</span><span class="p">,</span> <span class="s2">&quot;global_ll&quot;</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;local_rss&quot;</span><span class="p">,</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="n">prefit_initial</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">prefit_update</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    <span class="n">param_order</span><span class="p">:</span> <span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span class="n">cautious_updates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    <span class="n">cond_start_val</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="n">max_it_outer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    <span class="n">max_it_inner</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>    <span class="n">abs_tol_outer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>    <span class="n">abs_tol_inner</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>    <span class="n">rel_tol_outer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-05</span><span class="p">,</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>    <span class="n">rel_tol_inner</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-05</span><span class="p">,</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>    <span class="n">min_it_outer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OnlineDistributionalRegression</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The <code>OnlineDistributionalRegression()</code> provides the fit, update and predict methods for linear parametric GAMLSS models.</p>
+<p>For a response variable <span class="arithmatex">\(Y\)</span> which is distributed according to the distribution <span class="arithmatex">\(\mathcal{F}(\theta)\)</span>
+with the distribution parameters <span class="arithmatex">\(\theta\)</span>, we model:</p>
+<div class="arithmatex">\[g_k(\theta_k) = \eta_k = X_k\beta_k\]</div>
+<p>where <span class="arithmatex">\(g_k(\cdot)\)</span> is a link function, which ensures that the predicted distribution parameters are in a
+sensible range (we don't want, e.g. negative standard deviations), and <span class="arithmatex">\(\eta_k\)</span> is the predictor (on the
+space of the link function). The model is fitted using iterative re-weighted least squares (IRLS).</p>
+<div class="admonition note">
+<p class="admonition-title">Tips and Tricks</p>
+<p>If you're facing issues with non-convergence and/or matrix inversion problems, please enable the <code>debug</code> mode and increase the
+logging level by increasing <code>verbose</code>.
+In debug mode, the estimator will save the weights, working vectors, derivatives each iteration in a
+according dictionary, i.e. self._debug_weights.
+The keys are composed of a tuple of ints of <code>(parameter, outer_iteration, inner_iteration)</code>.
+Very small and/or very large weights (implicitly second derivatives) can be a sign that either start values are not chosen appropriately or
+that the distributional assumption does not fit the data well.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Debug Mode</p>
+<p>Please don't use debug more for production models since it saves the <code>X</code> matrix and its scaled counterpart, so you will get large
+estimator objects.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Conditional start values <code>cond_start_val=False</code></p>
+<p>The <code>cond_start_val</code> parameter is considered experimental and may not work as expected.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Cautious updates <code>cautious_updates=True</code></p>
+<p>The <code>cautious_updates</code> parameter is considered experimental and may not work as expected.</p>
+</div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>distribution</code></b>
+              (<code><span title="ondil.Distribution">Distribution</span></code>, default:
+                  <code><a class="autorefs autorefs-internal" title="ondil.distributions.Normal" href="../distributions/#ondil.distributions.Normal">Normal</a>()</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The parametric distribution to use for modeling the response variable.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>equation</code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="typing.Union">Union</span>[<span title="str">str</span>, <span title="numpy.ndarray">ndarray</span>, <span title="list">list</span>]]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The modeling equation for each distribution parameter. The dictionary should map parameter indices to either the strings <code>'all'</code>, <code>'intercept'</code>, a numpy array of column indices, or a list of column names. Defaults to None, which uses all covariates for the first parameter and intercepts for others.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>forget</code></b>
+              (<code><span title="float">float</span> | <span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="float">float</span>]</code>, default:
+                  <code>0.0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The forget factor for exponential weighting of past observations. Can be a single float for all parameters or a dictionary mapping parameter indices to floats. Defaults to 0.0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>method</code></b>
+              (<code><span title="str">str</span> | <span title="ondil.base.EstimationMethod">EstimationMethod</span> | <span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="str">str</span>] | <span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="ondil.base.EstimationMethod">EstimationMethod</span>]</code>, default:
+                  <code>&#39;ols&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The estimation method for each parameter. Can be a string, EstimationMethod, or a dictionary mapping parameter indices. Defaults to "ols".</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>scale_inputs</code></b>
+              (<code><span title="bool">bool</span> | <span title="numpy.ndarray">ndarray</span></code>, default:
+                  <code>True</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to scale the input features. Can be a boolean or a numpy array specifying scaling per feature. Defaults to True.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>fit_intercept</code></b>
+              (<code><span title="bool">bool</span> | <span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="bool">bool</span>]</code>, default:
+                  <code>True</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to fit an intercept for each parameter. Can be a boolean or a dictionary mapping parameter indices. Defaults to True.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>regularize_intercept</code></b>
+              (<code><span title="bool">bool</span> | <span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="bool">bool</span>]</code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to regularize the intercept for each parameter. Can be a boolean or a dictionary mapping parameter indices. Defaults to False.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>ic</code></b>
+              (<code><span title="str">str</span> | <span title="typing.Dict">Dict</span></code>, default:
+                  <code>&#39;aic&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Information criterion for model selection (e.g., "aic", "bic"). Can be a string or a dictionary mapping parameter indices. Defaults to "aic".</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>model_selection</code></b>
+              (<code><span title="typing.Literal">Literal</span>[&#39;local_rss&#39;, &#39;global_ll&#39;]</code>, default:
+                  <code>&#39;local_rss&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Model selection strategy. "local_rss" selects based on local residual sum of squares, "global_ll" uses global log-likelihood. Defaults to "local_rss".</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>prefit_initial</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Number of initial outer iterations with only one inner iteration (for stabilization). Defaults to 0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>prefit_update</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Number of initial outer iterations with only one inner iteration during updates. Defaults to 0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>step_size</code></b>
+              (<code><span title="float">float</span> | <span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="float">float</span>]</code>, default:
+                  <code>1.0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Step size for parameter updates. Can be a float or a dictionary mapping parameter indices. Defaults to 1.0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>verbose</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Verbosity level for logging. 0 = silent, 1 = high-level, 2 = per-parameter, 3 = per-iteration. Defaults to 0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>debug</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Enable debug mode. Debug mode will save additional data to the estimator object.
+Currently, we save</p>
+<div class="language-text highlight"><pre><span></span><code>* self._debug_X_dict
+* self._debug_X_scaled
+* self._debug_weights
+* self._debug_working_vectors
+* self._debug_dl1dlp1
+* self._debug_dl2dlp2
+* self._debug_eta
+* self._debug_fv
+* self._debug_coef
+* self._debug_coef_path
+</code></pre></div>
+<p>to the the estimator. Debug mode works in batch and online settings. Note that debug mode is not recommended for production use. Defaults to False.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>param_order</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Order in which to fit the distribution parameters. Defaults to None (natural order).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>cautious_updates</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>If True, use smaller step sizes and more iterations when new data are outliers. Defaults to False.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>cond_start_val</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>If True, use conditional start values for parameters (experimental). Defaults to False.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>max_it_outer</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>30</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Maximum number of outer iterations for the fitting algorithm. Defaults to 30.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>max_it_inner</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>30</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Maximum number of inner iterations for the fitting algorithm. Defaults to 30.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>abs_tol_outer</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.001</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Absolute tolerance for convergence in the outer loop. Defaults to 1e-3.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>abs_tol_inner</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.001</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Absolute tolerance for convergence in the inner loop. Defaults to 1e-3.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>rel_tol_outer</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>1e-05</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Relative tolerance for convergence in the outer loop. Defaults to 1e-5.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>rel_tol_inner</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>1e-05</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Relative tolerance for convergence in the inner loop. Defaults to 1e-5.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>min_it_outer</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>1</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Minimum number of outer iterations before checking for convergence. Defaults to 1.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.distribution">distribution</span></code></b>
+              (<code><a class="autorefs autorefs-internal" title="ondil.base.Distribution" href="../distributions/#ondil.base.Distribution">Distribution</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>The distribution used for modeling.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.equation">equation</span></code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="typing.Union">Union</span>[<span title="str">str</span>, <span title="numpy.ndarray">ndarray</span>, <span title="list">list</span>]]</code>)
+          –
+          <div class="doc-md-description">
+            <p>The modeling equation for each distribution parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.forget">forget</span></code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="float">float</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Forget factor for each distribution parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.fit_intercept">fit_intercept</span></code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="bool">bool</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Whether to fit an intercept for each parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.regularize_intercept">regularize_intercept</span></code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="bool">bool</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Whether to regularize the intercept for each parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.ic">ic</span></code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="str">str</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Information criterion for model selection for each parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.method">method</span></code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="ondil.base.EstimationMethod">EstimationMethod</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Estimation method for each parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.scale_inputs">scale_inputs</span></code></b>
+              (<code><span title="bool">bool</span> | <span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Whether to scale the input features.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.param_order">param_order</span></code></b>
+              (<code><span title="numpy.ndarray">ndarray</span> | None</code>)
+          –
+          <div class="doc-md-description">
+            <p>Order in which to fit the distribution parameters.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.n_observations_">n_observations_</span></code></b>
+              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Total number of observations used for fitting.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.n_training_">n_training_</span></code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="int">int</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Effective training length for each distribution parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.n_features_">n_features_</span></code></b>
+              (<code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="int">int</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Number of features used for each distribution parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.coef_">coef_</span></code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Coefficients for the fitted model, shape (n_params, n_features).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="ondil.estimators.OnlineDistributionalRegression.__init__.coef_path_">coef_path_</span></code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Coefficients path for the fitted model, shape (n_params, n_iterations, n_features). Only available if <code>method</code> is a path-based method like LASSO.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>OnlineDistributionalRegression</code></b> (              <code><a class="autorefs autorefs-internal" title="ondil.estimators.OnlineDistributionalRegression (ondil.estimators.online_gamlss.OnlineDistributionalRegression)" href="#ondil.estimators.OnlineDistributionalRegression">OnlineDistributionalRegression</a></code>
+)          –
+          <div class="doc-md-description">
+            <p>The OnlineDistributionalRegression instance.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineDistributionalRegression.fit" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">fit</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">fit</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">sample_weight</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OnlineDistributionalRegression</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Fit the online GAMLSS model.</p>
+<p>This method initializes the model with the given covariate data matrix <span class="arithmatex">\(X\)</span> and response variable <span class="arithmatex">\(Y\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Covariate data matrix <span class="arithmatex">\(X\)</span>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>y</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Response variable <span class="arithmatex">\(Y\)</span>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>sample_weight</code></b>
+              (<code><span title="typing.Optional">Optional</span>[<span title="numpy.ndarray">ndarray</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>User-defined sample weights. Defaults to None.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>OnlineDistributionalRegression</code></b> (              <code><a class="autorefs autorefs-internal" title="ondil.estimators.OnlineDistributionalRegression (ondil.estimators.online_gamlss.OnlineDistributionalRegression)" href="#ondil.estimators.OnlineDistributionalRegression">OnlineDistributionalRegression</a></code>
+)          –
+          <div class="doc-md-description">
+            <p>The fitted OnlineDistributionalRegression instance.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="ValueError">ValueError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>If the equation is not specified correctly.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="ondil.error.OutOfSupportError">OutOfSupportError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>If the values of <span class="arithmatex">\(y\)</span> are below or above the distribution's support.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineDistributionalRegression.update" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">update</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">update</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">y</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">sample_weight</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Update the fit for the online GAMLSS Model.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Covariate data matrix <span class="arithmatex">\(X\)</span>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>y</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Response variable <span class="arithmatex">\(Y\)</span>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>sample_weight</code></b>
+              (<code><span title="typing.Optional">Optional</span>[<span title="numpy.ndarray">ndarray</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>User-defined sample weights. Defaults to None (all observations have the same weight).</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineDistributionalRegression.predict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">predict</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Predict the mean of the response distribution.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Covariate matrix <span class="arithmatex">\(X\)</span>. Shape should be (n_samples, n_features).</p>
+          </div>
+        </li>
+    </ul>
+        <p>Raises:
+    NotFittedError: If the model is not fitted yet.</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Predictions</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>Predictions</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineDistributionalRegression.predict_median" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">predict_median</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_median</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Predict the median of the distribution.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Covariate matrix <span class="arithmatex">\(X\)</span>. Shape should be (n_samples, n_features).</p>
+          </div>
+        </li>
+    </ul>
+        <p>Raises:
+    NotFittedError: If the model is not fitted yet.</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Predictions</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>Predicted median of the distribution. Shape will be (n_samples,).</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineDistributionalRegression.predict_distribution_parameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">predict_distribution_parameters</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_distribution_parameters</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">what</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;response&quot;</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">return_contributions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Predict the distibution parameters given input data.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Design matrix.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>what</code></b>
+              (<code><span title="str">str</span></code>, default:
+                  <code>&#39;response&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Predict the response or the link. Defaults to "response". Remember the  GAMLSS models <span class="arithmatex">\(g(\theta) = X^T\beta\)</span>. Predict <code>"link"</code> will output <span class="arithmatex">\(X^T\beta\)</span>, predict <code>"response"</code> will output <span class="arithmatex">\(g^{-1}(X^T\beta)\)</span>. Usually, you want predict = <code>"response"</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>return_contributions</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to return a <code>Tuple[prediction, contributions]</code> where the contributions of the individual covariates for each distribution parameter's predicted value is specified. Defaults to False.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="ValueError">ValueError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>Raises if <code>what</code> is not in <code>["link", "response"]</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Predictions</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>Predicted values for the distribution of shape (n_samples, n_params) where n_params is the number of distribution parameters.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineDistributionalRegression.predict_quantile" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">predict_quantile</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_quantile</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">quantile</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">ndarray</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Predict the quantile(s) of the distribution.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Covariate matrix <span class="arithmatex">\(X\)</span>. Shape should be (n_samples, n_features).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>quantile</code></b>
+              (<code><span title="float">float</span> | <span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Quantile(s) to predict.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Predicted quantile(s) of the distribution. Shape will be (n_samples, n_quantiles).</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.OnlineDistributionalRegression.get_debug_information" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_debug_information</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_debug_information</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">variable</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;coef&quot;</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">param</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">it_outer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">it_inner</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get debug information for a specific variable, parameter, outer iteration and inner iteration.</p>
+<p>We currently support the following variables:</p>
+<ul>
+<li>"X_dict": The design matrix for the distribution parameter.</li>
+<li>"X_scaled": The scaled design matrix.</li>
+<li>"weights": The sample weights for the distribution parameter.</li>
+<li>"working_vectors": The working vectors for the distribution parameter.</li>
+<li>"dl1dlp1": The first derivative of the log-likelihood with respect to the distribution parameter.</li>
+<li>"dl2dlp2": The second derivative of the log-likelihood with respect to the distribution parameter.</li>
+<li>"eta": The linear predictor for the distribution parameter.</li>
+<li>"fv": The fitted values for the distribution parameter.</li>
+<li>"dv": The deviance for the distribution parameter.</li>
+<li>"coef": The coefficients for the distribution parameter.</li>
+<li>"coef_path": The coefficients path for the distribution parameter.</li>
+</ul>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>variable</code></b>
+              (<code><span title="str">str</span></code>, default:
+                  <code>&#39;coef&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The variable to get debug information for. Defaults to "coef".</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>param</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The distribution parameter to get debug information for. Defaults to 0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>it_outer</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>1</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The outer iteration to get debug information for. Defaults to 1.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>it_inner</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>1</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The inner iteration to get debug information for. Defaults to 1.</p>
+          </div>
+        </li>
+    </ul>
+        <p>Returns:
+    Any: The debug information for the specified variable, parameter, outer iteration and inner iteration.
+Raises:
+    ValueError: If debug mode is not enabled.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">ondil.estimators.MultivariateOnlineDistributionalRegressionPath</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="ondil.base.OndilEstimatorMixin">OndilEstimatorMixin</span></code>, <code><span title="sklearn.base.RegressorMixin">RegressorMixin</span></code>, <code><span title="sklearn.base.MultiOutputMixin">MultiOutputMixin</span></code>, <code><span title="sklearn.base.BaseEstimator">BaseEstimator</span></code></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__init__</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">distribution</span><span class="p">:</span> <span class="n">Distribution</span> <span class="o">=</span> <span class="n">MultivariateNormalInverseCholesky</span><span class="p">(),</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">equation</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">forget</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Dict</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">fit_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">regularize_intercept</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">scale_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">method</span><span class="p">:</span> <span class="p">(</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ols&quot;</span><span class="p">,</span> <span class="s2">&quot;lasso&quot;</span><span class="p">]</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        <span class="o">|</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ols&quot;</span><span class="p">,</span> <span class="s2">&quot;lasso&quot;</span><span class="p">]]</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="p">)</span> <span class="o">=</span> <span class="s2">&quot;ols&quot;</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">ic</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ll&quot;</span><span class="p">,</span> <span class="s2">&quot;aic&quot;</span><span class="p">,</span> <span class="s2">&quot;bic&quot;</span><span class="p">,</span> <span class="s2">&quot;hqc&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;aic&quot;</span><span class="p">,</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">iteration_along_diagonal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">approx_fast_model_selection</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="n">max_regularisation_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="n">early_stopping</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="n">early_stopping_criteria</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>        <span class="s2">&quot;ll&quot;</span><span class="p">,</span> <span class="s2">&quot;aic&quot;</span><span class="p">,</span> <span class="s2">&quot;bic&quot;</span><span class="p">,</span> <span class="s2">&quot;hqc&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;aic&quot;</span><span class="p">,</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">early_stopping_abs_tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">early_stopping_rel_tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    <span class="n">weight_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    <span class="n">max_iterations_inner</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span class="n">max_iterations_outer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    <span class="n">overshoot_correction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="n">dampen_estimation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>    <span class="n">rel_tol_inner</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>    <span class="n">abs_tol_inner</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>    <span class="n">rel_tol_outer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>    <span class="n">abs_tol_outer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize the Online Multivariate Distributional Regression Path Estimator.</p>
+<p>This estimator fits a multivariate distribution to the data using an online approach.
+It regularizes the scale matrix by estimating it sequentially from an "independence" configuration to a full covariance matrix,
+using the AD-R regularization scheme. Supports various regression methods, model selection criteria, early stopping, and input scaling.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>distribution</code></b>
+              (<code><a class="autorefs autorefs-internal" title="ondil.base.Distribution" href="../distributions/#ondil.base.Distribution">Distribution</a></code>, default:
+                  <code><a class="autorefs autorefs-internal" title="ondil.distributions.MultivariateNormalInverseCholesky" href="../distributions/#ondil.distributions.MultivariateNormalInverseCholesky">MultivariateNormalInverseCholesky</a>()</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The multivariate distribution to fit. Defaults to MultivariateNormalInverseCholesky().</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>equation</code></b>
+              (<code><span title="typing.Dict">Dict</span> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Dictionary specifying the regression equation. Defaults to None.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>forget</code></b>
+              (<code><span title="float">float</span> | <span title="typing.Dict">Dict</span></code>, default:
+                  <code>0.0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Forgetting factor for online updates, can be a float or per-dimension dict. Defaults to 0.0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>learning_rate</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Learning rate for online updates. Defaults to 0.0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>fit_intercept</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>True</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to fit an intercept term. Defaults to True.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>regularize_intercept</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to regularize the intercept term. Defaults to False.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>scale_inputs</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>True</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to scale input features. Defaults to True.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>verbose</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>1</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Verbosity level for logging. Defaults to 1.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>method</code></b>
+              (<code><span title="typing.Literal">Literal</span>[&#39;ols&#39;, &#39;lasso&#39;] | <span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="typing.Literal">Literal</span>[&#39;ols&#39;, &#39;lasso&#39;]]</code>, default:
+                  <code>&#39;ols&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Regression method(s) to use, either "ols", "lasso", or per-dimension dict. Defaults to "ols".</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>ic</code></b>
+              (<code><span title="typing.Literal">Literal</span>[&#39;ll&#39;, &#39;aic&#39;, &#39;bic&#39;, &#39;hqc&#39;, &#39;max&#39;]</code>, default:
+                  <code>&#39;aic&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Information criterion for model selection. Defaults to "aic".</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>iteration_along_diagonal</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>If True, iterates regularization along the diagonal of the scale matrix. Defaults to False.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>approx_fast_model_selection</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>True</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>If True, uses approximate fast model selection. Defaults to True.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>max_regularisation_size</code></b>
+              (<code><span title="int">int</span> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Maximum size for regularization path. Defaults to None.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>early_stopping</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>True</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Enables early stopping during regularization. Defaults to True.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>early_stopping_criteria</code></b>
+              (<code><span title="typing.Literal">Literal</span>[&#39;ll&#39;, &#39;aic&#39;, &#39;bic&#39;, &#39;hqc&#39;, &#39;max&#39;]</code>, default:
+                  <code>&#39;aic&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Criterion for early stopping. Defaults to "aic".</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>early_stopping_abs_tol</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.001</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Absolute tolerance for early stopping. Defaults to 0.001.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>early_stopping_rel_tol</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.001</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Relative tolerance for early stopping. Defaults to 0.001.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>weight_delta</code></b>
+              (<code><span title="float">float</span> | <span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="float">float</span>]</code>, default:
+                  <code>1.0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Step size for weight updates, can be float or per-dimension dict. Defaults to 1.0.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>max_iterations_inner</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>10</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Maximum number of inner iterations. Defaults to 10.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>max_iterations_outer</code></b>
+              (<code><span title="int">int</span></code>, default:
+                  <code>10</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Maximum number of outer iterations. Defaults to 10.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>overshoot_correction</code></b>
+              (<code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="float">float</span>]]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Correction factors for overshooting during updates. Defaults to None.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>dampen_estimation</code></b>
+              (<code><span title="bool">bool</span> | <span title="int">int</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>If True or int, dampens estimation updates. Defaults to False.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>debug</code></b>
+              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Enables debug mode for additional logging. Defaults to False.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>rel_tol_inner</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.001</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Relative tolerance for convergence in inner loop. Defaults to 1e-3.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>abs_tol_inner</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.001</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Absolute tolerance for convergence in inner loop. Defaults to 1e-3.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>rel_tol_outer</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.001</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Relative tolerance for convergence in outer loop. Defaults to 1e-3.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>abs_tol_outer</code></b>
+              (<code><span title="float">float</span></code>, default:
+                  <code>0.001</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Absolute tolerance for convergence in outer loop. Defaults to 1e-3.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.fit" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">fit</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">fit</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ndarray</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateOnlineDistributionalRegressionPath</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Fit the estimator to the data.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The response <span class="arithmatex">\(y\)</span> must be a multivariate response
+variable, i.e., a 2D array where each column represents
+a different response variable and we expect at least a
+bivariate response. Hence, passing an <code>(n, 1)</code> array
+for y does not work!</p>
+</div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Covariate or feature matrix.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+            <b><code>y</code></b>
+              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Multivariate response variable.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>estimator</code></b> (              <code><a class="autorefs autorefs-internal" title="ondil.estimators.MultivariateOnlineDistributionalRegressionPath (ondil.estimators.online_mvdistreg.MultivariateOnlineDistributionalRegressionPath)" href="#ondil.estimators.MultivariateOnlineDistributionalRegressionPath">MultivariateOnlineDistributionalRegressionPath</a></code>
+)          –
+          <div class="doc-md-description">
+            <p>Returns the fitted estimator.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.count_coef_to_be_fitted" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">count_coef_to_be_fitted</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">count_coef_to_be_fitted</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">outer_iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">inner_iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">adr</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">param</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Count all coefficients that should be fitted.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">predict</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Predict the location parameter.</p>
+<h5 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict--parameters">Parameters</h5>
+<p>X : np.ndarray, optional
+    The input data. If None, will use a default value of ones.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict_distribution_parameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">predict_distribution_parameters</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_distribution_parameters</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Predict the distribution parameters.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="typing.Optional">Optional</span>[<span title="numpy.ndarray">ndarray</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Covariate or feature matrix. Defaults to None.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="numpy.ndarray">ndarray</span>]</code>
+          –
+          <div class="doc-md-description">
+            <p>Dict[int, np.ndarray]: Return the predicted distribution parameters as a dictionary.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.predict_all_adr" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">predict_all_adr</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_all_adr</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Predict all regualarized fits in one go.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+            <b><code>X</code></b>
+              (<code><span title="typing.Optional">Optional</span>[<span title="numpy.ndarray">ndarray</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Covariate or feature matrix. Defaults to None.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="numpy.ndarray">ndarray</span>]</code>
+          –
+          <div class="doc-md-description">
+            <p>Dict[int, np.ndarray]: Return the predicted distribution parameters for all AD-R steps as a dictionary. The structure is</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="typing.Dict">Dict</span>[<span title="int">int</span>, <span title="numpy.ndarray">ndarray</span>]</code>
+          –
+          <div class="doc-md-description">
+            <p>{adr_step: {param: np.ndarray}} where <code>adr_step</code> is the AD-R step index and <code>param</code> is the distribution parameter index.</p>
+          </div>
+        </li>
+    </ul>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.partial_fit" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">partial_fit</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">partial_fit</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Align ondil with the scikit-learn API for partial fitting.</p>
+<p>The first partial fit will call <code>fit</code>, and subsequent calls will call <code>update</code>.
+Allows furthermore to use the sklearn testing framework.</p>
+<p>Overwrites the base class method to avoid sample_weights. This estimator does not support sample weights.</p>
+<h5 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.partial_fit--parameters">Parameters</h5>
+<p>X : np.ndarray
+    The input data.
+y : np.ndarray
+    The target values.
+Returns</p>
+<hr />
+<p>self : Estimator
+    The fitted estimator.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.update" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">update</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">update</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">X</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ndarray</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateOnlineDistributionalRegressionPath</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Updates the estimator with new observations.</p>
+<p>This method validates the input data, updates internal counters for the number of observations,
+recalculates the effective training length based on the learning rate, and updates the model's
+likelihood. It also scales the input features, stores previous states for model selection and
+likelihood, and performs an outer update step with the scaled data.</p>
+<h5 id="ondil.estimators.MultivariateOnlineDistributionalRegressionPath.update--parameters">Parameters</h5>
+<p>X : np.ndarray
+    Input feature matrix of shape (n_samples, n_features).
+y : np.ndarray
+    Target values of shape (n_samples, n_outputs).
+Returns</p>
+<hr />
+<p>self : object
+    Returns the updated estimator instance.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["search.share", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      
+        <script src="../javascripts/katex.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/katex.min.js"></script>
+      
+        <script src="https://unpkg.com/katex@0/dist/contrib/auto-render.min.js"></script>
+      
+    
+  </body>
+</html>
