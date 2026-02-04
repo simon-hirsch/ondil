@@ -39,6 +39,8 @@ class Normal(ScipyMixin, Distribution):
     # Scipy equivalent and parameter mapping ondil -> scipy
     scipy_dist = st.norm
     scipy_names = {"mu": "loc", "sigma": "scale"}
+    crps_function = "crps_normal"
+    crps_names = {"mu": "loc", "sigma": "scale"}
 
     def __init__(
         self,
