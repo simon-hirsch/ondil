@@ -74,6 +74,11 @@ known-first-party = ["ondil"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --tb=short"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
