@@ -6,6 +6,7 @@ from importlib.util import find_spec
 HAS_PANDAS = False
 HAS_POLARS = False
 HAS_MPL = False
+HAS_SCORINGRULES = False
 
 if find_spec("pandas") is not None:
     HAS_PANDAS = True
@@ -15,6 +16,9 @@ if find_spec("polars") is not None:
 
 if find_spec("matplotlib") is not None:
     HAS_MPL = True
+
+if find_spec("scoringrules") is not None:
+    HAS_SCORINGRULES = True
 
 from . import (
     base,

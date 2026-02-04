@@ -287,6 +287,45 @@ class Distribution(ABC):
         else:
             return self.logpdf(y, theta)
 
+    def crps(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
+        """Compute the Continuous Ranked Probability Score (CRPS) for the given data.
+        
+        This method checks if this is a multivariate distribution and raises an error.
+        Univariate distributions should override this method in ScipyMixin.
+        
+        Args:
+            y (np.ndarray): The observed data points at which to evaluate the CRPS.
+            theta (np.ndarray): The parameters of the distribution.
+            
+        Returns:
+            np.ndarray: An array of CRPS values corresponding to the data points in `y`.
+            
+        Raises:
+            ImportError: If scoringrules package is not installed.
+            ValueError: If called on a multivariate distribution.
+        """
+        # Import HAS_SCORINGRULES from module level
+        from .. import HAS_SCORINGRULES
+        
+        # Check if scoringrules is available
+        if not HAS_SCORINGRULES:
+            raise ImportError(
+                "The scoringrules package is required to compute CRPS. "
+                "Install it with: pip install ondil[scoring]"
+            )
+        
+        # Check if this is a multivariate distribution
+        from . import MultivariateDistributionMixin
+        if isinstance(self, MultivariateDistributionMixin):
+            raise ValueError(
+                "CRPS computation is not supported for multivariate distributions."
+            )
+        
+        # This should not be reached for properly implemented distributions
+        raise NotImplementedError(
+            f"CRPS is not implemented for {self.__class__.__name__}"
+        )
+
 
 class MultivariateDistributionMixin(ABC):
     # TODO: The element link functions should be defined here as well.
@@ -446,20 +485,22 @@ class ScipyMixin(ABC):
             return None
         return None
 
-    def crps(self, y: np.ndarray, theta: np.ndarray) -> Optional[np.ndarray]:
+    def crps(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         """Compute the Continuous Ranked Probability Score (CRPS) for the given data.
         
         This method uses the scoringrules package to compute closed-form CRPS when available.
-        If scoringrules is not installed or no closed-form CRPS exists for this distribution,
-        returns None.
+        If a closed-form CRPS is not available, it approximates CRPS using 99 quantiles.
         
         Args:
             y (np.ndarray): The observed data points at which to evaluate the CRPS.
             theta (np.ndarray): The parameters of the distribution.
             
         Returns:
-            Optional[np.ndarray]: An array of CRPS values corresponding to the data points in `y`,
-                or None if CRPS computation is not available.
+            np.ndarray: An array of CRPS values corresponding to the data points in `y`.
+            
+        Raises:
+            ImportError: If scoringrules package is not installed.
+            ValueError: If called on a multivariate distribution.
                 
         Example:
             >>> from ondil.distributions import Normal
@@ -468,39 +509,82 @@ class ScipyMixin(ABC):
             >>> y = np.array([1.0, 2.0, 3.0])
             >>> theta = np.array([[1.5, 0.5], [2.5, 0.5], [3.5, 0.5]])
             >>> crps = dist.crps(y, theta)
-            >>> if crps is not None:
-            ...     print(crps)
+            >>> print(crps)
         """
+        # Import HAS_SCORINGRULES from module level
+        from .. import HAS_SCORINGRULES
+        
         # Check if scoringrules is available
-        try:
-            import scoringrules as sr
-        except ImportError:
-            return None
+        if not HAS_SCORINGRULES:
+            raise ImportError(
+                "The scoringrules package is required to compute CRPS. "
+                "Install it with: pip install ondil[scoring]"
+            )
+        
+        # Check if this is a multivariate distribution
+        from . import MultivariateDistributionMixin
+        if isinstance(self, MultivariateDistributionMixin):
+            raise ValueError(
+                "CRPS computation is not supported for multivariate distributions."
+            )
+        
+        # Try to use closed-form CRPS if available
+        if self.crps_function is not None:
+            try:
+                import scoringrules as sr
+                
+                # Get the CRPS function from scoringrules
+                crps_func = getattr(sr, self.crps_function)
+                
+                # Get the parameters
+                params_result = self.theta_to_crps_params(theta)
+                if params_result is not None:
+                    # Unpack positional and keyword arguments
+                    pos_args, kw_args = params_result
+                    
+                    # Call the CRPS function
+                    result = crps_func(y, *pos_args, **kw_args)
+                    
+                    # If result is valid, return it
+                    if result is not None:
+                        return result
+            except Exception:
+                # If closed-form fails, fall through to quantile approximation
+                pass
+        
+        # Approximate CRPS using 99 quantiles
+        return self._crps_quantile_approximation(y, theta)
+    
+    def _crps_quantile_approximation(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
+        """Approximate CRPS using 99 quantiles.
+        
+        This method uses the quantile-based approximation of CRPS as described in
+        the scoringrules package documentation.
+        
+        Args:
+            y (np.ndarray): The observed data points.
+            theta (np.ndarray): The parameters of the distribution.
             
-        # Check if this distribution has a CRPS function
-        if self.crps_function is None:
-            return None
+        Returns:
+            np.ndarray: Approximated CRPS values.
+        """
+        import scoringrules as sr
+        
+        # Generate 99 quantile levels
+        quantile_levels = np.linspace(0.01, 0.99, 99)
+        
+        # Get quantiles for each observation (ppf returns quantiles for the given levels)
+        # We need to compute quantiles for each row of theta separately
+        crps_values = np.zeros(len(y))
+        for i in range(len(y)):
+            # Get quantiles for this observation's parameters
+            theta_i = theta[i:i+1, :]  # Keep 2D shape
+            quantiles = self.ppf(quantile_levels, theta_i)
             
-        # Get the CRPS function from scoringrules
-        try:
-            crps_func = getattr(sr, self.crps_function)
-        except AttributeError:
-            return None
-            
-        # Get the parameters
-        params_result = self.theta_to_crps_params(theta)
-        if params_result is None:
-            return None
-            
-        # Unpack positional and keyword arguments
-        pos_args, kw_args = params_result
-            
-        # Call the CRPS function
-        try:
-            return crps_func(y, *pos_args, **kw_args)
-        except Exception:
-            # If the CRPS function call fails for any reason, return None
-            return None
+            # Use scoringrules quantile-based CRPS
+            crps_values[i] = sr.crps_quantile(y[i], quantiles, quantile_levels)
+        
+        return crps_values
 
     def _scipy_mle_objective(
         self,
