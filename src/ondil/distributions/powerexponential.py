@@ -91,7 +91,6 @@ class PowerExponential(Distribution):
         gamma_q = gamma_dist.ppf(np.abs(2 * q - 1), a=1 / nu, scale=1)
         z = sign * (2 * gamma_q) ** (1 / nu) * c
         return mu + sigma * z
-        # return result
 
     def calculate_conditional_initial_values(self, y, theta, param):
         if param == 0:
