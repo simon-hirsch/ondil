@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
+
 from ondil import HAS_SCORINGRULES
-import rpy2.robjects as robjects
 
 from .utils import get_distributions_with_gamlss
 
