@@ -47,21 +47,19 @@ class StudentT(ScipyMixin, Distribution):
             }
         )
 
-    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+    def theta_to_crps_params(self, theta: np.ndarray) -> tuple:
         """Map theta to scoringrules CRPS parameters.
         
         Args:
             theta (np.ndarray): Distribution parameters.
             
         Returns:
-            dict: Dictionary with 'df', 'location', and 'scale' for crps_t.
+            tuple: (positional_args, keyword_args) for crps_t.
         """
         scipy_params = self.theta_to_scipy_params(theta)
-        return {
-            "df": scipy_params["df"],
-            "location": scipy_params["loc"],
-            "scale": scipy_params["scale"]
-        }
+        # crps_t(obs, df, /, location=0.0, scale=1.0)
+        # df is positional-only, location and scale are keyword-only
+        return ((scipy_params["df"],), {"location": scipy_params["loc"], "scale": scipy_params["scale"]})
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)

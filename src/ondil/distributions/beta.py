@@ -96,20 +96,21 @@ class Beta(ScipyMixin, Distribution):
         params = {"a": alpha, "b": beta, "loc": 0, "scale": 1}
         return params
 
-    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+    def theta_to_crps_params(self, theta: np.ndarray) -> tuple:
         """Map theta to scoringrules CRPS parameters.
         
-        crps_beta expects (obs, a, b, lower=0.0, upper=1.0).
+        crps_beta expects (obs, a, b, /, lower=0.0, upper=1.0).
         We use the default lower=0.0, upper=1.0.
         
         Args:
             theta (np.ndarray): Distribution parameters.
             
         Returns:
-            dict: Dictionary with 'a' and 'b' for crps_beta.
+            tuple: (positional_args, keyword_args) for crps_beta.
         """
         scipy_params = self.theta_to_scipy_params(theta)
-        return {"a": scipy_params["a"], "b": scipy_params["b"]}
+        # crps_beta(obs, a, b, /) - a and b are positional-only
+        return ((scipy_params["a"], scipy_params["b"]), {})
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)

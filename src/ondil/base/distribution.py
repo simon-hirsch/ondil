@@ -426,31 +426,25 @@ class ScipyMixin(ABC):
         """
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).mean()
 
-    @property
-    def crps_function(self) -> Optional[str]:
-        """Name of the scoringrules CRPS function for this distribution.
-        
-        Returns:
-            Optional[str]: The name of the CRPS function (e.g., 'crps_normal') or None if not available.
-        """
-        return None
+    crps_function: Optional[str] = None
+    """Name of the scoringrules CRPS function for this distribution (e.g., 'crps_normal')."""
 
-    def theta_to_crps_params(self, theta: np.ndarray) -> Optional[Dict[str, np.ndarray]]:
+    def theta_to_crps_params(self, theta: np.ndarray) -> Optional[tuple]:
         """Maps theta to scoringrules CRPS parameters.
         
-        By default, this uses the scipy parameter mapping. Subclasses can override
-        this method if they need custom parameter transformations for CRPS.
+        By default, returns None. Subclasses must override this method to provide
+        the correct parameter mapping for their CRPS function.
         
         Args:
             theta (np.ndarray): Distribution parameters as estimated by the estimator.
             
         Returns:
-            Optional[Dict[str, np.ndarray]]: Dictionary of parameters for scoringrules CRPS function,
-                or None if the mapping is not available.
+            Optional[tuple]: A tuple of (positional_args, keyword_args) where positional_args is a tuple
+                and keyword_args is a dict, or None if the mapping is not available.
         """
         if self.crps_function is None:
             return None
-        return self.theta_to_scipy_params(theta)
+        return None
 
     def crps(self, y: np.ndarray, theta: np.ndarray) -> Optional[np.ndarray]:
         """Compute the Continuous Ranked Probability Score (CRPS) for the given data.
@@ -494,13 +488,16 @@ class ScipyMixin(ABC):
             return None
             
         # Get the parameters
-        params = self.theta_to_crps_params(theta)
-        if params is None:
+        params_result = self.theta_to_crps_params(theta)
+        if params_result is None:
             return None
+            
+        # Unpack positional and keyword arguments
+        pos_args, kw_args = params_result
             
         # Call the CRPS function
         try:
-            return crps_func(y, **params)
+            return crps_func(y, *pos_args, **kw_args)
         except Exception:
             # If the CRPS function call fails for any reason, return None
             return None

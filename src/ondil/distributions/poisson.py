@@ -56,19 +56,20 @@ class Poisson(ScipyMixin, Distribution):
     ) -> None:
         super().__init__(links={0: loc_link})
 
-    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+    def theta_to_crps_params(self, theta: np.ndarray) -> tuple:
         """Map theta to scoringrules CRPS parameters.
         
-        crps_poisson expects (obs, mean).
+        crps_poisson expects (obs, mean, /).
         
         Args:
             theta (np.ndarray): Distribution parameters.
             
         Returns:
-            dict: Dictionary with 'mean' for crps_poisson.
+            tuple: (positional_args, keyword_args) for crps_poisson.
         """
         (mu,) = self.theta_to_params(theta)
-        return {"mean": mu}
+        # crps_poisson(obs, mean, /) - mean is positional-only
+        return ((mu,), {})
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)

@@ -42,20 +42,21 @@ class Exponential(ScipyMixin, Distribution):
         (mu,) = self.theta_to_params(theta)
         return {"scale": mu}
 
-    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+    def theta_to_crps_params(self, theta: np.ndarray) -> tuple:
         """Map theta to scoringrules CRPS parameters.
         
-        crps_exponential expects (obs, rate).
+        crps_exponential expects (obs, rate, /).
         rate = 1/scale = 1/mu
         
         Args:
             theta (np.ndarray): Distribution parameters.
             
         Returns:
-            dict: Dictionary with 'rate' for crps_exponential.
+            tuple: (positional_args, keyword_args) for crps_exponential.
         """
         (mu,) = self.theta_to_params(theta)
-        return {"rate": 1.0 / mu}
+        # crps_exponential(obs, rate, /) - rate is positional-only
+        return ((1.0 / mu,), {})
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)

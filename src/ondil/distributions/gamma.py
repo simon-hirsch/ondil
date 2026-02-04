@@ -86,20 +86,22 @@ class Gamma(ScipyMixin, Distribution):
         params = {"a": 1 / sigma**2, "loc": 0, "scale": 1 / beta}
         return params
 
-    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+    def theta_to_crps_params(self, theta: np.ndarray) -> tuple:
         """Map theta to scoringrules CRPS parameters.
         
-        crps_gamma expects (obs, shape, rate=None, scale=None).
+        crps_gamma expects (obs, shape, /, rate=None, *, scale=None).
         We use scale parameterization.
         
         Args:
             theta (np.ndarray): Distribution parameters.
             
         Returns:
-            dict: Dictionary with 'shape' and 'scale' for crps_gamma.
+            tuple: (positional_args, keyword_args) for crps_gamma.
         """
         scipy_params = self.theta_to_scipy_params(theta)
-        return {"shape": scipy_params["a"], "scale": scipy_params["scale"]}
+        # crps_gamma(obs, shape, /, rate=None, *, scale=None)
+        # shape is positional-only, scale is keyword-only
+        return ((scipy_params["a"],), {"scale": scipy_params["scale"]})
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
