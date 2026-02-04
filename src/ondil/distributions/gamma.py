@@ -61,6 +61,8 @@ class Gamma(ScipyMixin, Distribution):
     # Theta columns do not map 1:1 to scipy parameters for gamma
     # So we have to overload theta_to_scipy_params
     scipy_names = {}
+    # Scoringrules CRPS function
+    crps_function = "crps_gamma"
 
     def __init__(
         self,
@@ -83,6 +85,21 @@ class Gamma(ScipyMixin, Distribution):
         beta = 1 / (sigma**2 * mu)
         params = {"a": 1 / sigma**2, "loc": 0, "scale": 1 / beta}
         return params
+
+    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+        """Map theta to scoringrules CRPS parameters.
+        
+        crps_gamma expects (obs, shape, rate=None, scale=None).
+        We use scale parameterization.
+        
+        Args:
+            theta (np.ndarray): Distribution parameters.
+            
+        Returns:
+            dict: Dictionary with 'shape' and 'scale' for crps_gamma.
+        """
+        scipy_params = self.theta_to_scipy_params(theta)
+        return {"shape": scipy_params["a"], "scale": scipy_params["scale"]}
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)

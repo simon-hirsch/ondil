@@ -426,6 +426,85 @@ class ScipyMixin(ABC):
         """
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).mean()
 
+    @property
+    def crps_function(self) -> Optional[str]:
+        """Name of the scoringrules CRPS function for this distribution.
+        
+        Returns:
+            Optional[str]: The name of the CRPS function (e.g., 'crps_normal') or None if not available.
+        """
+        return None
+
+    def theta_to_crps_params(self, theta: np.ndarray) -> Optional[Dict[str, np.ndarray]]:
+        """Maps theta to scoringrules CRPS parameters.
+        
+        By default, this uses the scipy parameter mapping. Subclasses can override
+        this method if they need custom parameter transformations for CRPS.
+        
+        Args:
+            theta (np.ndarray): Distribution parameters as estimated by the estimator.
+            
+        Returns:
+            Optional[Dict[str, np.ndarray]]: Dictionary of parameters for scoringrules CRPS function,
+                or None if the mapping is not available.
+        """
+        if self.crps_function is None:
+            return None
+        return self.theta_to_scipy_params(theta)
+
+    def crps(self, y: np.ndarray, theta: np.ndarray) -> Optional[np.ndarray]:
+        """Compute the Continuous Ranked Probability Score (CRPS) for the given data.
+        
+        This method uses the scoringrules package to compute closed-form CRPS when available.
+        If scoringrules is not installed or no closed-form CRPS exists for this distribution,
+        returns None.
+        
+        Args:
+            y (np.ndarray): The observed data points at which to evaluate the CRPS.
+            theta (np.ndarray): The parameters of the distribution.
+            
+        Returns:
+            Optional[np.ndarray]: An array of CRPS values corresponding to the data points in `y`,
+                or None if CRPS computation is not available.
+                
+        Example:
+            >>> from ondil.distributions import Normal
+            >>> import numpy as np
+            >>> dist = Normal()
+            >>> y = np.array([1.0, 2.0, 3.0])
+            >>> theta = np.array([[1.5, 0.5], [2.5, 0.5], [3.5, 0.5]])
+            >>> crps = dist.crps(y, theta)
+            >>> if crps is not None:
+            ...     print(crps)
+        """
+        # Check if scoringrules is available
+        try:
+            import scoringrules as sr
+        except ImportError:
+            return None
+            
+        # Check if this distribution has a CRPS function
+        if self.crps_function is None:
+            return None
+            
+        # Get the CRPS function from scoringrules
+        try:
+            crps_func = getattr(sr, self.crps_function)
+        except AttributeError:
+            return None
+            
+        # Get the parameters
+        params = self.theta_to_crps_params(theta)
+        if params is None:
+            return None
+            
+        # Call the CRPS function
+        try:
+            return crps_func(y, **params)
+        except Exception:
+            # If the CRPS function call fails for any reason, return None
+            return None
+
     def _scipy_mle_objective(
         self,
         start: np.ndarray,

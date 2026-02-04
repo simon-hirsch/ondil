@@ -33,6 +33,8 @@ class Logistic(ScipyMixin, Distribution):
     distribution_support = (-np.inf, np.inf)
     scipy_dist = st.logistic
     scipy_names = {"mu": "loc", "sigma": "scale"}
+    # Scoringrules CRPS function
+    crps_function = "crps_logistic"
 
     def __init__(
         self,
@@ -45,6 +47,18 @@ class Logistic(ScipyMixin, Distribution):
         mu = theta[:, 0]
         sigma = theta[:, 1]
         return {"loc": mu, "scale": sigma}
+
+    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+        """Map theta to scoringrules CRPS parameters.
+        
+        Args:
+            theta (np.ndarray): Distribution parameters.
+            
+        Returns:
+            dict: Dictionary with 'mu' and 'sigma' for crps_logistic.
+        """
+        scipy_params = self.theta_to_scipy_params(theta)
+        return {"mu": scipy_params["loc"], "sigma": scipy_params["scale"]}
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)

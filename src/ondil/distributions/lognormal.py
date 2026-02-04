@@ -48,6 +48,8 @@ class LogNormal(ScipyMixin, Distribution):
     distribution_support = (0, np.inf)
     scipy_dist = st.lognorm
     scipy_names = {"mu": "scale", "sigma": "s"}
+    # Scoringrules CRPS function
+    crps_function = "crps_lognormal"
 
     def __init__(
         self,
@@ -65,6 +67,22 @@ class LogNormal(ScipyMixin, Distribution):
         mu = theta[:, 0]
         sigma = theta[:, 1]
         return {"s": sigma, "scale": robust_exp(mu), "loc": 0}
+
+    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+        """Map theta to scoringrules CRPS parameters.
+        
+        crps_lognormal expects (obs, mulog, sigmalog).
+        mulog and sigmalog are the parameters of the underlying normal distribution.
+        
+        Args:
+            theta (np.ndarray): Distribution parameters.
+            
+        Returns:
+            dict: Dictionary with 'mulog' and 'sigmalog' for crps_lognormal.
+        """
+        mu = theta[:, 0]
+        sigma = theta[:, 1]
+        return {"mulog": mu, "sigmalog": sigma}
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)

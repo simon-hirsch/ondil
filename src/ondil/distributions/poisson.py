@@ -47,12 +47,28 @@ class Poisson(ScipyMixin, Distribution):
     scipy_dist = st.poisson
     scipy_names = {"mu": "mu"}
     is_discrete = True
+    # Scoringrules CRPS function
+    crps_function = "crps_poisson"
 
     def __init__(
         self,
         loc_link: LinkFunction = Log(),
     ) -> None:
         super().__init__(links={0: loc_link})
+
+    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+        """Map theta to scoringrules CRPS parameters.
+        
+        crps_poisson expects (obs, mean).
+        
+        Args:
+            theta (np.ndarray): Distribution parameters.
+            
+        Returns:
+            dict: Dictionary with 'mean' for crps_poisson.
+        """
+        (mu,) = self.theta_to_params(theta)
+        return {"mean": mu}
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)

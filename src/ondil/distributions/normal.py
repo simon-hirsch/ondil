@@ -39,6 +39,8 @@ class Normal(ScipyMixin, Distribution):
     # Scipy equivalent and parameter mapping ondil -> scipy
     scipy_dist = st.norm
     scipy_names = {"mu": "loc", "sigma": "scale"}
+    # Scoringrules CRPS function
+    crps_function = "crps_normal"
 
     def __init__(
         self,
@@ -57,6 +59,18 @@ class Normal(ScipyMixin, Distribution):
                 1: scale_link,
             }
         )
+
+    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+        """Map theta to scoringrules CRPS parameters.
+        
+        Args:
+            theta (np.ndarray): Distribution parameters.
+            
+        Returns:
+            dict: Dictionary with 'mu' and 'sigma' for crps_normal.
+        """
+        scipy_params = self.theta_to_scipy_params(theta)
+        return {"mu": scipy_params["loc"], "sigma": scipy_params["scale"]}
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
@@ -120,6 +134,8 @@ class NormalMeanVariance(ScipyMixin, Distribution):
     # Scipy equivalent and parameter mapping ondil -> scipy
     scipy_dist = st.norm
     scipy_names = {"mu": "loc", "sigma": "scale"}
+    # Scoringrules CRPS function
+    crps_function = "crps_normal"
 
     def __init__(
         self,
@@ -152,6 +168,20 @@ class NormalMeanVariance(ScipyMixin, Distribution):
         sigma = theta[:, 1]
         params = {"loc": mu, "scale": sigma**0.5}
         return params
+
+    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+        """Map theta to scoringrules CRPS parameters.
+        
+        For NormalMeanVariance, theta[:,1] is variance, so we convert to standard deviation.
+        
+        Args:
+            theta (np.ndarray): Distribution parameters.
+            
+        Returns:
+            dict: Dictionary with 'mu' and 'sigma' for crps_normal.
+        """
+        scipy_params = self.theta_to_scipy_params(theta)
+        return {"mu": scipy_params["loc"], "sigma": scipy_params["scale"]}
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)

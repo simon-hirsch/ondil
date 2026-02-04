@@ -30,6 +30,8 @@ class StudentT(ScipyMixin, Distribution):
     # Scipy distribution and parameter mapping ondil -> scipy
     scipy_dist = st.t
     scipy_names = {"mu": "loc", "sigma": "scale", "nu": "df"}
+    # Scoringrules CRPS function
+    crps_function = "crps_t"
 
     def __init__(
         self,
@@ -44,6 +46,22 @@ class StudentT(ScipyMixin, Distribution):
                 2: tail_link,
             }
         )
+
+    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+        """Map theta to scoringrules CRPS parameters.
+        
+        Args:
+            theta (np.ndarray): Distribution parameters.
+            
+        Returns:
+            dict: Dictionary with 'df', 'location', and 'scale' for crps_t.
+        """
+        scipy_params = self.theta_to_scipy_params(theta)
+        return {
+            "df": scipy_params["df"],
+            "location": scipy_params["loc"],
+            "scale": scipy_params["scale"]
+        }
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)

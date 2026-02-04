@@ -70,6 +70,8 @@ class Beta(ScipyMixin, Distribution):
     # Theta columns do not map 1:1 to scipy parameters for beta
     # So we have to overload theta_to_scipy_params
     scipy_names = {}
+    # Scoringrules CRPS function
+    crps_function = "crps_beta"
 
     def __init__(
         self,
@@ -93,6 +95,21 @@ class Beta(ScipyMixin, Distribution):
         beta = (1 - mu) * (1 - sigma**2) / sigma**2
         params = {"a": alpha, "b": beta, "loc": 0, "scale": 1}
         return params
+
+    def theta_to_crps_params(self, theta: np.ndarray) -> dict:
+        """Map theta to scoringrules CRPS parameters.
+        
+        crps_beta expects (obs, a, b, lower=0.0, upper=1.0).
+        We use the default lower=0.0, upper=1.0.
+        
+        Args:
+            theta (np.ndarray): Distribution parameters.
+            
+        Returns:
+            dict: Dictionary with 'a' and 'b' for crps_beta.
+        """
+        scipy_params = self.theta_to_scipy_params(theta)
+        return {"a": scipy_params["a"], "b": scipy_params["b"]}
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
