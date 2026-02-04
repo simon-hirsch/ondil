@@ -1016,8 +1016,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                         forget=self._forget[p],
                     )
                     self._y_gram[p][k][a] = (
-                        self
-                        ._method[p][k]
+                        self._method[p][k]
                         .init_y_gram(
                             X=x,
                             y=wv,
@@ -1574,8 +1573,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                         forget=self._forget[p],
                     )
                     self._y_gram[p][k][a] = (
-                        self
-                        ._method[p][k]
+                        self._method[p][k]
                         .update_y_gram(
                             gram=np.expand_dims(self._y_gram_old[p][k][a], -1),
                             X=x,

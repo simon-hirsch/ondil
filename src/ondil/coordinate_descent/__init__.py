@@ -7,7 +7,6 @@ from .cd_linear_constrained import (
     online_linear_constrained_coordinate_descent_path,
 )
 
-
 __all__ = [
     "online_coordinate_descent",
     "online_coordinate_descent_path",
