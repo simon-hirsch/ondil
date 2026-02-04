@@ -26,18 +26,24 @@ from . import (
     distributions,
     error,
     estimators,
+    incremental_statistics,
     information_criteria,
     links,
+    logging,
     methods,
     scaler,
+    terms,
     utils,
     warnings,
 )
+
+logging.set_log_level("INFO")
 
 __version__ = version("ondil")
 
 __all__ = [
     "base",
+    "terms",
     "diagnostics",
     "error",
     "information_criteria",
@@ -48,4 +54,5 @@ __all__ = [
     "utils",
     "scaler",
     "warnings",
+    "incremental_statistics",
 ]
