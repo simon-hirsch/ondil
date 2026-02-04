@@ -54,9 +54,6 @@ def online_coordinate_descent_lagrange_relaxed(
     if regularization_weights is None:
         regularization_weights = np.ones(J)
 
-    constraint_participation = np.where(constraint_matrix != 0, 1, 0)
-    constraint_gram = constraint_matrix.T @ constraint_matrix
-
     while True:
         i += 1
         beta_star = np.copy(beta_now)
@@ -139,8 +136,6 @@ def online_linear_constrained_coordinate_descent(
     # We solve the dual problem via projected subgradient descent
     constraint_residuals = constraint_matrix @ beta - constraint_bounds
     dual_penalty = np.zeros(constraint_matrix.shape[0])
-    dual_gap = np.sum(np.fmax(constraint_residuals, 0) ** 2)
-    dual_gap_old = dual_gap + 1e-3
 
     stepsize = dual_stepsize
 
