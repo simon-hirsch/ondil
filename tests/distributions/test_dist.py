@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from ondil import HAS_SCORINGRULES
 import rpy2.robjects as robjects
 
 from ondil import HAS_SCORINGRULES
