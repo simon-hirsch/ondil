@@ -26,8 +26,8 @@ SPECIAL_BOUNDS_DISTRIBUTIONS = {
     get_distributions_with_gamlss(),
     ids=lambda dist: dist.__class__.__name__,
 )
-def test_distribution_functions(distribution):
-    """Test that Python distribution functions match R GAMLSS functions."""
+def test_crps_shape(distribution):
+    """Test that CRPS output shape matches input shape for each distribution."""
 
     # Set seed for reproducibility
     np.random.seed(42)
