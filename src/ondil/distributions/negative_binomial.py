@@ -61,8 +61,10 @@ class NegativeBinomial(ScipyMixin, Distribution):
         self,
         loc_link: LinkFunction = Log(),
         scale_link: LinkFunction = Log(),
+        start_value_mixing: float = 0.5,
     ) -> None:
         super().__init__(links={0: loc_link, 1: scale_link})
+        self.start_value_mixing = start_value_mixing
 
     def theta_to_scipy_params(self, theta) -> Dict[str, np.ndarray]:
         mu, sigma = self.theta_to_params(theta)
@@ -106,10 +108,18 @@ class NegativeBinomial(ScipyMixin, Distribution):
         # No cross derivatives for single parameter distribution
         return np.zeros_like(y)
 
+    def constant_initial_values(self, y: np.ndarray):
+        return np.vstack([
+            np.full_like(y, y.mean()),
+            np.full_like(y, np.maximum((y.var() - y.mean()) / np.mean(y) ** 2, 0.1)),
+        ]).T
+
     def initial_values(self, y: np.ndarray) -> np.ndarray:
-        mixed_mean = (np.mean(y) + y).flatten() / 2
+        mixed_mean = (
+            self.start_value_mixing * y + (1 - self.start_value_mixing) * y.mean()
+        )
 
         return np.vstack([
             mixed_mean,
-            np.clip((np.var(y) / mixed_mean) / np.mean(y) ** 2, 0.1, np.inf),
+            np.maximum((np.var(y) - mixed_mean) / mixed_mean**2, 0.1),
         ]).T
