@@ -196,7 +196,7 @@ class JSU(ScipyMixin, Distribution):
             d2ldvdt = -(dldv * dldt)
             return d2ldvdt
 
-    def initial_values(self, y: np.ndarray) -> np.ndarray:
+    def constant_initial_values(self, y: np.ndarray) -> np.ndarray:
         out = np.empty((y.shape[0], self.n_params))
         if self.gamlss_init_values:
             out[:, 0] = (np.repeat(np.mean(y), y.shape[0]) + y) / 2
@@ -210,3 +210,15 @@ class JSU(ScipyMixin, Distribution):
             out[:, 2] = params[0]
             out[:, 3] = params[1]
         return out
+
+    def initial_values(self, y: np.ndarray) -> np.ndarray:
+        self.start_value_mixing = 0.5
+        r = np.abs(y - np.mean(y))
+        theta = np.vstack((
+            (y * self.start_value_mixing) + (1 - self.start_value_mixing) * np.mean(y),
+            (r * self.start_value_mixing)
+            + (1 - self.start_value_mixing) * np.std(y, ddof=1),
+            (y - np.median(y)) / np.var(y, ddof=1),
+            np.abs((r - np.mean(r)) / np.var(r, ddof=1)),
+        )).T
+        return theta

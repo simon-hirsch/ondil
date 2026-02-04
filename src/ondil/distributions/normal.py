@@ -44,6 +44,7 @@ class Normal(ScipyMixin, Distribution):
         self,
         loc_link: LinkFunction = Identity(),
         scale_link: LinkFunction = Log(),
+        start_value_mixing: float = 0.5,
     ) -> None:
         """Initialize the Normal.
 
@@ -57,6 +58,7 @@ class Normal(ScipyMixin, Distribution):
                 1: scale_link,
             }
         )
+        self.start_value_mixing = start_value_mixing
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
@@ -92,9 +94,11 @@ class Normal(ScipyMixin, Distribution):
         return theta
 
     def initial_values(self, y: np.ndarray) -> np.ndarray:
+        r = np.abs(y - np.mean(y))
         theta = np.vstack((
-            (y + y.mean()) / 2,
-            (np.abs(y - np.mean(y)) + np.std(y, ddof=1)),
+            (y * self.start_value_mixing) + (1 - self.start_value_mixing) * np.mean(y),
+            (r * self.start_value_mixing)
+            + (1 - self.start_value_mixing) * np.std(y, ddof=1),
         )).T
         return theta
 
