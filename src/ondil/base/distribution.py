@@ -422,7 +422,6 @@ class ScipyMixin(ABC):
                 for p in sig.parameters.values()
                 if p.name in self.crps_names.keys()
             ]
-            print(names)
             # Build params list in the exact order required by the function signature
             mapping = {name: self.crps_names.get(name, name) for name in names}
             params = [scipy_params[mapping[name]] for name in names]
