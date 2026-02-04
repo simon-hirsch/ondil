@@ -21,6 +21,7 @@ SPECIAL_BOUNDS_DISTRIBUTIONS = {
 }
 
 
+@pytest.mark.skipif(not HAS_SCORINGRULES, reason="scoringrules not installed")
 @pytest.mark.parametrize(
     "distribution",
     get_distributions_with_gamlss(),
@@ -53,8 +54,6 @@ def test_crps_shape(distribution):
         for i in range(distribution.n_params)
     ]).T
 
-    # Test CRPS if scoringrules is installed
-
-    if HAS_SCORINGRULES:
-        crps_values = distribution.crps(y=x, theta=theta)
-        assert crps_values.shape == x.shape, "Shape mismatch in CRPS output"
+    # Test CRPS
+    crps_values = distribution.crps(y=x, theta=theta)
+    assert crps_values.shape == x.shape, "Shape mismatch in CRPS output"
