@@ -1139,6 +1139,12 @@ class MultivariateOnlineDistributionalRegressionPath(
                         )
                         .squeeze()
                     )
+                    # Count NaNs in x, wv, wt, self._weight_delta[p], self._forget[p]
+                    nan_count_x = np.isnan(x).sum()
+                    nan_count_wv = np.isnan(wv).sum()
+                    nan_count_wt = np.isnan(wt).sum()
+                    nan_count_weight_delta = np.isnan(self._weight_delta[p]).sum()
+                    nan_count_forget = np.isnan(self._forget[p]).sum()
                     ny = np.isnan(self._y_gram[p][k][a]).sum()
                     nx = np.isnan(self._x_gram[p][k][a]).sum()
 
@@ -1146,7 +1152,9 @@ class MultivariateOnlineDistributionalRegressionPath(
                         raise ValueError(
                             f"NaNs detected in gram matrices at p={p}, k={k}, a={a}: "
                             f"y_gram NaNs={ny}, x_gram NaNs={nx}"
-                        )
+                            f"NaNs in x: {nan_count_x}, wv: {nan_count_wv}, wt: {nan_count_wt}, "
+                          f"weight_delta[{p}]: {nan_count_weight_delta}, forget[{p}]: {nan_count_forget}")
+                        
                     if self._method[p][k]._path_based_method:
                         self.coef_path_[p][k][a] = self._method[p][k].fit_beta_path(
                             x_gram=self._x_gram[p][k][a],
