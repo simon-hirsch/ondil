@@ -24,11 +24,13 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         self,
         link: LinkFunction = FisherZLink(),
         param_link: LinkFunction = KendallsTauToParameter(),
+        family_code: int = 1,
     ):
         super().__init__(
             links={0: link},
             param_links={0: param_link},
         )
+        self.family_code = family_code
         self.is_multivariate = True
         self._regularization_allowed = {0: False}
 
@@ -131,7 +133,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
 
         x = self.hinv(z1, z2, theta, un=1)
 
-        return x
+        return np.column_stack([z2, x])
 
     def pdf(self, y, theta):
         return np.exp(self.logpdf(y, theta))

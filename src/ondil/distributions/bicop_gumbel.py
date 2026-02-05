@@ -121,7 +121,7 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
     def ppf(self, q, theta):
         raise NotImplementedError("Not implemented")
 
-    def rvs(self, size, theta):
+    def rvs(self, size, theta, family_code=None):
         """
         Generate random samples from the bivariate normal copula.
 
@@ -137,9 +137,9 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
         z1 = np.random.uniform(size=size)
         z2 = np.random.uniform(size=size)
 
-        x = self.hinv(z1, z2, theta, un=2)
+        x = self.hinv(z1, z2, theta, un=2, family_code=family_code)
 
-        return x
+        return np.column_stack([z2, x])
 
     def pdf(self, y, theta):
         return np.exp(self.logpdf(y, theta))

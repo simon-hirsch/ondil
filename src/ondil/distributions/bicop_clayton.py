@@ -132,7 +132,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
 
         x = self.hinv(z1, z2, theta, un=1, family_code=family_code)
 
-        return x
+        return np.column_stack([z2, x])
 
     def logcdf(self, y, theta):
         raise NotImplementedError("Not implemented for Clayton copula.")
