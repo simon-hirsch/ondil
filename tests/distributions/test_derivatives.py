@@ -8,7 +8,10 @@ from .utils import get_distributions_with_gamlss
 N = 100
 CLIP_BOUNDS = (-1e5, 1e5)
 
-SPECIAL_BOUNDS_DISTRIBUTIONS = {"PowerExponential": (-1e2, 1e2)}
+SPECIAL_BOUNDS_DISTRIBUTIONS = {
+    "PowerExponential": (-1e2, 1e2),
+    "SkewNormal": (-1e3, 1e3),
+}
 
 
 @pytest.mark.parametrize(
@@ -101,4 +104,7 @@ def test_distribution_derivatives(distribution):
         if key in derivative_mapping:
             assert np.allclose(derivative_mapping[key](), R_list.rx2(key)), (
                 f"Derivative {key} doesn't match for {distribution.__class__.__name__}"
+                f"Got: {derivative_mapping[key]().round(3)} for Python \n"
+                f"Got: {np.asarray(R_list.rx2(key)).round(3)} for R \n"
+                f"Difference: {(derivative_mapping[key]() - R_list.rx2(key)).round(3)}"
             )
