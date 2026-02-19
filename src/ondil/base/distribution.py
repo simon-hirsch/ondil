@@ -525,3 +525,111 @@ class ScipyMixin(ABC):
         else:
             new[:, unknown] = np.expand_dims(result.x, 0)
         return new
+
+
+class CopulaMixin(ABC):
+    def __init__(self, links, param_links: dict[int, LinkFunction]) -> None:
+        self.links = links
+        self.param_links = param_links
+
+    def __call__(self, *args, **kwds):
+        raise NotImplementedError("Not implemented but necessary for sklearn.")
+
+
+class BivariateCopulaMixin(ABC):
+    def __init__(self, links, param_links: dict[int, LinkFunction]) -> None:
+        self.links = links
+        self.param_links = param_links
+
+    def __call__(self, *args, **kwds):
+        raise NotImplementedError("Not implemented but necessary for sklearn.")
+
+    def cube_to_flat(self, x: np.ndarray, param: int):
+        return x
+
+    def flat_to_cube(self, x: np.ndarray, param: int):
+        return x
+
+    @staticmethod
+    def set_theta_element(theta: dict, value: np.ndarray, param: int, k: int) -> dict:
+        theta[param] = value
+        return theta
+
+    def element_link_function(
+        self,
+        y: np.ndarray,
+        param: int = 0,
+        k: int = 0,
+        d: int = 0,
+    ) -> np.ndarray:
+        return self.links[param].element_link(y)
+
+    def element_link_function_derivative(
+        self,
+        y: np.ndarray,
+        param: int = 0,
+        k: int = 0,
+        d: int = 0,
+    ) -> np.ndarray:
+        return self.links[param].element_derivative(y)
+
+    def element_link_function_second_derivative(
+        self,
+        y: np.ndarray,
+        param: int = 0,
+        k: int = 0,
+        d: int = 0,
+    ) -> np.ndarray:
+        return self.links[param].element_link_second_derivative(y)
+
+    def element_link_inverse(
+        self,
+        y: np.ndarray,
+        param: int = 0,
+        k: int = 0,
+        d: int = 0,
+    ) -> np.ndarray:
+        return self.links[param].inverse(y)
+
+    def element_link_inverse_derivative(
+        self,
+        y: np.ndarray,
+        param: int = 0,
+        k: int = 0,
+        d: int = 0,
+    ) -> np.ndarray:
+        return self.links[param].element_inverse_derivative(y)
+
+    def param_conditional_likelihood(
+        self, y: np.ndarray, theta: Dict, eta: np.ndarray, param: int
+    ) -> np.ndarray:
+        """Calulate the log-likelihood for (flat) eta for parameter (param)
+        and theta for all other parameters.
+
+        Args:
+            y (np.ndarray): True values
+            theta (Dict): Fitted theta.
+            eta (np.ndarray): Fitted eta.
+            param (int): Param for which we take eta.
+
+        Returns:
+            np.ndarray: Log-likelihood.
+        """
+        fitted = self.flat_to_cube(eta, param=param)
+        fitted = self.link_inverse(fitted, param=param)
+        return self.log_likelihood(y, theta={**theta, param: fitted})
+
+    def param_link_function(self, y, param=0):
+        return self.param_links[param].link(y)
+
+    def param_link_inverse(self, y, param=0):
+        return self.param_links[param].inverse(y)
+
+    def param_link_function_derivative(self, y, param=0):
+        return self.param_links[param].link_derivative(y)
+
+    def param_link_function_second_derivative(self, y, param=0):
+        return self.param_links[param].link_second_derivative(y)
+
+    def param_link_inverse_derivative(self, y, param=0):
+        return self.param_links[param].inverse_derivative(y)

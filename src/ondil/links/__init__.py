@@ -1,3 +1,10 @@
+from .copulalinks import (
+    FisherZLink,
+    GumbelLink,
+    KendallsTauToParameter,
+    KendallsTauToParameterClayton,
+    KendallsTauToParameterGumbel,
+)
 from .identitylinks import Identity
 from .logitlinks import Logit
 from .loglinks import Log, LogIdent, LogShiftTwo, LogShiftValue
@@ -25,4 +32,9 @@ __all__ = [
     "MatrixDiag",
     "MatrixDiagTriu",
     "MatrixDiagTril",
+    "FisherZLink",
+    "KendallsTauToParameter",
+    "GumbelLink",
+    "KendallsTauToParameterGumbel",
+    "KendallsTauToParameterClayton",
 ]
