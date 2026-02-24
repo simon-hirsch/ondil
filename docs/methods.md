@@ -39,10 +39,13 @@ More information on coordinate descent can also be found on this [page](coordina
 !!! note
     We don't document the classmethods of the `EstimationMethod` since these are only used internally.
 
+All coordinate descent based methods inherit from the [`ElasticNetPath`][ondil.methods.ElasticNetPath] class, which itself inherits from [`EstimationMethod`][ondil.methods.EstimationMethod]. For reference, please consult the API documentation below.
+
 ::: ondil.methods.OrdinaryLeastSquares
+
+::: ondil.methods.ElasticNetPath
 
 ::: ondil.methods.LassoPath
 
 ::: ondil.methods.Ridge
 
-::: ondil.methods.ElasticNetPath

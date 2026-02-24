@@ -30,6 +30,8 @@ class StudentT(ScipyMixin, Distribution):
     # Scipy distribution and parameter mapping ondil -> scipy
     scipy_dist = st.t
     scipy_names = {"mu": "loc", "sigma": "scale", "nu": "df"}
+    crps_function = "crps_t"
+    crps_names = {"location": "loc", "scale": "scale", "df": "df"}
 
     def __init__(
         self,
