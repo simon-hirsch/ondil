@@ -10,7 +10,7 @@ import scipy.stats as st
 from numba import njit, prange
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
-from ..links import FisherZLink, KendallsTauToParameter, LogShiftTwo
+from ..links import FisherZLink, ParameterToKendallsTau, LogShiftTwo
 from ..types import ParameterShapes
 
 UMIN = 1e-12
@@ -32,8 +32,8 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         self,
         link_1: LinkFunction = FisherZLink(),
         link_2: LinkFunction = LogShiftTwo(),
-        param_link_1: LinkFunction = KendallsTauToParameter(),
-        param_link_2: LinkFunction = KendallsTauToParameter(),
+        param_link_1: LinkFunction = ParameterToKendallsTau(),
+        param_link_2: LinkFunction = ParameterToKendallsTau(),
         family_code: int = 2,
     ):
         super().__init__(
@@ -49,7 +49,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         return {0: 1, 1: 1}
 
     def theta_to_params(self, theta):
-        return theta[0], theta[1]  # default nu = 4
+        return theta[0].reshape(-1, 1), theta[1].reshape(-1, 1)   # default nu = 4
 
     def set_initial_guess(self, theta, param):
         return theta
@@ -218,8 +218,8 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         h = np.where((v == 0) | (u == 0), 0, np.nan)
         h = np.where(v == 1, u, h).reshape(-1, 1)
 
-        qt_u = st.t.ppf(u, df=nu + 1.0).reshape(-1, 1)
-        qt_v = st.t.ppf(v, df=nu).reshape(-1, 1)
+        qt_u = st.t.ppf(u.reshape(-1, 1), df=nu + 1.0).reshape(-1, 1)
+        qt_v = st.t.ppf(v.reshape(-1, 1), df=nu).reshape(-1, 1)
 
         denom = np.sqrt((nu + qt_v**2) * (1 - rho**2) / (nu + 1))
         x = (qt_u - rho * qt_v) / denom
@@ -382,7 +382,7 @@ def _log_likelihood_t(y, rho, nu):
     #     * (1 + (t1^2 + t2^2 - 2*rho*t1*t2)/(nu*(1-rho^2)))^(-(nu+2)/2)
 
     # Calculate the gamma ratio using stable division
-    gamma_ratio = stable_gamma_division((nu + 2.0) / 2.0, nu / 2.0)
+    gamma_ratio = nu/2
     # Calculate t distribution PDFs (dt in C code)
     nu1 = np.asarray(nu).ravel()        
     dt1 = st.t.pdf(t1[:, 0], df=nu1).reshape(-1, 1)

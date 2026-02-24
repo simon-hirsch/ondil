@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats as st
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
-from ..links import KendallsTauToParameterClayton, Log
+from ..links import ClaytonParameterToKendallsTau, Log
 from ..types import ParameterShapes
 
 
@@ -21,7 +21,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
     def __init__(
         self,
         link: LinkFunction = Log(),
-        param_link: LinkFunction = KendallsTauToParameterClayton(),
+        param_link: LinkFunction = ClaytonParameterToKendallsTau(),
         family_code: int = 31,
     ):
         super().__init__(
@@ -31,16 +31,6 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         self.family_code = family_code
         self.is_multivariate = True
         self._regularization_allowed = {0: False}
-
-    @property
-    def rotation(self):
-        """Return the effective rotation based on family code in degrees."""
-        return {
-            301: 0,
-            302: 90,
-            303: 180,
-            304: 270,
-        }[self.family_code]
 
     @staticmethod
     def fitted_elements(dim: int):

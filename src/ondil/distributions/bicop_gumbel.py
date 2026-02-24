@@ -6,7 +6,7 @@ import numpy as np
 import scipy.stats as st
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
-from ..links import KendallsTauToParameterGumbel, Log
+from ..links import GumbelParameterToKendallsTau, Log
 from ..types import ParameterShapes
 
 
@@ -21,7 +21,7 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
     def __init__(
         self,
         link: LinkFunction = Log(),
-        param_link: LinkFunction = KendallsTauToParameterGumbel(),
+        param_link: LinkFunction = GumbelParameterToKendallsTau(),
         family_code: int = 41,
     ):
         super().__init__(
@@ -31,16 +31,6 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
         self.family_code = family_code  # gamCopula family code (401, 402, 403, 404)
         self.is_multivariate = True
         self._regularization_allowed = {0: False}
-
-    @property
-    def rotation(self):
-        """Return the effective rotation based on family code in degrees."""
-        return {
-            401: 0,
-            402: 90,
-            403: 180,
-            404: 270,
-        }[self.family_code]
 
     @staticmethod
     def fitted_elements(dim: int):

@@ -1,9 +1,9 @@
 from .copulalinks import (
     FisherZLink,
     GumbelLink,
-    KendallsTauToParameter,
-    KendallsTauToParameterClayton,
-    KendallsTauToParameterGumbel,
+    ParameterToKendallsTau,
+    ClaytonParameterToKendallsTau,
+    GumbelParameterToKendallsTau,
 )
 from .identitylinks import Identity
 from .logitlinks import Logit
@@ -33,8 +33,7 @@ __all__ = [
     "MatrixDiagTriu",
     "MatrixDiagTril",
     "FisherZLink",
-    "KendallsTauToParameter",
-    "GumbelLink",
-    "KendallsTauToParameterGumbel",
-    "KendallsTauToParameterClayton",
+    "ParameterToKendallsTau",
+    "GumbelParameterToKendallsTau",
+    "ClaytonParameterToKendallsTau",
 ]
