@@ -998,6 +998,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                         tau[a][p] = self.distribution.param_link_function(
                             theta[a][p], p
                         )
+                        # Fisher z-transformation for the tau to get the eta
                         eta[a][p] = 2.0 * np.arctanh(np.clip(tau[a][p], -1 + 1e-12, 1 - 1e-12))
 
                         dl1dp1 = self.distribution.element_dl1_dp1(
@@ -1007,22 +1008,16 @@ class MultivariateOnlineDistributionalRegressionPath(
                         dl2dp2 = self.distribution.element_dl2_dp2(
                             y, theta=theta[a], param=p, k=k
                         )
-
-                        dl1_link = 1.0 / (1.0 + np.cosh(np.clip(eta[a][p], -50, 50))).squeeze()
-
-                        sinh_half = np.sinh(eta[a][p] / 2.0)
-                        sinh_x = np.sinh(eta[a][p])
-                        sinh_x_safe = np.where(np.abs(sinh_x) < 1e-10, 1e-10, sinh_x)
-
-                        dl2_link = (
-                            -4.0 * sinh_half**4 * (1.0 / sinh_x_safe) ** 3
-                        ).squeeze()
+    
+                        # cap z to avoid cosh overflow warnings; does not change values meaningfully
+                        z = np.clip(eta[a][p] / 2.0, -700.0, 700.0)
+                        sech2 = 1.0 / np.cosh(z) ** 2
+                        # first and second derivative of the inverse Fisher z-transformation 
+                        dl1_link = (0.5 * sech2).squeeze()
+                        dl2_link = (-0.5 * np.tanh(z) * sech2).squeeze()
 
                         dp = self.distribution.pdf(y=y, theta=theta[a])
-                        dl1_link = self.distribution.cube_to_flat(dl1_link, param=p)
-                        dl1_link = dl1_link
-                        dl2_link = self.distribution.cube_to_flat(dl2_link, param=p)
-                        dl2_link = dl2_link
+
                         u = dl1dp1 * dl1_link
                         u = (
                             u
@@ -1046,7 +1041,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                             * dl1_link
                         )
 
-                        sel = (~np.isnan(wt)) & (wt > 0)
+                        sel = (~np.isnan(wt)) & (~np.isinf(wt))  & (wt > 0)
 
                         if not np.any(sel):
                             wt = (
@@ -1061,11 +1056,9 @@ class MultivariateOnlineDistributionalRegressionPath(
                         else:
                             wt[~sel] = np.mean(wt[sel])
 
-                        # Compute quantiles for clipping
                         ratio = u / wt
                         qq = np.quantile(ratio, [0.025, 0.975])
 
-                        # Clip the ratio to the quantiles
                         clipped = np.clip(ratio, qq[0], qq[1])
                         wv = eta[a][p].squeeze() + clipped
 
@@ -1139,21 +1132,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                         )
                         .squeeze()
                     )
-                    # Count NaNs in x, wv, wt, self._weight_delta[p], self._forget[p]
-                    nan_count_x = np.isnan(x).sum()
-                    nan_count_wv = np.isnan(wv).sum()
-                    nan_count_wt = np.isnan(wt).sum()
-                    nan_count_weight_delta = np.isnan(self._weight_delta[p]).sum()
-                    nan_count_forget = np.isnan(self._forget[p]).sum()
-                    ny = np.isnan(self._y_gram[p][k][a]).sum()
-                    nx = np.isnan(self._x_gram[p][k][a]).sum()
-
-                    if ny > 0 or nx > 0:
-                        raise ValueError(
-                            f"NaNs detected in gram matrices at p={p}, k={k}, a={a}: "
-                            f"y_gram NaNs={ny}, x_gram NaNs={nx}"
-                            f"NaNs in x: {nan_count_x}, wv: {nan_count_wv}, wt: {nan_count_wt}, "
-                          f"weight_delta[{p}]: {nan_count_weight_delta}, forget[{p}]: {nan_count_forget}")
                         
                     if self._method[p][k]._path_based_method:
                         self.coef_path_[p][k][a] = self._method[p][k].fit_beta_path(
@@ -1165,21 +1143,14 @@ class MultivariateOnlineDistributionalRegressionPath(
                         eta_elem = x @ self.coef_path_[p][k][a].T
 
                         if issubclass(self.distribution.__class__, CopulaMixin):
-                            eta_elem = self.distribution.flat_to_cube(eta_elem, param=p)
 
                             tau_elem = (1 - 1e-5) * self.distribution.link_inverse(
                                 eta_elem, param=p
                             )
 
-                            eta_elem = self.distribution.link_function(
-                                self.distribution.flat_to_cube(tau_elem, param=p),
-                                param=p,
-                            )
+                            eta_elem = self.distribution.link_function(tau_elem, param=p)
 
-                            theta_elem = self.distribution.param_link_inverse(
-                                self.distribution.flat_to_cube(tau_elem, param=p),
-                                param=p,
-                            )
+                            theta_elem = self.distribution.param_link_inverse(tau_elem, param=p)
 
                         else:
                             eta_elem = self.distribution.flat_to_cube(eta_elem, param=p)
@@ -1227,34 +1198,27 @@ class MultivariateOnlineDistributionalRegressionPath(
                             self.distribution,
                             (BivariateCopulaClayton, BivariateCopulaGumbel),
                         ):
+                            # Numerical stability
                             eta[a][p] = np.sign(eta[a][p]) * np.minimum(
                                 np.abs(eta[a][p]), 200
                             )
-                            tau[a][p] = self.distribution.flat_to_cube(
-                                np.tanh(eta[a][p] / 2), param=p
-                            ) * (1 - 1e-5)
+                            # Inverse Fisher z-transformation
+                            tau[a][p] = np.tanh(eta[a][p] / 2) * (1 - 1e-5)
+                            # Numerical stability
                             tau[a][p] = np.sign(eta[a][p] * (1 - 1e-5)) * np.minimum(
                                 np.abs(tau[a][p] * (1 - 1e-5)), 200
                             )
+                            # Fisher z-transformation
+                            eta[a][p] = 2 * np.arctanh(tau[a][p])
+                            
 
-                            eta[a][p] = self.distribution.flat_to_cube(
-                                2 * np.arctanh(tau[a][p]), param=p
-                            )
                             theta[a][p] = np.sign(
                                 self.distribution.param_link_inverse(
-                                    self.distribution.flat_to_cube(
-                                        (tau[a][p]) * (1 - 1e-5), param=p
-                                    ),
-                                    param=p,
-                                )
-                                * (1 - 1e-5)
-                            ) * np.minimum(
+                                        (tau[a][p]) * (1 - 1e-5), p
+                                )* (1 - 1e-5)) * np.minimum(
                                 np.abs(
                                     self.distribution.param_link_inverse(
-                                        self.distribution.flat_to_cube(
-                                            (tau[a][p]) * (1 - 1e-5), param=p
-                                        ),
-                                        param=p,
+                                            (tau[a][p]) * (1 - 1e-5), p
                                     )
                                     * (1 - 1e-5)
                                 ),
@@ -1262,20 +1226,17 @@ class MultivariateOnlineDistributionalRegressionPath(
                             )
 
                         else:
-                            tau[a][p] = np.clip(
-                                np.tanh(
-                                    self.distribution.flat_to_cube(eta[a][p], param=p)
-                                    / 2
-                                ),
+                            tau[a][p] = np.clip(self.distribution.link_inverse(eta[a][p], p),
                                 -1 + 1e-5,
                                 1 - 1e-5,
                             )
-                            eta[a][p] = 2 * np.arctanh(
-                                self.distribution.flat_to_cube(tau[a][p], param=p)
+                        
+                            eta[a][p] = self.distribution.link_function(
+                                tau[a][p],p
                             )
+                            
                             theta[a][p] = self.distribution.param_link_inverse(
-                                self.distribution.flat_to_cube(tau[a][p], param=p),
-                                param=p,
+                                tau[a][p], p
                             ) * (1 - 1e-5)
 
                     else:
@@ -1335,7 +1296,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                     old_likelihood = self._current_likelihood[a]
 
             # If the LL is decreasing, we're resetting to the previous iteration
-            if ((outer_iteration > 0) | (inner_iteration > 1)) & decreasing:
+            if ((outer_iteration >= 0) | (inner_iteration > 1)) & decreasing:
                 warnings.warn("Likelihood is decreasing. Breaking.")
                 # Reset to values from the previous iteration
                 theta = prev_theta
@@ -1815,9 +1776,9 @@ class MultivariateOnlineDistributionalRegressionPath(
                         tau[a][p] = self.distribution.param_link_function(
                             theta[a][p], p
                         )
-                        eta[a][p] = 2 * np.arctanh(
-                            np.clip(tau[a][p], -1 + 1e-8, 1 - 1e-8)
-                        )
+                        # Fisher z-transformation for the tau to get the eta
+                        eta[a][p] = 2.0 * np.arctanh(np.clip(tau[a][p], -1 + 1e-12, 1 - 1e-12))
+
                         dl1dp1 = self.distribution.element_dl1_dp1(
                             y, theta=theta[a], param=p, k=k
                         )
@@ -1825,17 +1786,15 @@ class MultivariateOnlineDistributionalRegressionPath(
                         dl2dp2 = self.distribution.element_dl2_dp2(
                             y, theta=theta[a], param=p, k=k
                         )
+    
+                        # cap z to avoid cosh overflow warnings; does not change values meaningfully
+                        z = np.clip(eta[a][p] / 2.0, -700.0, 700.0)
+                        sech2 = 1.0 / np.cosh(z) ** 2
+                        # first and second derivative of the inverse Fisher z-transformation 
+                        dl1_link = (0.5 * sech2).squeeze()
+                        dl2_link = (-0.5 * np.tanh(z) * sech2).squeeze()
 
-                        dl1_link = 1.0 / (1.0 + np.cosh(eta[a][p])).squeeze()
-                        sinh_half = np.sinh(eta[a][p] / 2.0)
-                        sinh_x = np.sinh(eta[a][p])
-                        sinh_x_safe = np.where(np.abs(sinh_x) < 1e-10, 1e-10, sinh_x)
-                        dl2_link = (
-                            -4.0 * sinh_half**4 * (1.0 / sinh_x_safe) ** 3
-                        ).squeeze()
                         dp = self.distribution.pdf(y=y, theta=theta[a])
-                        dl1_link = self.distribution.cube_to_flat(dl1_link, param=p)
-                        dl2_link = self.distribution.cube_to_flat(dl2_link, param=p)
                         u = dl1dp1 * dl1_link
                         u = (
                             u
@@ -1967,21 +1926,15 @@ class MultivariateOnlineDistributionalRegressionPath(
                         eta_elem = x @ self.coef_path_[p][k][a].T
 
                         if issubclass(self.distribution.__class__, CopulaMixin):
-                            eta_elem = self.distribution.flat_to_cube(eta_elem, param=p)
 
                             tau_elem = (1 - 1e-5) * self.distribution.link_inverse(
                                 eta_elem, param=p
                             )
 
-                            eta_elem = self.distribution.link_function(
-                                self.distribution.flat_to_cube(tau_elem, param=p),
-                                param=p,
-                            )
+                            eta_elem = self.distribution.link_function(tau_elem, param=p)
 
-                            theta_elem = self.distribution.param_link_inverse(
-                                self.distribution.flat_to_cube(tau_elem, param=p),
-                                param=p,
-                            )
+                            theta_elem = self.distribution.param_link_inverse(tau_elem, param=p)
+
 
                         else:
                             eta_elem = self.distribution.flat_to_cube(eta_elem, param=p)
@@ -2031,34 +1984,27 @@ class MultivariateOnlineDistributionalRegressionPath(
                             self.distribution,
                             (BivariateCopulaClayton, BivariateCopulaGumbel),
                         ):
+                            # Numerical stability
                             eta[a][p] = np.sign(eta[a][p]) * np.minimum(
                                 np.abs(eta[a][p]), 200
                             )
-                            tau[a][p] = self.distribution.flat_to_cube(
-                                np.tanh(eta[a][p] / 2), param=p
-                            ) * (1 - 1e-5)
+                            # Inverse Fisher z-transformation
+                            tau[a][p] = np.tanh(eta[a][p] / 2) * (1 - 1e-5)
+                            # Numerical stability
                             tau[a][p] = np.sign(eta[a][p] * (1 - 1e-5)) * np.minimum(
                                 np.abs(tau[a][p] * (1 - 1e-5)), 200
                             )
+                            # Fisher z-transformation
+                            eta[a][p] = 2 * np.arctanh(tau[a][p])
+                            
 
-                            eta[a][p] = self.distribution.flat_to_cube(
-                                2 * np.arctanh(tau[a][p]), param=p
-                            )
                             theta[a][p] = np.sign(
                                 self.distribution.param_link_inverse(
-                                    self.distribution.flat_to_cube(
-                                        (tau[a][p]) * (1 - 1e-5), param=p
-                                    ),
-                                    param=p,
-                                )
-                                * (1 - 1e-5)
-                            ) * np.minimum(
+                                        (tau[a][p]) * (1 - 1e-5), p
+                                )* (1 - 1e-5)) * np.minimum(
                                 np.abs(
                                     self.distribution.param_link_inverse(
-                                        self.distribution.flat_to_cube(
-                                            (tau[a][p]) * (1 - 1e-5), param=p
-                                        ),
-                                        param=p,
+                                            (tau[a][p]) * (1 - 1e-5), p
                                     )
                                     * (1 - 1e-5)
                                 ),
