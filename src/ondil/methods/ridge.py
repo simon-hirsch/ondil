@@ -177,6 +177,32 @@ class Ridge(EstimationMethod):
         return super().update_beta_path(x_gram, y_gram, beta_path, is_regularized)
 
 
+class CoordinateDescent(Ridge):
+    r"""Single-lambda Coordinate Descent Estimation.
+
+    This is a special case of the Ridge method where the regularization parameter is set to zero.
+    """
+
+    def __init__(
+        self,
+        start_beta: np.ndarray | None = None,
+        selection: Literal["cyclic", "random"] = "cyclic",
+        beta_lower_bound: np.ndarray | None = None,
+        beta_upper_bound: np.ndarray | None = None,
+        tolerance: float = 1e-4,
+        max_iterations: int = 1000,
+    ):
+        super().__init__(
+            lambda_reg=0.0,
+            start_beta=start_beta,
+            selection=selection,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
+            tolerance=tolerance,
+            max_iterations=max_iterations,
+        )
+
+
 class LinearConstrainedCoordinateDescent(EstimationMethod):
     r"""Linear Constrained (unconstrained) Estimation.
 
