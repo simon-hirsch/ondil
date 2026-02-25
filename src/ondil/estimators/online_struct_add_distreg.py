@@ -12,7 +12,7 @@ from ..distributions import Normal
 from ..gram import init_forget_vector
 from ..logging import logger
 from ..scaler import OnlineScaler
-from ..terms.linear_terms import LinearTerm
+from ..terms.linear import LinearTerm
 
 if HAS_PANDAS:
     pass

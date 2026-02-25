@@ -1,25 +1,35 @@
-from .autoregressive_terms import (
-    JointEstimationTimeSeriesTerm,
+from .features import (
     LaggedAbsoluteResidual,
     LaggedResidual,
     LaggedSquaredResidual,
     LaggedTarget,
     LaggedTheta,
-    RegularizedJointEstimationTimeSeriesTerm,
+    LinearFeature,
+    TimeSeriesFeature,
 )
-from .linear_terms import InterceptTerm, LinearTerm, RegularizedLinearTermIC
+from .linear import (
+    InterceptTerm,
+    LinearTerm,
+    RegularizedLinearTerm,
+)
 from .special import ScikitLearnEstimatorTerm
+from .time_series import (
+    RegularizedTimeSeriesTerm,
+    TimeSeriesTerm,
+)
 
 __all__ = [
-    "JointEstimationTimeSeriesTerm",
+    "TimeSeriesTerm",
     "ScikitLearnEstimatorTerm",
     "LinearTerm",
-    "RegularizedLinearTermIC",
+    "RegularizedLinearTerm",
     "InterceptTerm",
     "LaggedResidual",
     "LaggedSquaredResidual",
     "LaggedAbsoluteResidual",
     "LaggedTheta",
     "LaggedTarget",
-    "RegularizedJointEstimationTimeSeriesTerm",
+    "RegularizedTimeSeriesTerm",
+    "LinearFeature",
+    "TimeSeriesFeature",
 ]

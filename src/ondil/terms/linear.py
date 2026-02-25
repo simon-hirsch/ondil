@@ -5,7 +5,6 @@ from typing import Literal, Tuple
 import numpy as np
 
 from ..base import Distribution, EstimationMethod, Term
-from ..base.terms import FeatureTransformation
 from ..design_matrix import add_intercept, subset_array
 from ..gram import init_forget_vector
 from ..incremental_statistics import calculate_statistics, update_statistics
@@ -22,7 +21,7 @@ class LinearTermState:
 
 
 @dataclass(frozen=True)
-class RegularizedLinearTermICState:
+class RegularizedLinearTermState:
     is_regularized: np.ndarray | None
     g: np.ndarray | None
     h: np.ndarray | None
@@ -33,38 +32,6 @@ class RegularizedLinearTermICState:
     rss: np.ndarray | None
     n_observations: int | None
     n_nonzero_coef: np.ndarray | None
-
-
-class LinearFeatures(FeatureTransformation):
-    def __init__(
-        self,
-        features: np.ndarray | list[int] | Literal["all"] = "all",
-    ):
-        self.features = features
-
-    def make_design_matrix_in_sample_during_fit(
-        self,
-        X: np.ndarray,
-        distribution: Distribution,
-        **kwargs,
-    ) -> np.ndarray:
-        return subset_array(X, self.features)
-
-    def make_design_matrix_in_sample_during_update(
-        self,
-        X: np.ndarray,
-        distribution: Distribution,
-        **kwargs,
-    ) -> np.ndarray:
-        return subset_array(X, self.features)
-
-    def make_design_matrix_out_of_sample(
-        self,
-        X,
-        distribution: Distribution,
-        **kwargs,
-    ) -> np.ndarray:
-        return subset_array(X, self.features)
 
 
 class _LinearBaseTerm(Term):
@@ -320,7 +287,7 @@ class InterceptTerm(LinearTerm):
         return np.ones((n_samples, 1))
 
 
-class _LinearPathModelSelectionIC(Term):
+class _LinearPathModelSelection(Term):
     """Linear term with regularization and information criterion for model selection."""
 
     allow_online_updates: bool = True
@@ -390,7 +357,7 @@ class _LinearPathModelSelectionIC(Term):
         distribution: Distribution,
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
-    ) -> "RegularizedLinearTermIC":
+    ) -> "RegularizedLinearTerm":
         X_mat = self.make_design_matrix_in_sample_during_fit(
             X=X,
             fitted_values=fitted_values,
@@ -572,7 +539,7 @@ class _LinearPathModelSelectionIC(Term):
         )
 
 
-class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
+class RegularizedLinearTerm(_LinearPathModelSelection):
     """Linear term with regularization and information criterion for model selection."""
 
     def __init__(
@@ -634,7 +601,7 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
         distribution: Distribution,
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
-    ) -> "RegularizedLinearTermIC":
+    ) -> "RegularizedLinearTerm":
         (
             is_regularized,
             g,
@@ -655,7 +622,7 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
             sample_weight=sample_weight,
             estimation_weight=estimation_weight,
         )
-        self._state = RegularizedLinearTermICState(
+        self._state = RegularizedLinearTermState(
             is_regularized=is_regularized,
             g=g,
             h=h,
@@ -678,7 +645,7 @@ class RegularizedLinearTermIC(_LinearPathModelSelectionIC):
         distribution: Distribution,
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
-    ) -> "RegularizedLinearTermIC":
+    ) -> "RegularizedLinearTerm":
         (
             g,
             h,
