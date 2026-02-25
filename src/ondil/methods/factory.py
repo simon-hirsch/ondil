@@ -4,8 +4,8 @@ from typing import Literal
 from ..base import EstimationMethod
 from .elasticnet import ElasticNetPath
 from .lasso_path import LassoPath
-from .ridge import CoordinateDescent
 from .recursive_least_squares import OrdinaryLeastSquares
+from .ridge import CoordinateDescent
 
 
 class EstimationMethodFactory:
