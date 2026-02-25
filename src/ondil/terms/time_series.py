@@ -5,9 +5,8 @@ import numpy as np
 
 from ..base import Distribution, EstimationMethod
 from ..base.terms import FeatureTransformation
-from ..design_matrix import add_intercept, make_lags
+from ..design_matrix import add_intercept
 from ..methods import get_estimation_method
-from .features import TimeSeriesFeature
 from .linear import _LinearBaseTerm, _LinearPathModelSelection
 
 
