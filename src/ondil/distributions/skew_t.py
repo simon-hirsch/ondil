@@ -195,6 +195,8 @@ class SkewTMeanStd(ScipyMixin, Distribution):
         scale_link: LinkFunction = Log(),
         skew_link: LinkFunction = Log(),
         shape_link: LinkFunction = LogShiftTwo(),
+        start_value_mixing: float = 0.5,
+        use_gamlss_init_values: bool = False,
     ) -> None:
         super().__init__(
             links={
@@ -204,6 +206,8 @@ class SkewTMeanStd(ScipyMixin, Distribution):
                 3: shape_link,
             }
         )
+        self.gamlss_init_values = use_gamlss_init_values
+        self.start_value_mixing = start_value_mixing
         self._st3dist = SkewT()
 
     def _map(self, theta):
@@ -214,6 +218,9 @@ class SkewTMeanStd(ScipyMixin, Distribution):
         mu_0 = mu - (sigma * m / np.sqrt(s2))
         sigma_0 = sigma / np.sqrt(s2)
         return mu_0, sigma_0, nu, tau, c
+
+    def mean(self, theta: np.ndarray) -> np.ndarray:
+        return theta[:, 0]
 
     def cdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
         _, _, nu, tau = self.theta_to_params(theta)
@@ -281,9 +288,14 @@ class SkewTMeanStd(ScipyMixin, Distribution):
         dynamic_values = np.zeros_like(constant_values)
         dynamic_values[:, 0] = y  # mu
         dynamic_values[:, 1] = np.abs(y - np.mean(y))  # sigma
-        dynamic_values[:, 2] = np.abs(y - np.median(y)) / constant_values[:, 1]  # tau
-        dynamic_values[:, 3] = np.abs(y - np.mean(y)) / constant_values[:, 1]  # nu
-        return dynamic_values
+        dynamic_values[:, 2] = 1 + np.sign(y - np.mean(y)) * np.abs(
+            (y - np.mean(y)) / (np.std(y, ddof=1) ** 3)
+        )  # nu
+        dynamic_values[:, 3] = (
+            2.5 + np.abs(y - np.mean(y)) / constant_values[:, 1]
+        )  # tau
+        mixed_values = self._svm * constant_values + (1 - self._svm) * dynamic_values
+        return mixed_values
 
     def dl1_dp1(self, y, theta, param):
         self._validate_dln_dpn_inputs(y, theta, param)
