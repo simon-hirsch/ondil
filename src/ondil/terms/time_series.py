@@ -261,7 +261,7 @@ class TimeSeriesTerm(_LinearBaseTerm):
             time series features and fitted coefficients.
         """
         X_mat = self.make_design_matrix_out_of_sample(X=X, distribution=distribution)
-        # X_mat = self.remove_problematic_columns(X_mat)
+        X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self._state.coef_
 
     def update(
