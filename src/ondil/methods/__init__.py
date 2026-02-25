@@ -6,7 +6,7 @@ from .linear_constrained import (
     LinearConstrainedElasticNetPath,
 )
 from .recursive_least_squares import OrdinaryLeastSquares
-from .ridge import Ridge
+from .ridge import Ridge, CoordinateDescent
 
 __all__ = [
     "get_estimation_method",
@@ -16,4 +16,5 @@ __all__ = [
     "OrdinaryLeastSquares",
     "LinearConstrainedCoordinateDescent",
     "LinearConstrainedElasticNetPath",
+    "CoordinateDescent",
 ]

@@ -1,8 +1,10 @@
 import copy
+from typing import Literal
 
 from ..base import EstimationMethod
 from .elasticnet import ElasticNetPath
 from .lasso_path import LassoPath
+from .ridge import CoordinateDescent
 from .recursive_least_squares import OrdinaryLeastSquares
 
 
@@ -11,20 +13,24 @@ class EstimationMethodFactory:
         pass
 
     @staticmethod
-    def from_string(method: str):
+    def from_string(method: Literal["ols", "lasso", "elasticnet", "ocd"]):
         if method == "lasso":
             return LassoPath()
         elif method == "ols":
             return OrdinaryLeastSquares()
         elif method == "elasticnet":
             return ElasticNetPath(alpha=0.5)
+        elif method == "ocd":
+            return CoordinateDescent()
         else:
             raise ValueError(
-                "Did not recognize method. Please provide ['ols', 'lasso', 'elasticnet']."
+                "Did not recognize method. Please provide ['ols', 'lasso', 'elasticnet', 'ocd']."
             )
 
 
-def get_estimation_method(method: EstimationMethod | str):
+def get_estimation_method(
+    method: EstimationMethod | Literal["ols", "lasso", "elasticnet", "ocd"],
+) -> EstimationMethod:
     if isinstance(method, str):
         out = EstimationMethodFactory().from_string(method=method)
     elif isinstance(method, EstimationMethod):
