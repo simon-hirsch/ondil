@@ -72,6 +72,8 @@ class TimeSeriesTerm(_LinearBaseTerm):
         regularize_intercept: None | bool = False,
         constraint_matrix: np.ndarray | None = None,
         constraint_bounds: np.ndarray | None = None,
+        beta_lower_bound: np.ndarray | None = None,
+        beta_upper_bound: np.ndarray | None = None,
     ):
         super().__init__(
             fit_intercept=fit_intercept,
@@ -81,6 +83,8 @@ class TimeSeriesTerm(_LinearBaseTerm):
             regularize_intercept=regularize_intercept,
             constraint_matrix=constraint_matrix,
             constraint_bounds=constraint_bounds,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
         )
         self.effects = effects
 
@@ -513,6 +517,8 @@ class RegularizedTimeSeriesTerm(
         ic: str = "aic",
         constraint_matrix: np.ndarray | None = None,
         constraint_bounds: np.ndarray | None = None,
+        beta_lower_bound: np.ndarray | None = None,
+        beta_upper_bound: np.ndarray | None = None,
     ):
         super().__init__(
             method=method,
@@ -524,6 +530,8 @@ class RegularizedTimeSeriesTerm(
             ic=ic,
             constraint_matrix=constraint_matrix,
             constraint_bounds=constraint_bounds,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
         )
         self.effects = effects
 

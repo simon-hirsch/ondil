@@ -77,7 +77,7 @@ class Term(ABC):
     def remove_problematic_columns(
         self,
         X: np.ndarray | None,
-    ) -> np.ndarray:
+    ) -> np.ndarray | None:
         """Remove both zero-variance and multicollinear columns from the design matrix X.
 
         Args:

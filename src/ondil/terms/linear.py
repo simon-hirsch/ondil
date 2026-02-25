@@ -49,6 +49,8 @@ class _LinearBaseTerm(Term):
         regularize_intercept: None | bool = None,
         constraint_matrix: np.ndarray | None = None,
         constraint_bounds: np.ndarray | None = None,
+        beta_lower_bound: np.ndarray | None = None,
+        beta_upper_bound: np.ndarray | None = None,
     ):
         self.method = method
         self.fit_intercept = fit_intercept
@@ -57,6 +59,8 @@ class _LinearBaseTerm(Term):
         self.forget = forget
         self.constraint_matrix = constraint_matrix
         self.constraint_bounds = constraint_bounds
+        self.beta_lower_bound = beta_lower_bound
+        self.beta_upper_bound = beta_upper_bound
 
     def _fit(
         self,
@@ -128,6 +132,8 @@ class _LinearBaseTerm(Term):
             is_regularized=is_regularized,
             constraint_matrix=self.remove_problematic_columns(self.constraint_matrix),
             constraint_bounds=self.constraint_bounds,
+            beta_lower_bound=self.remove_problematic_columns(self.beta_lower_bound),
+            beta_upper_bound=self.remove_problematic_columns(self.beta_upper_bound),
         )
         return g, h, coef_, is_regularized
 
@@ -192,6 +198,8 @@ class _LinearBaseTerm(Term):
             is_regularized=self._state.is_regularized,
             constraint_matrix=self.remove_problematic_columns(self.constraint_matrix),
             constraint_bounds=self.constraint_bounds,
+            beta_lower_bound=self.remove_problematic_columns(self.beta_lower_bound),
+            beta_upper_bound=self.remove_problematic_columns(self.beta_upper_bound),
         )
         return g, h, coef_
 
@@ -211,6 +219,8 @@ class LinearTerm(_LinearBaseTerm):
         regularize_intercept: None | bool = None,
         constraint_matrix: np.ndarray | None = None,
         constraint_bounds: np.ndarray | None = None,
+        beta_lower_bound: np.ndarray | None = None,
+        beta_upper_bound: np.ndarray | None = None,
     ):
         super().__init__(
             method=method,
@@ -220,6 +230,8 @@ class LinearTerm(_LinearBaseTerm):
             forget=forget,
             constraint_matrix=constraint_matrix,
             constraint_bounds=constraint_bounds,
+            beta_lower_bound=beta_lower_bound,
+            beta_upper_bound=beta_upper_bound,
         )
         self.features = features
 
@@ -453,6 +465,8 @@ class _LinearPathModelSelection(Term):
         weighted_regularization: bool = False,
         constraint_matrix: np.ndarray | None = None,
         constraint_bounds: np.ndarray | None = None,
+        beta_lower_bound: np.ndarray | None = None,
+        beta_upper_bound: np.ndarray | None = None,
     ):
         self.fit_intercept = fit_intercept
         self.method = method
@@ -463,6 +477,8 @@ class _LinearPathModelSelection(Term):
         self.ic = ic
         self.constraint_matrix = constraint_matrix
         self.constraint_bounds = constraint_bounds
+        self.beta_lower_bound = beta_lower_bound
+        self.beta_upper_bound = beta_upper_bound
 
     def _prepare_term(self):
         self._method = get_estimation_method(self.method)
@@ -594,6 +610,8 @@ class _LinearPathModelSelection(Term):
             regularization_weights=regularization_weights,
             constraint_bounds=self.constraint_bounds,
             constraint_matrix=self.remove_problematic_columns(self.constraint_matrix),
+            beta_lower_bound=self.remove_problematic_columns(self.beta_lower_bound),
+            beta_upper_bound=self.remove_problematic_columns(self.beta_upper_bound),
         )
 
         n_observations = y.shape[0]
@@ -700,6 +718,8 @@ class _LinearPathModelSelection(Term):
             regularization_weights=regularization_weights,
             constraint_bounds=self.constraint_bounds,
             constraint_matrix=self.remove_problematic_columns(self.constraint_matrix),
+            beta_lower_bound=self.remove_problematic_columns(self.beta_lower_bound),
+            beta_upper_bound=self.remove_problematic_columns(self.beta_upper_bound),
         )
         n_observations = self._state.n_observations + y.shape[0]
         n_nonzero_coef = np.count_nonzero(coef_path_, axis=1)
