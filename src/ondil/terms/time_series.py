@@ -86,6 +86,13 @@ class TimeSeriesTerm(_LinearBaseTerm):
         self.effects = effects
 
     def _prepare_term(self):
+        """Prepare the term by initializing the estimation method and computing lags.
+
+        Returns
+        -------
+        TimeSeriesTerm
+            The prepared term instance.
+        """
         self._method = get_estimation_method(self.method)
         if self._method._path_based_method:
             raise ValueError("Path-based methods are not supported for LinearTerm.")
@@ -104,6 +111,30 @@ class TimeSeriesTerm(_LinearBaseTerm):
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "TimeSeriesTerm":
+        """Fit the time series term.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused).
+        y : np.ndarray
+            Target values for the term.
+        fitted_values : np.ndarray
+            Current fitted distributional parameters.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        sample_weight : np.ndarray
+            Sample weights.
+        estimation_weight : np.ndarray
+            Estimation weights.
+
+        Returns
+        -------
+        TimeSeriesTerm
+            The fitted term with memory initialized.
+        """
         g, h, coef_, is_regularized = self._fit(
             X=X,
             y=y,
@@ -134,6 +165,26 @@ class TimeSeriesTerm(_LinearBaseTerm):
         target_values: np.ndarray,
         distribution: Distribution,
     ) -> np.ndarray:
+        """Predict in-sample values during fitting.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        y : np.ndarray
+            Target values (unused).
+        fitted_values : np.ndarray
+            Fitted values.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+
+        Returns
+        -------
+        np.ndarray
+            Predicted values.
+        """
         X_mat = self.make_design_matrix_in_sample_during_fit(
             X=X,
             fitted_values=fitted_values,
@@ -151,6 +202,32 @@ class TimeSeriesTerm(_LinearBaseTerm):
         target_values: np.ndarray,
         distribution: Distribution,
     ):
+        """Predict in-sample values during the update phase.
+
+        This method generates predictions for the current in-sample data points
+        during the incremental update process. It constructs the design matrix
+        using the update-specific method and applies the current coefficient
+        estimates.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            The input feature matrix for the current batch.
+        y : np.ndarray
+            The target values for the current batch (unused in prediction).
+        fitted_values : np.ndarray
+            The fitted values from the distribution for the current batch.
+        target_values : np.ndarray
+            The target values for the current batch.
+        distribution : Distribution
+            The distribution object containing current parameter estimates.
+
+        Returns
+        -------
+        np.ndarray
+            Predicted values for the current batch based on the time series
+            features and current coefficient estimates.
+        """
         X_mat = self.make_design_matrix_in_sample_during_update(
             X=X,
             fitted_values=fitted_values,
@@ -165,6 +242,25 @@ class TimeSeriesTerm(_LinearBaseTerm):
         X: np.ndarray,  # for api compatibility; not used
         distribution: Distribution,
     ):
+        """Predict out-of-sample values using the fitted time series term.
+
+        This method generates predictions for future time points beyond the
+        training data. It uses the out-of-sample design matrix construction
+        method which relies on the maintained memory of lagged values.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused, included for API compatibility).
+        distribution : Distribution
+            The distribution object containing current parameter estimates.
+
+        Returns
+        -------
+        np.ndarray
+            Predicted values for out-of-sample time points based on the
+            time series features and fitted coefficients.
+        """
         X_mat = self.make_design_matrix_out_of_sample(X=X, distribution=distribution)
         # X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self._state.coef_
@@ -179,6 +275,40 @@ class TimeSeriesTerm(_LinearBaseTerm):
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "TimeSeriesTerm":
+        """Update the time series term with new data in an incremental manner.
+
+        This method performs incremental updates to the coefficient estimates
+        using new batches of data. It maintains the memory of lagged fitted
+        and target values required for time series feature generation.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused, included for API compatibility).
+        y : np.ndarray
+            The target values for the new batch.
+        fitted_values : np.ndarray
+            The fitted values from the distribution for the new batch.
+        target_values : np.ndarray
+            The target values for the new batch.
+        distribution : Distribution
+            The distribution object containing current parameter estimates.
+        sample_weight : np.ndarray
+            Sample weights for the new batch.
+        estimation_weight : np.ndarray
+            Estimation weights for the new batch.
+
+        Returns
+        -------
+        TimeSeriesTerm
+            A new instance of TimeSeriesTerm with updated coefficients and
+            extended memory for lagged values.
+
+        Raises
+        ------
+        ValueError
+            If the term has not been fitted before calling update.
+        """
         if self._state is None:
             raise ValueError("Term must be fitted before it can be updated.")
 
@@ -215,6 +345,28 @@ class TimeSeriesTerm(_LinearBaseTerm):
         target_values: np.ndarray,
         distribution: Distribution,
     ):
+        """Create the design matrix for in-sample predictions during fitting.
+
+        This method constructs the design matrix by combining the design
+        matrices from all individual time series effects (features). It
+        optionally adds an intercept column if fit_intercept is True.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            The input feature matrix.
+        fitted_values : np.ndarray
+            The fitted values from the distribution.
+        target_values : np.ndarray
+            The target values.
+        distribution : Distribution
+            The distribution object containing parameter estimates.
+
+        Returns
+        -------
+        np.ndarray
+            The combined design matrix for all time series effects.
+        """
         X_mats = [
             term.make_design_matrix_in_sample_during_fit(
                 X=X,
@@ -236,6 +388,29 @@ class TimeSeriesTerm(_LinearBaseTerm):
         target_values: np.ndarray,
         distribution: Distribution,
     ):
+        """Create the design matrix for in-sample predictions during updates.
+
+        This method constructs the design matrix for incremental updates by
+        combining the design matrices from all individual time series effects.
+        It passes the current state to each effect for memory-based feature
+        generation and optionally adds an intercept column.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            The input feature matrix.
+        fitted_values : np.ndarray
+            The fitted values from the distribution.
+        target_values : np.ndarray
+            The target values.
+        distribution : Distribution
+            The distribution object containing parameter estimates.
+
+        Returns
+        -------
+        np.ndarray
+            The combined design matrix for all time series effects during update.
+        """
         X_mats = [
             term.make_design_matrix_in_sample_during_update(
                 X=X,
@@ -256,6 +431,26 @@ class TimeSeriesTerm(_LinearBaseTerm):
         X: np.ndarray,
         distribution: Distribution,
     ):
+        """Create the design matrix for out-of-sample predictions.
+
+        This method constructs the design matrix for predictions beyond the
+        training data by combining the design matrices from all individual
+        time series effects. It relies on the maintained memory in the state
+        for generating lagged features and optionally adds an intercept column.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            The input feature matrix.
+        distribution : Distribution
+            The distribution object containing parameter estimates.
+
+        Returns
+        -------
+        np.ndarray
+            The combined design matrix for all time series effects for
+            out-of-sample predictions.
+        """
         X_mats = [
             term.make_design_matrix_out_of_sample(
                 X,
@@ -284,15 +479,27 @@ class RegularizedTimeSeriesTerm(
 
     Parameters
     ----------
-    lags : list[int]
-        List of lag orders to include in the autoregressive term.
+    effects : list[FeatureTransformation]
+        List of feature transformations to include in the time series term.
     method : EstimationMethod | str, default="lasso"
         Estimation method to use. Can be an instance of EstimationMethod or a string
         identifier for a predefined method.
-    intercept : bool, default=True
+    fit_intercept : bool, default=True
         Whether to include an intercept in the model.
+    forget : float, default=0.0
+        Forgetting factor for incremental updates.
+    is_regularized : np.ndarray | None, default=None
+        Boolean array indicating which coefficients should be regularized.
+    regularize_intercept : bool, default=False
+        Whether to regularize the intercept term.
+    weighted_regularization : bool, default=False
+        Whether to use weighted regularization.
     ic : str, default="aic"
         Information criterion to use for model selection.
+    constraint_matrix : np.ndarray | None, default=None
+        Constraint matrix for constrained optimization.
+    constraint_bounds : np.ndarray | None, default=None
+        Bounds for the constraints.
     """
 
     def __init__(
@@ -322,6 +529,22 @@ class RegularizedTimeSeriesTerm(
         self.effects = effects
 
     def _prepare_term(self):
+        """Prepare the regularized time series term for fitting.
+
+        This method initializes the estimation method, validates that it's
+        path-based, and extracts lag information from the effects for memory
+        management.
+
+        Returns
+        -------
+        RegularizedTimeSeriesTerm
+            The prepared term instance.
+
+        Raises
+        ------
+        ValueError
+            If the estimation method is not path-based.
+        """
         self._method = get_estimation_method(self.method)
         if not self._method._path_based_method:
             raise ValueError("Non-Path-based methods are not supported for LinearTerm.")
@@ -340,6 +563,36 @@ class RegularizedTimeSeriesTerm(
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "RegularizedTimeSeriesTerm":
+        """Fit the regularized time series term using path-based model selection.
+
+        This method performs initial fitting of the regularized time series term
+        using a path-based estimation method with information criterion-based
+        model selection. It stores the complete regularization path and selects
+        the optimal model.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused, included for API compatibility).
+        y : np.ndarray
+            The target values.
+        fitted_values : np.ndarray
+            The fitted values from the distribution.
+        target_values : np.ndarray
+            The target values.
+        distribution : Distribution
+            The distribution object containing parameter estimates.
+        sample_weight : np.ndarray
+            Sample weights for the observations.
+        estimation_weight : np.ndarray
+            Estimation weights for regularization.
+
+        Returns
+        -------
+        RegularizedTimeSeriesTerm
+            The fitted term instance with optimized coefficients and model
+            selection results stored in the state.
+        """
         (
             is_regularized,
             g,
@@ -386,6 +639,35 @@ class RegularizedTimeSeriesTerm(
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "RegularizedTimeSeriesTerm":
+        """Update the regularized time series term with new data.
+
+        This method performs incremental updates to the regularized time series
+        term, re-running the path-based model selection on the updated data.
+        It maintains memory for lagged values and updates the regularization path.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused, included for API compatibility).
+        y : np.ndarray
+            The target values for the new batch.
+        fitted_values : np.ndarray
+            The fitted values from the distribution for the new batch.
+        target_values : np.ndarray
+            The target values for the new batch.
+        distribution : Distribution
+            The distribution object containing current parameter estimates.
+        sample_weight : np.ndarray
+            Sample weights for the new batch.
+        estimation_weight : np.ndarray
+            Estimation weights for the new batch.
+
+        Returns
+        -------
+        RegularizedTimeSeriesTerm
+            A new instance with updated coefficients, regularization path,
+            and extended memory for lagged values.
+        """
         (
             g,
             h,

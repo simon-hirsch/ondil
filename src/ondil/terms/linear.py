@@ -68,6 +68,30 @@ class _LinearBaseTerm(Term):
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "LinearTerm":
+        """Fit the linear term during initial training.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        y : np.ndarray
+            Target values for the term.
+        fitted_values : np.ndarray
+            Current fitted distributional parameters.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        sample_weight : np.ndarray
+            Sample weights.
+        estimation_weight : np.ndarray
+            Estimation weights.
+
+        Returns
+        -------
+        tuple
+            Gram matrices, coefficients, and regularization flags.
+        """
         X_mat = self.make_design_matrix_in_sample_during_fit(
             X=X,
             fitted_values=fitted_values,
@@ -117,6 +141,30 @@ class _LinearBaseTerm(Term):
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "LinearTerm":
+        """Update the linear term with new data.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        y : np.ndarray
+            Target values for the term.
+        fitted_values : np.ndarray
+            Current fitted distributional parameters.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        sample_weight : np.ndarray
+            Sample weights.
+        estimation_weight : np.ndarray
+            Estimation weights.
+
+        Returns
+        -------
+        tuple
+            Updated Gram matrices and coefficients.
+        """
         X_mat = self.make_design_matrix_in_sample_during_update(
             X=X,
             fitted_values=fitted_values,
@@ -176,6 +224,13 @@ class LinearTerm(_LinearBaseTerm):
         self.features = features
 
     def _prepare_term(self):
+        """Prepare the term by initializing the estimation method.
+
+        Returns
+        -------
+        LinearTerm
+            The prepared term instance.
+        """
         self._method = get_estimation_method(self.method)
         if self._method._path_based_method:
             raise ValueError("Path-based methods are not supported for LinearTerm.")
@@ -185,6 +240,18 @@ class LinearTerm(_LinearBaseTerm):
         self,
         X: np.ndarray | None = None,
     ) -> np.ndarray:
+        """Create the design matrix from input features.
+
+        Parameters
+        ----------
+        X : np.ndarray, optional
+            Input feature matrix.
+
+        Returns
+        -------
+        np.ndarray
+            Design matrix with optional intercept.
+        """
         if self.fit_intercept:
             X_mat = add_intercept(subset_array(X, self.features))
         else:
@@ -205,6 +272,20 @@ class LinearTerm(_LinearBaseTerm):
         X: np.ndarray,
         distribution: Distribution,
     ) -> np.ndarray:
+        """Predict out-of-sample values.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        distribution : Distribution
+            The distribution object (unused).
+
+        Returns
+        -------
+        np.ndarray
+            Predicted values.
+        """
         X_mat = self.make_design_matrix_out_of_sample(X=X)
         # X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self.coef_
@@ -219,6 +300,30 @@ class LinearTerm(_LinearBaseTerm):
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "LinearTerm":
+        """Fit the linear term.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        y : np.ndarray
+            Target values for the term.
+        fitted_values : np.ndarray
+            Current fitted distributional parameters.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        sample_weight : np.ndarray
+            Sample weights.
+        estimation_weight : np.ndarray
+            Estimation weights.
+
+        Returns
+        -------
+        LinearTerm
+            The fitted term.
+        """
         g, h, coef_, is_regularized = self._fit(
             X=X,
             y=y,
@@ -246,6 +351,30 @@ class LinearTerm(_LinearBaseTerm):
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "LinearTerm":
+        """Update the linear term with new data.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        y : np.ndarray
+            Target values for the term.
+        fitted_values : np.ndarray
+            Current fitted distributional parameters.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        sample_weight : np.ndarray
+            Sample weights.
+        estimation_weight : np.ndarray
+            Estimation weights.
+
+        Returns
+        -------
+        LinearTerm
+            Updated term instance.
+        """
         g, h, coef_ = self._update(
             X=X,
             y=y,
@@ -270,6 +399,13 @@ class InterceptTerm(LinearTerm):
     """Intercept term for structured additive distributional regression."""
 
     def __init__(self, forget=0.0):
+        """Initialize the intercept term.
+
+        Parameters
+        ----------
+        forget : float, default=0.0
+            Forgetting factor for online updates.
+        """
         super().__init__(features=[], forget=forget, fit_intercept=True, method="ols")
 
     def make_design_matrix(
@@ -277,6 +413,20 @@ class InterceptTerm(LinearTerm):
         X: np.ndarray | None,
         target_values: np.ndarray | None = None,
     ):
+        """Create design matrix for intercept term.
+
+        Parameters
+        ----------
+        X : np.ndarray, optional
+            Input feature matrix.
+        target_values : np.ndarray, optional
+            Target values.
+
+        Returns
+        -------
+        np.ndarray
+            Column of ones with appropriate length.
+        """
         if X is not None:
             n_samples = X.shape[0]
         elif target_values is not None:
@@ -344,6 +494,15 @@ class _LinearPathModelSelection(Term):
         X: np.ndarray,
         sample_weight: np.ndarray,
     ):
+        """Calculate the variance of design matrix columns.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Design matrix.
+        sample_weight : np.ndarray
+            Sample weights.
+        """
         self.X_mat_mean = np.average(X, weights=sample_weight, axis=0)
         self.X_mat_diff_sq = (X - self.X_mat_mean) ** 2
         self.X_mat_var = np.average(self.X_mat_diff_sq, weights=sample_weight, axis=0)
@@ -358,6 +517,30 @@ class _LinearPathModelSelection(Term):
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "RegularizedLinearTerm":
+        """Fit the regularized linear term with model selection.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        y : np.ndarray
+            Target values for the term.
+        fitted_values : np.ndarray
+            Current fitted distributional parameters.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        sample_weight : np.ndarray
+            Sample weights.
+        estimation_weight : np.ndarray
+            Estimation weights.
+
+        Returns
+        -------
+        tuple
+            Various fitted parameters and statistics.
+        """
         X_mat = self.make_design_matrix_in_sample_during_fit(
             X=X,
             fitted_values=fitted_values,
@@ -451,17 +634,29 @@ class _LinearPathModelSelection(Term):
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> Tuple:
-        """Update the Term.
+        """Update the regularized linear term with new data.
 
-        Returns an updated copy and leaves the original unchanged.
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        y : np.ndarray
+            Target values for the term.
+        fitted_values : np.ndarray
+            Current fitted distributional parameters.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        sample_weight : np.ndarray
+            Sample weights.
+        estimation_weight : np.ndarray
+            Estimation weights.
 
-        Args:
-            X (np.ndarray): Feature array
-            y (np.ndarray): Target array
-            sample_weight (np.ndarray, optional): Sample weights. Defaults to None.
-
-        Returns:
-            LinearTerm: _description_
+        Returns
+        -------
+        tuple
+            Updated fitted parameters and statistics.
         """
         X_mat = self.make_design_matrix_in_sample_during_update(
             X=X,
@@ -568,6 +763,18 @@ class RegularizedLinearTerm(_LinearPathModelSelection):
         self,
         X: np.ndarray | None = None,
     ) -> np.ndarray:
+        """Create the design matrix from input features.
+
+        Parameters
+        ----------
+        X : np.ndarray, optional
+            Input feature matrix.
+
+        Returns
+        -------
+        np.ndarray
+            Design matrix with optional intercept.
+        """
         if self.fit_intercept:
             X_mat = add_intercept(subset_array(X, self.features))
         else:
@@ -588,6 +795,20 @@ class RegularizedLinearTerm(_LinearPathModelSelection):
         X: np.ndarray,
         distribution: Distribution,
     ) -> np.ndarray:
+        """Predict out-of-sample values.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        distribution : Distribution
+            The distribution object (unused).
+
+        Returns
+        -------
+        np.ndarray
+            Predicted values.
+        """
         X_mat = self.make_design_matrix(X=X)
         # X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self.coef_
@@ -602,6 +823,30 @@ class RegularizedLinearTerm(_LinearPathModelSelection):
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "RegularizedLinearTerm":
+        """Fit the regularized linear term.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        y : np.ndarray
+            Target values for the term.
+        fitted_values : np.ndarray
+            Current fitted distributional parameters.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        sample_weight : np.ndarray
+            Sample weights.
+        estimation_weight : np.ndarray
+            Estimation weights.
+
+        Returns
+        -------
+        RegularizedLinearTerm
+            The fitted term.
+        """
         (
             is_regularized,
             g,
@@ -646,6 +891,30 @@ class RegularizedLinearTerm(_LinearPathModelSelection):
         sample_weight: np.ndarray,
         estimation_weight: np.ndarray,
     ) -> "RegularizedLinearTerm":
+        """Update the regularized linear term with new data.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        y : np.ndarray
+            Target values for the term.
+        fitted_values : np.ndarray
+            Current fitted distributional parameters.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        sample_weight : np.ndarray
+            Sample weights.
+        estimation_weight : np.ndarray
+            Estimation weights.
+
+        Returns
+        -------
+        RegularizedLinearTerm
+            Updated term instance.
+        """
         (
             g,
             h,

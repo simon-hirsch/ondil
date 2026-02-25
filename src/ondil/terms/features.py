@@ -13,10 +13,23 @@ if TYPE_CHECKING:
 
 
 class LinearFeature(FeatureTransformation):
+    """Feature transformation that selects linear features from the input data.
+
+    This class allows selecting specific columns or all columns from the input
+    feature matrix X for use in linear terms.
+    """
+
     def __init__(
         self,
         features: np.ndarray | list[int] | Literal["all"] = "all",
     ):
+        """Initialize the LinearFeature transformation.
+
+        Parameters
+        ----------
+        features : np.ndarray | list[int] | Literal["all"], default="all"
+            Indices of features to select. If "all", selects all features.
+        """
         self.features = features
 
     def make_design_matrix_in_sample_during_fit(
@@ -25,6 +38,22 @@ class LinearFeature(FeatureTransformation):
         distribution: Distribution,
         **kwargs,
     ) -> np.ndarray:
+        """Create design matrix for in-sample fitting.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        distribution : Distribution
+            The distribution object (unused for linear features).
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        np.ndarray
+            Selected feature columns.
+        """
         return subset_array(X, self.features)
 
     def make_design_matrix_in_sample_during_update(
@@ -33,6 +62,22 @@ class LinearFeature(FeatureTransformation):
         distribution: Distribution,
         **kwargs,
     ) -> np.ndarray:
+        """Create design matrix for in-sample updating.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        distribution : Distribution
+            The distribution object (unused for linear features).
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        np.ndarray
+            Selected feature columns.
+        """
         return subset_array(X, self.features)
 
     def make_design_matrix_out_of_sample(
@@ -41,11 +86,40 @@ class LinearFeature(FeatureTransformation):
         distribution: Distribution,
         **kwargs,
     ) -> np.ndarray:
+        """Create design matrix for out-of-sample prediction.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        distribution : Distribution
+            The distribution object (unused for linear features).
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        np.ndarray
+            Selected feature columns.
+        """
         return subset_array(X, self.features)
 
 
 class TimeSeriesFeature(FeatureTransformation):
+    """Base class for time series feature transformations.
+
+    This class provides a template for creating lagged features from time series data.
+    Subclasses should implement the specific logic for creating design matrices.
+    """
+
     def __init__(self, lags: np.ndarray | list[int] | int = 1):
+        """Initialize the TimeSeriesFeature transformation.
+
+        Parameters
+        ----------
+        lags : np.ndarray | list[int] | int, default=1
+            Lag orders to include in the feature transformation.
+        """
         self.lags = lags
 
     def make_design_matrix_in_sample_during_fit(
@@ -56,6 +130,26 @@ class TimeSeriesFeature(FeatureTransformation):
         distribution: Distribution,
         **kwargs,
     ):
+        """Create design matrix for in-sample fitting.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        fitted_values : np.ndarray
+            Fitted values from the model.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        **kwargs
+            Additional keyword arguments.
+
+        Raises
+        ------
+        NotImplementedError
+            This method must be implemented by subclasses.
+        """
         raise NotImplementedError("Not implemented")
 
     def make_design_matrix_in_sample_during_update(
@@ -67,6 +161,28 @@ class TimeSeriesFeature(FeatureTransformation):
         state: ARTermState,
         **kwargs,
     ):
+        """Create design matrix for in-sample updating.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        fitted_values : np.ndarray
+            Fitted values from the model.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object.
+        state : ARTermState
+            State object containing memory for time series.
+        **kwargs
+            Additional keyword arguments.
+
+        Raises
+        ------
+        NotImplementedError
+            This method must be implemented by subclasses.
+        """
         raise NotImplementedError("Not implemented")
 
     def make_design_matrix_out_of_sample(
@@ -76,11 +192,33 @@ class TimeSeriesFeature(FeatureTransformation):
         state: ARTermState,
         **kwargs,
     ):
+        """Create design matrix for out-of-sample prediction.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        distribution : Distribution
+            The distribution object.
+        state : ARTermState
+            State object containing memory for time series.
+        **kwargs
+            Additional keyword arguments.
+
+        Raises
+        ------
+        NotImplementedError
+            This method must be implemented by subclasses.
+        """
         raise NotImplementedError("Not implemented")
 
 
 class LaggedTheta(TimeSeriesFeature):
-    """Autoregressive term using target values for lagged predictors."""
+    """Autoregressive term using fitted parameter values for lagged predictors.
+
+    This feature creates lagged versions of the fitted distributional parameters
+    transformed to the link space if specified.
+    """
 
     def __init__(
         self,
@@ -88,6 +226,17 @@ class LaggedTheta(TimeSeriesFeature):
         lags: np.ndarray | list[int] | int = 1,
         on_link_space: bool = False,
     ):
+        """Initialize the LaggedTheta feature.
+
+        Parameters
+        ----------
+        param : int
+            Index of the distributional parameter to lag.
+        lags : np.ndarray | list[int] | int, default=1
+            Lag orders to include.
+        on_link_space : bool, default=False
+            Whether to apply the link function before lagging.
+        """
         super().__init__(
             lags=lags,
         )
@@ -101,6 +250,24 @@ class LaggedTheta(TimeSeriesFeature):
         distribution: Distribution,
         **kwargs,
     ):
+        """Create design matrix for in-sample fitting.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused).
+        fitted_values : np.ndarray
+            Fitted parameter values.
+        distribution : Distribution
+            The distribution object for link function.
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged fitted parameter values.
+        """
         if self.on_link_space:
             values = distribution.link_function(
                 fitted_values[:, self.param], param=self.param
@@ -117,6 +284,26 @@ class LaggedTheta(TimeSeriesFeature):
         state: ARTermState,
         **kwargs,
     ):
+        """Create design matrix for in-sample updating.
+
+        Parameters
+        ----------
+        fitted_values : np.ndarray
+            Current fitted parameter values.
+        target_values : np.ndarray
+            Target values (unused).
+        distribution : Distribution
+            The distribution object for link function.
+        state : ARTermState
+            State containing memory of previous fitted values.
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged fitted parameter values including memory.
+        """
         if self.on_link_space:
             values = distribution.link_function(
                 fitted_values[:, self.param], param=self.param
@@ -141,6 +328,27 @@ class LaggedTheta(TimeSeriesFeature):
         distribution: Distribution,
         state: ARTermState,
     ):
+        """Create design matrix for out-of-sample prediction.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused).
+        distribution : Distribution
+            The distribution object (unused).
+        state : ARTermState
+            State containing memory of fitted values.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged fitted parameter values for prediction.
+
+        Raises
+        ------
+        ValueError
+            If prediction is not one step ahead.
+        """
         if X.shape[0] > 1:
             raise ValueError(
                 "Out-of-sample prediction for autoregressive terms can only be done "
@@ -154,13 +362,31 @@ class LaggedTheta(TimeSeriesFeature):
 
 
 class LaggedTarget(TimeSeriesFeature):
-    """Autoregressive term using fitted values for lagged predictors."""
+    """Autoregressive term using target values for lagged predictors.
+
+    This feature creates lagged versions of the target values for use in
+    autoregressive modeling.
+    """
 
     def make_design_matrix_in_sample_during_fit(
         self,
         target_values: np.ndarray,
         **kwargs,
     ):
+        """Create design matrix for in-sample fitting.
+
+        Parameters
+        ----------
+        target_values : np.ndarray
+            Target values to lag.
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged target values.
+        """
         X_mat = make_lags(y=target_values, lags=self.lags)
         return X_mat
 
@@ -172,6 +398,26 @@ class LaggedTarget(TimeSeriesFeature):
         distribution: Distribution,
         state: ARTermState,
     ):
+        """Create design matrix for in-sample updating.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused).
+        fitted_values : np.ndarray
+            Fitted values (unused).
+        target_values : np.ndarray
+            Current target values.
+        distribution : Distribution
+            The distribution object (unused).
+        state : ARTermState
+            State containing memory of previous target values.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged target values including memory.
+        """
         lagged_value = np.concatenate((
             state.memory_target_values,
             target_values,
@@ -189,6 +435,27 @@ class LaggedTarget(TimeSeriesFeature):
         distribution: Distribution,
         state: ARTermState,
     ):
+        """Create design matrix for out-of-sample prediction.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused).
+        distribution : Distribution
+            The distribution object (unused).
+        state : ARTermState
+            State containing memory of target values.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged target values for prediction.
+
+        Raises
+        ------
+        ValueError
+            If prediction is not one step ahead.
+        """
         if X.shape[0] > 1:
             raise ValueError(
                 "Out-of-sample prediction for autoregressive terms can only be done "
@@ -202,13 +469,26 @@ class LaggedTarget(TimeSeriesFeature):
 
 
 class LaggedSquaredResidual(TimeSeriesFeature):
-    """Autoregressive term using fitted values for lagged predictors."""
+    """Autoregressive term using squared residuals for lagged predictors.
+
+    This feature creates lagged versions of the squared residuals
+    (optionally standardized) for use in volatility modeling.
+    """
 
     def __init__(
         self,
         lags: np.ndarray | list[int] | int = 1,
         standardize: bool = False,
     ):
+        """Initialize the LaggedSquaredResidual feature.
+
+        Parameters
+        ----------
+        lags : np.ndarray | list[int] | int, default=1
+            Lag orders to include.
+        standardize : bool, default=False
+            Whether to standardize residuals by the variance.
+        """
         super().__init__(
             lags=lags,
         )
@@ -221,6 +501,24 @@ class LaggedSquaredResidual(TimeSeriesFeature):
         distribution: Distribution,
         **kwargs,
     ):
+        """Create design matrix for in-sample fitting.
+
+        Parameters
+        ----------
+        fitted_values : np.ndarray
+            Fitted parameter values.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object for computing residuals.
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged squared residuals.
+        """
         residuals = target_values - distribution.mean(fitted_values)
         if self.standardize:
             residuals = residuals / distribution.variance(fitted_values) ** 0.5
@@ -237,6 +535,26 @@ class LaggedSquaredResidual(TimeSeriesFeature):
         distribution: Distribution,
         state: ARTermState,
     ):
+        """Create design matrix for in-sample updating.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused).
+        fitted_values : np.ndarray
+            Current fitted parameter values.
+        target_values : np.ndarray
+            Current target values.
+        distribution : Distribution
+            The distribution object for computing residuals.
+        state : ARTermState
+            State containing memory of previous values.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged squared residuals including memory.
+        """
         target = np.concatenate((
             state.memory_target_values,
             target_values,
@@ -262,6 +580,27 @@ class LaggedSquaredResidual(TimeSeriesFeature):
         distribution: Distribution,
         state: ARTermState,
     ):
+        """Create design matrix for out-of-sample prediction.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused).
+        distribution : Distribution
+            The distribution object for computing residuals.
+        state : ARTermState
+            State containing memory of fitted and target values.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged squared residuals for prediction.
+
+        Raises
+        ------
+        ValueError
+            If prediction is not one step ahead.
+        """
         if X.shape[0] > 1:
             raise ValueError(
                 "Out-of-sample prediction for autoregressive terms can only be done "
@@ -285,13 +624,26 @@ class LaggedSquaredResidual(TimeSeriesFeature):
 
 
 class LaggedAbsoluteResidual(TimeSeriesFeature):
-    """Autoregressive term using fitted values for lagged predictors."""
+    """Autoregressive term using absolute residuals for lagged predictors.
+
+    This feature creates lagged versions of the absolute residuals
+    (optionally standardized) for use in volatility modeling.
+    """
 
     def __init__(
         self,
         lags: np.ndarray | list[int] | int = 1,
         standardize: bool = False,
     ):
+        """Initialize the LaggedAbsoluteResidual feature.
+
+        Parameters
+        ----------
+        lags : np.ndarray | list[int] | int, default=1
+            Lag orders to include.
+        standardize : bool, default=False
+            Whether to standardize residuals by the variance.
+        """
         super().__init__(
             lags=lags,
         )
@@ -304,6 +656,24 @@ class LaggedAbsoluteResidual(TimeSeriesFeature):
         distribution: Distribution,
         **kwargs,
     ):
+        """Create design matrix for in-sample fitting.
+
+        Parameters
+        ----------
+        fitted_values : np.ndarray
+            Fitted parameter values.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object for computing residuals.
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged absolute residuals.
+        """
         residuals = target_values - distribution.mean(fitted_values)
         if self.standardize:
             residuals = residuals / distribution.variance(fitted_values) ** 0.5
@@ -319,6 +689,26 @@ class LaggedAbsoluteResidual(TimeSeriesFeature):
         distribution: Distribution,
         state: ARTermState,
     ):
+        """Create design matrix for in-sample updating.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused).
+        fitted_values : np.ndarray
+            Current fitted parameter values.
+        target_values : np.ndarray
+            Current target values.
+        distribution : Distribution
+            The distribution object for computing residuals.
+        state : ARTermState
+            State containing memory of previous values.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged absolute residuals including memory.
+        """
         target = np.concatenate((
             state.memory_target_values,
             target_values,
@@ -344,6 +734,27 @@ class LaggedAbsoluteResidual(TimeSeriesFeature):
         distribution: Distribution,
         state: ARTermState,
     ):
+        """Create design matrix for out-of-sample prediction.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused).
+        distribution : Distribution
+            The distribution object for computing residuals.
+        state : ARTermState
+            State containing memory of fitted and target values.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged absolute residuals for prediction.
+
+        Raises
+        ------
+        ValueError
+            If prediction is not one step ahead.
+        """
         if X.shape[0] > 1:
             raise ValueError(
                 "Out-of-sample prediction for autoregressive terms can only be done "
@@ -380,6 +791,24 @@ class LaggedResidual(TimeSeriesFeature):
         distribution: Distribution,
         **kwargs,
     ):
+        """Create design matrix for in-sample fitting.
+
+        Parameters
+        ----------
+        fitted_values : np.ndarray
+            Fitted parameter values.
+        target_values : np.ndarray
+            Target values.
+        distribution : Distribution
+            The distribution object for computing residuals.
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged residuals.
+        """
         residual = target_values - distribution.mean(fitted_values)
         X_mat = make_lags(y=residual, lags=self.lags)
         return X_mat
@@ -392,6 +821,26 @@ class LaggedResidual(TimeSeriesFeature):
         state: ARTermState,
         **kwargs,
     ):
+        """Create design matrix for in-sample updating.
+
+        Parameters
+        ----------
+        fitted_values : np.ndarray
+            Current fitted parameter values.
+        target_values : np.ndarray
+            Current target values.
+        distribution : Distribution
+            The distribution object for computing residuals.
+        state : ARTermState
+            State containing memory of previous values.
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged residuals including memory.
+        """
         target = np.concatenate((
             state.memory_target_values,
             target_values,
@@ -414,6 +863,27 @@ class LaggedResidual(TimeSeriesFeature):
         distribution: Distribution,
         state: ARTermState,
     ):
+        """Create design matrix for out-of-sample prediction.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix (unused).
+        distribution : Distribution
+            The distribution object for computing residuals.
+        state : ARTermState
+            State containing memory of fitted and target values.
+
+        Returns
+        -------
+        np.ndarray
+            Lagged residuals for prediction.
+
+        Raises
+        ------
+        ValueError
+            If prediction is not one step ahead.
+        """
         if X.shape[0] > 1:
             raise ValueError(
                 "Out-of-sample prediction for autoregressive terms can only be done "
