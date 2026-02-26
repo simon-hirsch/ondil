@@ -1144,13 +1144,46 @@ class MultivariateOnlineDistributionalRegressionPath(
 
                         if issubclass(self.distribution.__class__, CopulaMixin):
 
-                            tau_elem = (1 - 1e-5) * self.distribution.link_inverse(
-                                eta_elem, param=p
-                            )
+                            if isinstance(
+                                self.distribution,
+                                (BivariateCopulaClayton, BivariateCopulaGumbel),
+                            ):
+                                # Numerical stability
+                                eta_elem = np.sign(eta_elem) * np.minimum(
+                                    np.abs(eta_elem), 200
+                                )
+                                # Inverse Fisher z-transformation
+                                tau_elem = np.tanh(eta_elem / 2) * (1 - 1e-5)
+                                # Numerical stability
+                                tau_elem = np.sign(eta_elem * (1 - 1e-5)) * np.minimum(
+                                    np.abs(tau_elem * (1 - 1e-5)), 200
+                                )
+                                # Fisher z-transformation
+                                eta_elem = 2 * np.arctanh(tau_elem)
+                                
 
-                            eta_elem = self.distribution.link_function(tau_elem, param=p)
+                                theta_elem = np.sign(
+                                    self.distribution.param_link_inverse(
+                                            (tau_elem) * (1 - 1e-5), p
+                                    )* (1 - 1e-5)) * np.minimum(
+                                    np.abs(
+                                        self.distribution.param_link_inverse(
+                                                (tau_elem) * (1 - 1e-5), p
+                                        )
+                                        * (1 - 1e-5)
+                                    ),
+                                    200,
+                                )
 
-                            theta_elem = self.distribution.param_link_inverse(tau_elem, param=p)
+                            else:
+
+                                tau_elem = (1 - 1e-5) * self.distribution.link_inverse(
+                                    eta_elem, param=p
+                                )
+
+                                eta_elem = self.distribution.link_function(tau_elem, param=p)
+
+                                theta_elem = self.distribution.param_link_inverse(tau_elem, param=p)
 
                         else:
                             eta_elem = self.distribution.flat_to_cube(eta_elem, param=p)
