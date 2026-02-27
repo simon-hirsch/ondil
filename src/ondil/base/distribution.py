@@ -47,6 +47,13 @@ class Distribution(ABC):
         return None
 
     @property
+    def _svm(self):
+        if self.start_value_mixing is not None:
+            return self.start_value_mixing
+        else:
+            return 0.5
+
+    @property
     @abstractmethod
     def parameter_names(self) -> dict:
         """Parameter name for each column of theta."""
@@ -211,6 +218,7 @@ class Distribution(ABC):
         param: int,
     ) -> np.ndarray:
         """Calculate the conditional initial values for the GAMLSS fit."""
+        raise NotImplementedError("Not implemented")
 
     @abstractmethod
     def cdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
