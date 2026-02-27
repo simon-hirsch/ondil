@@ -928,7 +928,6 @@ class MultivariateOnlineDistributionalRegressionPath(
         outer_iteration: int,
         inner_iteration: int,
         param: int,
-        k: int,
     ):
         if (outer_iteration == 0) & (inner_iteration < self._dampen_estimation[param]):
             out = (prediction * self._dampen_estimation[param] + eta) / (
@@ -1231,7 +1230,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                             inner_iteration=inner_iteration,
                             outer_iteration=outer_iteration,
                             param=p,
-                            k=k,
                         ).reshape(-1, 1)
 
                         if isinstance(
@@ -1286,7 +1284,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                             inner_iteration=inner_iteration,
                             outer_iteration=outer_iteration,
                             param=p,
-                            k=k,
                         )
 
                         theta[a][p] = self.distribution.link_inverse(
@@ -2023,7 +2020,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                             inner_iteration=inner_iteration,
                             outer_iteration=outer_iteration,
                             param=p,
-                            k=k,
                         ).reshape(-1, 1)
 
                         if isinstance(
@@ -2082,7 +2078,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                             inner_iteration=inner_iteration,
                             outer_iteration=outer_iteration,
                             param=p,
-                            k=k,
                         )
 
                         theta[a][p] = self.distribution.link_inverse(
