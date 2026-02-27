@@ -1,7 +1,6 @@
 # Author Simon Hirsch
 # MIT Licence
 import math
-from math import exp, fabs, log
 from typing import Dict, List, Tuple
 
 import numpy as np
