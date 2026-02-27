@@ -7,6 +7,7 @@ import scipy.stats as st
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
 from ..links import FisherZLink, ParameterToKendallsTau
+from ..robust_math import UMAX, UMIN
 from ..types import ParameterShapes
 
 
@@ -38,12 +39,9 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
     def fitted_elements(dim: int):
         return {0: 1}
 
-
     def theta_to_params(self, theta) -> np.ndarray:
         val = theta[0]
         return np.asarray(val).reshape(-1, 1)
-
-
 
     def set_initial_guess(self, theta, param):
         return theta
@@ -160,7 +158,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         return dim
 
     def hfunc(
-        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code = 1
+        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code=1
     ) -> np.ndarray:
         """
         Conditional distribution function h(u|v) for the bivariate normal copula.
@@ -174,19 +172,16 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         Returns:
             np.ndarray: Array of shape (n,) with conditional probabilities.
         """
-        UMIN = 1e-12
-        UMAX = 1 - 1e-12
-
         # Apply clipping using masks
-        u_mask_low = u < UMIN
-        u_mask_high = u > UMAX
-        v_mask_low = v < UMIN
-        v_mask_high = v > UMAX
+        u_mask_low = u < self.UMIN
+        u_mask_high = u > self.UMAX
+        v_mask_low = v < self.UMIN
+        v_mask_high = v > self.UMAX
 
-        u = np.where(u_mask_low, UMIN, u)
-        u = np.where(u_mask_high, UMAX, u)
-        v = np.where(v_mask_low, UMIN, v)
-        v = np.where(v_mask_high, UMAX, v)
+        u = np.where(u_mask_low, self.UMIN, u)
+        u = np.where(u_mask_high, self.UMAX, u)
+        v = np.where(v_mask_low, self.UMIN, v)
+        v = np.where(v_mask_high, self.UMAX, v)
 
         qnorm_u = st.norm.ppf(u).reshape(-1, 1)
         qnorm_v = st.norm.ppf(v).reshape(-1, 1)
@@ -209,7 +204,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
         return h.squeeze()
 
     def hinv(
-        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code = 1
+        self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code=1
     ) -> np.ndarray:
         """
         Inverse conditional distribution function h^(-1)(u|v) for the bivariate normal copula.
@@ -224,19 +219,16 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
             np.ndarray: Array of shape (n,) with inverse conditional probabilities.
         """
 
-        UMIN = 1e-12
-        UMAX = 1 - 1e-12
-
         # Apply clipping using masks
-        u_mask_low = u < UMIN
-        u_mask_high = u > UMAX
-        v_mask_low = v < UMIN
-        v_mask_high = v > UMAX
+        u_mask_low = u < self.UMIN
+        u_mask_high = u > self.UMAX
+        v_mask_low = v < self.UMIN
+        v_mask_high = v > self.UMAX
 
-        u = np.where(u_mask_low, UMIN, u)
-        u = np.where(u_mask_high, UMAX, u)
-        v = np.where(v_mask_low, UMIN, v)
-        v = np.where(v_mask_high, UMAX, v)
+        u = np.where(u_mask_low, self.UMIN, u)
+        u = np.where(u_mask_high, self.UMAX, u)
+        v = np.where(v_mask_low, self.UMIN, v)
+        v = np.where(v_mask_high, self.UMAX, v)
 
         qnorm_u = st.norm.ppf(u).reshape(-1, 1)
         qnorm_v = st.norm.ppf(v).reshape(-1, 1)
@@ -265,9 +257,6 @@ def _log_likelihood(y, theta):
 
     f = np.empty(M)
     # Ensure y values are strictly between 0 and 1 for numerical stability
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
-
     y_clipped = np.clip(y, UMIN, UMAX)
 
     u = st.norm().ppf(y_clipped[:, 0]).reshape(-1, 1)
@@ -302,8 +291,6 @@ def _derivative_1st(y, theta):
         np.ndarray: First derivative, shape (M,)
     """
 
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)
     u = st.norm().ppf(y_clipped[:, 0]).reshape(-1, 1)
     v = st.norm().ppf(y_clipped[:, 1]).reshape(-1, 1)
@@ -322,8 +309,6 @@ def _derivative_2nd(y, theta):
     deriv = np.empty((M, 1), dtype=np.float64)
 
     # Ensure y values are strictly between 0 and 1 for numerical stability
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
     y_clipped = np.clip(y, UMIN, UMAX)
     u = st.norm().ppf(y_clipped[:, 0]).reshape(-1, 1)
     v = st.norm().ppf(y_clipped[:, 1]).reshape(-1, 1)

@@ -1,6 +1,8 @@
 import numba as nb
 import numpy as np
 
+UMIN = 1e-12
+UMAX = 1 - 1e-12
 SMALL_NUMBER = 1e-10
 LARGE_NUMBER = 1e15
 LOG_SMALL_NUMBER = np.log(SMALL_NUMBER)

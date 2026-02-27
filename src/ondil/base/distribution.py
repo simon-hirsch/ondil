@@ -9,6 +9,7 @@ import scipy.stats as st
 
 from .. import HAS_SCORINGRULES
 from ..error import check_scoringrules
+from ..robust_math import UMAX as ROBUST_UMAX, UMIN as ROBUST_UMIN
 from ..warnings import OutOfSupportWarning
 from .link import LinkFunction
 
@@ -534,6 +535,9 @@ class CopulaMixin(ABC):
     link functions (`param_links`) used to map unconstrained values into valid
     parameter domains.
     """
+
+    UMIN: float = ROBUST_UMIN
+    UMAX: float = ROBUST_UMAX
 
     def __init__(self, links, param_links: dict[int, LinkFunction]) -> None:
         """Initialize the copula mixin.

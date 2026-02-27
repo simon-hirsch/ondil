@@ -7,6 +7,7 @@ import scipy.stats as st
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
 from ..links import GumbelParameterToKendallsTau, Log
+from ..robust_math import UMAX, UMIN
 from ..types import ParameterShapes
 
 
@@ -169,14 +170,11 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
             np.ndarray: Array of shape (n,) with conditional probabilities.
         """
 
-        UMIN = 1e-12
-        UMAX = 1 - 1e-12
-
         theta = np.asarray(
             theta
         ).copy()  # <- prevents in-place mutation of caller's array
-        u = np.clip(u, UMIN, UMAX).reshape(-1, 1)
-        v = np.clip(v, UMIN, UMAX).reshape(-1, 1)
+        u = np.clip(u, self.UMIN, self.UMAX).reshape(-1, 1)
+        v = np.clip(v, self.UMIN, self.UMAX).reshape(-1, 1)
 
         # Get rotations for all samples
         rotation = get_effective_rotation(theta, family_code)
@@ -244,19 +242,16 @@ class BivariateCopulaGumbel(CopulaMixin, Distribution, BivariateCopulaMixin):
         Returns:
             np.ndarray: Array of shape (n,) with inverse conditional probabilities.
         """
-        UMIN = 1e-12
-        UMAX = 1 - 1e-12
-
         # Apply clipping using masks
-        u_mask_low = u < UMIN
-        u_mask_high = u > UMAX
-        v_mask_low = v < UMIN
-        v_mask_high = v > UMAX
+        u_mask_low = u < self.UMIN
+        u_mask_high = u > self.UMAX
+        v_mask_low = v < self.UMIN
+        v_mask_high = v > self.UMAX
 
-        u = np.where(u_mask_low, UMIN, u)
-        u = np.where(u_mask_high, UMAX, u)
-        v = np.where(v_mask_low, UMIN, v)
-        v = np.where(v_mask_high, UMAX, v)
+        u = np.where(u_mask_low, self.UMIN, u)
+        u = np.where(u_mask_high, self.UMAX, u)
+        v = np.where(v_mask_low, self.UMIN, v)
+        v = np.where(v_mask_high, self.UMAX, v)
         u = u.reshape(-1, 1)
         v = v.reshape(-1, 1)
 
@@ -323,8 +318,6 @@ def qcondgum(q: np.ndarray, u: np.ndarray, de: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: Conditional quantiles
     """
-    UMIN = 1e-12
-
     q = np.asarray(q).reshape(-1, 1)
     u = np.asarray(u).reshape(-1, 1)
     de = np.asarray(de).reshape(-1, 1)
@@ -433,9 +426,6 @@ def _log_likelihood(y, theta, family_code=41):
     """
 
     theta = np.asarray(theta).copy()  # <- prevents in-place mutation of caller's array
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
-
     y = np.clip(y, UMIN, UMAX)
     u = y[:, 0].reshape(-1, 1)
     v = y[:, 1].reshape(-1, 1)
@@ -523,10 +513,14 @@ def _derivative_1st(y, theta, family_code=41):
     sign[mask_3] = -1.0
 
     # ---- guard theta away from 0 (preserve sign) ----
-    theta = np.where(np.abs(theta) < eps_theta, np.sign(theta + 0.0) * eps_theta + (theta == 0) * eps_theta, theta)
+    theta = np.where(
+        np.abs(theta) < eps_theta,
+        np.sign(theta + 0.0) * eps_theta + (theta == 0) * eps_theta,
+        theta,
+    )
     # logs of u_rot, v_rot are negative because u_rot,v_rot in (0,1)
-    t1 = np.log(u_rot)                      # < 0
-    t3 = np.log(v_rot)                      # < 0
+    t1 = np.log(u_rot)  # < 0
+    t3 = np.log(v_rot)  # < 0
     # -t1, -t3 are positive, but guard anyway
     mt1 = np.maximum(-t1, eps)
     mt3 = np.maximum(-t3, eps)
@@ -534,7 +528,7 @@ def _derivative_1st(y, theta, family_code=41):
     t2 = np.power(mt1, theta)
     t4 = np.power(mt3, theta)
     t5 = t2 + t4
-    t5_safe = np.maximum(t5, eps)           # for log(t5), 1/t5, power(t5, ...)
+    t5_safe = np.maximum(t5, eps)  # for log(t5), 1/t5, power(t5, ...)
     t6 = 1.0 / theta
     t7 = np.power(t5_safe, t6)
     t8 = theta * theta
@@ -553,7 +547,7 @@ def _derivative_1st(y, theta, family_code=41):
     # power(t5, 2*t23) can blow if t5~0 and exponent negative -> guard with t5_safe
     t24 = np.power(t5_safe, 2.0 * t23)
     t25 = t22 * t24
-    t27 = t1 * t3                          # positive (neg*neg), but guard
+    t27 = t1 * t3  # positive (neg*neg), but guard
     t27_safe = np.maximum(t27, eps)
 
     t28 = theta - 1.0
@@ -562,7 +556,9 @@ def _derivative_1st(y, theta, family_code=41):
     t31 = t28 * t30
     t32 = 1.0 + t31
     # avoid division by ~0 later
-    t32_safe = np.where(np.abs(t32) < eps, np.sign(t32 + 0.0) * eps + (t32 == 0) * eps, t32)
+    t32_safe = np.where(
+        np.abs(t32) < eps, np.sign(t32 + 0.0) * eps + (t32 == 0) * eps, t32
+    )
 
     t34 = 1.0 / u_rot
     t35 = 1.0 / v_rot
@@ -588,7 +584,9 @@ def _derivative_1st(y, theta, family_code=41):
 
     # denominator: t22*t24*t29*t32 (guarded)
     denom = t22 * t24 * t29 * t32_safe
-    denom_safe = np.where(np.abs(denom) < eps, np.sign(denom + 0.0) * eps + (denom == 0) * eps, denom)
+    denom_safe = np.where(
+        np.abs(denom) < eps, np.sign(denom + 0.0) * eps + (denom == 0) * eps, denom
+    )
     numer = (
         -t7 * t20 * t25 * t37
         + t25 * (-2.0 * t11 + 2.0 * t23 * t16 * t18) * t37
