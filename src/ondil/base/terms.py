@@ -109,7 +109,7 @@ class Term(ABC):
                 f"total removed: {sorted(list(self.remove))}"
             )
 
-        return np.delete(X, sorted(list(self.remove)), axis=1)
+        return np.delete(X, sorted(list(self.remove)), axis=-1)
 
     @property
     def coef_(self) -> np.ndarray:
