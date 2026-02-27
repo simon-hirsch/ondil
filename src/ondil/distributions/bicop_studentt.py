@@ -1,5 +1,6 @@
-# Author Simon Hirsch
-# MIT Licence
+# Author: Christian Schulz
+# License: GPL-3.0
+
 import math
 from typing import Dict, List, Tuple
 

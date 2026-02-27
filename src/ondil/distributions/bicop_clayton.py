@@ -1,3 +1,6 @@
+# Author: Christian Schulz
+# License: GPL-3.0
+
 import numpy as np
 import scipy.stats as st
 

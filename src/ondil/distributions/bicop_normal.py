@@ -1,5 +1,6 @@
-# Author Simon Hirsch
-# MIT Licence
+# Author: Christian Schulz
+# License: GPL-3.0
+
 from typing import Dict
 
 import numpy as np
