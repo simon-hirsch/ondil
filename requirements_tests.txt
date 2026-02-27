@@ -4,3 +4,4 @@ scikit-learn
 build
 matplotlib
 pandas
+scoringrules >= 0.6.1

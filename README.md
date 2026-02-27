@@ -39,6 +39,7 @@ This allows us to specify very flexible models that consider the conditional beh
 - 🚀 Support for regularization methods like Lasso, Ridge and Elastic Net.
 - 🚀 Fast and efficient implementation using [`numba`](https://numba.pydata.org/) for just-in-time compilation.
 - 🚀 Full compatibility with [`scikit-learn`](https://scikit-learn.org/stable/) estimators and transformers.
+- 🚀 Directly score distributional forecasts using the CRPS from [`scoringrules`](https://github.com/frazane/scoringrules) (optional dependency) - either via fine-grid quantile approximation or closed-form solutions.
 
 ## Example
 
