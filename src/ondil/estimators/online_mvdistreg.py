@@ -2094,10 +2094,9 @@ class MultivariateOnlineDistributionalRegressionPath(
 
             # Are we in the last iteration
             if inner_iteration == (self.max_iterations_inner - 1):
-                0
-                # warnings.warn(
-                #    "Reached max inner iterations. Algorithm may or may not be converged."
-                # )
+                warnings.warn(
+                    "Reached max inner iterations. Algorithm may or may not be converged."
+                )
 
             # Are we converged
             if inner_iteration > 0:
