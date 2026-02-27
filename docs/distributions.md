@@ -142,3 +142,7 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 ::: ondil.base.Distribution
 
 ::: ondil.base.ScipyMixin
+
+::: ondil.base.CopulaMixin
+
+::: ondil.base.BivariateCopulaMixin
