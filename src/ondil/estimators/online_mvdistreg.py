@@ -1179,7 +1179,8 @@ class MultivariateOnlineDistributionalRegressionPath(
             # for all to-be-fitted parameters
             # that are not AD-R regularized
             nonzero = self.count_nonzero_coef(self.coef_, adr=a)
-            nonzero = nonzero + int(np.sum(self.coef_[param][k][a, :] != 0))
+            nonzero -= int(np.sum(self.coef_[param][k][a, :] != 0))
+            nonzero += np.sum(self.coef_path_[param][k][a, :] != 0, axis=1)
             nonzero = nonzero + self.count_coef_to_be_fitted(
                 outer_iteration, inner_iteration, adr=a, param=param, k=k
             )
@@ -1262,7 +1263,8 @@ class MultivariateOnlineDistributionalRegressionPath(
             # for all to-be-fitted parameters
             # that are not AD-R regularized
             nonzero = self.count_nonzero_coef(self.coef_, adr=a)
-            nonzero = nonzero + int(np.sum(self.coef_[param][k][a, :] != 0))
+            nonzero -= int(np.sum(self.coef_[param][k][a, :] != 0))
+            nonzero += np.sum(self.coef_path_[param][k][a, :] != 0, axis=1)
             nonzero = nonzero + self.count_coef_to_be_fitted(
                 outer_iteration, inner_iteration, adr=a, param=param, k=k
             )
