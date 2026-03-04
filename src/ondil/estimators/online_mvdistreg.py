@@ -1392,13 +1392,14 @@ class MultivariateOnlineDistributionalRegressionPath(
                     )
 
             # Count number of nonzero coefficients
-            # Subtract current beta if already fitted
-            # If in the first iteration, add intercept
-            # for all to-be-fitted parameters
-            # that are not AD-R regularized
+            # 1) Count all non-zero coefficients
+            # 2) Subtract previously fitted beta if already fitted
+            # 3) Add non-zero coefficients in the path
+            # 4) Add all coefficients that are to be fitted for p > param
             nonzero = self.count_nonzero_coef(self.coef_, adr=a)
-            nonzero = nonzero + int(np.sum(self.coef_[param][k][a, :] != 0))
-            nonzero = nonzero + self.count_coef_to_be_fitted(
+            nonzero -= int(np.sum(self.coef_[param][k][a, :] != 0))
+            nonzero += np.sum(self.coef_path_[param][k][a, :] != 0, axis=1)
+            nonzero += self.count_coef_to_be_fitted(
                 outer_iteration, inner_iteration, adr=a, param=param, k=k
             )
 
@@ -1477,13 +1478,14 @@ class MultivariateOnlineDistributionalRegressionPath(
                 * (1 - self.learning_rate) ** self.n_observations_step_
             )
             # Count number of nonzero coefficients
-            # Subtract current beta if already fitted
-            # If in the first iteration, add intercept
-            # for all to-be-fitted parameters
-            # that are not AD-R regularized
+            # 1) Count all non-zero coefficients
+            # 2) Subtract previously fitted beta if already fitted
+            # 3) Add non-zero coefficients in the path
+            # 4) Add all coefficients that are to be fitted for p > param
             nonzero = self.count_nonzero_coef(self.coef_, adr=a)
-            nonzero = nonzero + int(np.sum(self.coef_[param][k][a, :] != 0))
-            nonzero = nonzero + self.count_coef_to_be_fitted(
+            nonzero -= int(np.sum(self.coef_[param][k][a, :] != 0))
+            nonzero += np.sum(self.coef_path_[param][k][a, :] != 0, axis=1)
+            nonzero += self.count_coef_to_be_fitted(
                 outer_iteration, inner_iteration, adr=a, param=param, k=k
             )
             ic = InformationCriterion(
