@@ -1,7 +1,7 @@
-# Author Simon Hirsch
-# MIT Licence
+# Author: Christian Schulz
+# License: GPL-3.0
+
 import math
-from math import exp, fabs, log
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -11,10 +11,8 @@ from numba import njit, prange
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
 from ..links import FisherZLink, ParameterToKendallsTau, LogShiftTwo
+from ..robust_math import UMAX, UMIN
 from ..types import ParameterShapes
-
-UMIN = 1e-12
-UMAX = 1 - 1e-12
 
 
 class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
@@ -49,7 +47,7 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         return {0: 1, 1: 1}
 
     def theta_to_params(self, theta):
-        return theta[0].reshape(-1, 1), theta[1].reshape(-1, 1)   # default nu = 4
+        return theta[0].reshape(-1, 1), theta[1].reshape(-1, 1)  # default nu = 4
 
     def set_initial_guess(self, theta, param):
         return theta
@@ -200,15 +198,15 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         rho, nu = self.theta_to_params(theta)
 
         # Apply clipping using masks
-        u_mask_low = u < UMIN
-        u_mask_high = u > UMAX
-        v_mask_low = v < UMIN
-        v_mask_high = v > UMAX
+        u_mask_low = u < self.UMIN
+        u_mask_high = u > self.UMAX
+        v_mask_low = v < self.UMIN
+        v_mask_high = v > self.UMAX
 
-        u = np.where(u_mask_low, UMIN, u)
-        u = np.where(u_mask_high, UMAX, u)
-        v = np.where(v_mask_low, UMIN, v)
-        v = np.where(v_mask_high, UMAX, v)
+        u = np.where(u_mask_low, self.UMIN, u)
+        u = np.where(u_mask_high, self.UMAX, u)
+        v = np.where(v_mask_low, self.UMIN, v)
+        v = np.where(v_mask_high, self.UMAX, v)
 
         # Swap u and v if un == 2
         if un == 1:
@@ -256,15 +254,15 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         """
 
         # Apply clipping using masks
-        u_mask_low = u < UMIN
-        u_mask_high = u > UMAX
-        v_mask_low = v < UMIN
-        v_mask_high = v > UMAX
+        u_mask_low = u < self.UMIN
+        u_mask_high = u > self.UMAX
+        v_mask_low = v < self.UMIN
+        v_mask_high = v > self.UMAX
 
-        u = np.where(u_mask_low, UMIN, u)
-        u = np.where(u_mask_high, UMAX, u)
-        v = np.where(v_mask_low, UMIN, v)
-        v = np.where(v_mask_high, UMAX, v)
+        u = np.where(u_mask_low, self.UMIN, u)
+        u = np.where(u_mask_high, self.UMAX, u)
+        v = np.where(v_mask_low, self.UMIN, v)
+        v = np.where(v_mask_high, self.UMAX, v)
 
         rho, nu = self.theta_to_params(theta)
 
@@ -374,7 +372,7 @@ def _log_likelihood_t(y, rho, nu):
     """Log-likelihood for bivariate t copula"""
 
     y_clipped = np.clip(y, UMIN, UMAX)
-    nu1 = np.asarray(nu).ravel()        
+    nu1 = np.asarray(nu).ravel()
     t1 = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
     t2 = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
     # Bivariate t copula density (following C code structure)
@@ -382,9 +380,9 @@ def _log_likelihood_t(y, rho, nu):
     #     * (1 + (t1^2 + t2^2 - 2*rho*t1*t2)/(nu*(1-rho^2)))^(-(nu+2)/2)
 
     # Calculate the gamma ratio using stable division
-    gamma_ratio = nu/2
+    gamma_ratio = nu / 2
     # Calculate t distribution PDFs (dt in C code)
-    nu1 = np.asarray(nu).ravel()        
+    nu1 = np.asarray(nu).ravel()
     dt1 = st.t.pdf(t1[:, 0], df=nu1).reshape(-1, 1)
     dt2 = st.t.pdf(t2[:, 0], df=nu1).reshape(-1, 1)
 
@@ -408,7 +406,7 @@ def _derivative_1st_rho(y, rho, nu):
 
     y_clipped = np.clip(y, UMIN, UMAX)
 
-    nu1 = np.asarray(nu).ravel()        
+    nu1 = np.asarray(nu).ravel()
     t1 = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
     t2 = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
@@ -430,7 +428,7 @@ def _derivative_1st_rho_l(y, rho, nu):
     y_clipped = np.clip(y, UMIN, UMAX)
 
     c = _log_likelihood_t(y_clipped, rho, nu).reshape(-1, 1)
-    nu1 = np.asarray(nu).ravel()        
+    nu1 = np.asarray(nu).ravel()
     t1 = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
     t2 = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
@@ -452,7 +450,7 @@ def _derivative_1st_nu(y, rho, nu):
 
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
-    nu1 = np.asarray(nu).ravel()        
+    nu1 = np.asarray(nu).ravel()
     u = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
     v = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
@@ -497,7 +495,7 @@ def _derivative_1st_nu_l(y, rho, nu):
 
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
-    nu1 = np.asarray(nu).ravel()        
+    nu1 = np.asarray(nu).ravel()
     u = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
     v = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
@@ -544,7 +542,7 @@ def _derivative_2nd_rho(y, rho, nu):
     """Second derivative wrt rho for t copula"""
 
     y_clipped = np.clip(y, UMIN, UMAX)
-    nu1 = np.asarray(nu).ravel()        
+    nu1 = np.asarray(nu).ravel()
     u = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
     v = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
@@ -573,7 +571,7 @@ def _derivative_2nd_nu(y, rho, nu):
 
     eps = np.finfo(float).eps
     y_clipped = np.clip(y, eps, 1 - eps)
-    nu1 = np.asarray(nu).ravel()        
+    nu1 = np.asarray(nu).ravel()
     u = st.t.ppf(y_clipped[:, 0], df=nu1).reshape(-1, 1)
     v = st.t.ppf(y_clipped[:, 1], df=nu1).reshape(-1, 1)
 
@@ -872,11 +870,7 @@ def _an_bn_n_q(x, p, q, n):
 
 
 @njit(cache=True, parallel=True)
-def _inbeder_core_vec(
-    x, p, q, flipped,
-    c0log, c0exp, c1, c2,
-    err, minappx, maxappx
-):
+def _inbeder_core_vec(x, p, q, flipped, c0log, c0exp, c1, c2, err, minappx, maxappx):
     """
     Compiled iterative core. All special-function work must be precomputed outside.
     x,p,q are already the (possibly flipped) values.
@@ -946,10 +940,16 @@ def _inbeder_core_vec(
                 Rn = dbn0
 
             # scale an1,bn1 and dan/dbn components
-            an1_0 /= Rn; an1_1 /= Rn; an1_2 /= Rn
-            bn1_0 /= Rn; bn1_1 /= Rn; bn1_2 /= Rn
-            dan1 /= Rn; dan2 /= Rn
-            dbn1 /= Rn; dbn2 /= Rn
+            an1_0 /= Rn
+            an1_1 /= Rn
+            an1_2 /= Rn
+            bn1_0 /= Rn
+            bn1_1 /= Rn
+            bn1_2 /= Rn
+            dan1 /= Rn
+            dan2 /= Rn
+            dbn1 /= Rn
+            dbn2 /= Rn
 
             # normalize dan0/dbn0
             if abs(dbn0) > abs(dan0):
@@ -963,7 +963,9 @@ def _inbeder_core_vec(
             dr0 = dan0 / dbn0
             dbn0_sq = dbn0 * dbn0
             dr1 = (dan1 - dr0 * dbn1) / dbn0
-            dr2 = (-2.0 * dan1 * dbn1 + 2.0 * dr0 * dbn1 * dbn1) / dbn0_sq + (dan2 - dr0 * dbn2) / dbn0
+            dr2 = (-2.0 * dan1 * dbn1 + 2.0 * dr0 * dbn1 * dbn1) / dbn0_sq + (
+                dan2 - dr0 * dbn2
+            ) / dbn0
 
             # shift history
             an2_0, an2_1, an2_2 = an1_0, an1_1, an1_2
@@ -992,8 +994,10 @@ def _inbeder_core_vec(
             der_old0, der_old1, der_old2 = d0, d1v, d2v
 
             dmax = r0
-            if r1 > dmax: dmax = r1
-            if r2 > dmax: dmax = r2
+            if r1 > dmax:
+                dmax = r1
+            if r2 > dmax:
+                dmax = r2
 
             if n < minappx:
                 dmax = 1.0
@@ -1010,7 +1014,9 @@ def _inbeder_core_vec(
 
 
 def inbeder_vec_numba(
-    x_in, p_in, q_in,
+    x_in,
+    p_in,
+    q_in,
     err: float = 1e-12,
     minappx: int = 3,
     maxappx: int = 200,
@@ -1082,9 +1088,7 @@ def inbeder_vec_numba(
 
     # -------- compiled iterative core --------
     d0, d1v, d2v = _inbeder_core_vec(
-        x, p, q, flipped,
-        c0log, c0exp, c1, c2,
-        err, minappx, maxappx
+        x, p, q, flipped, c0log, c0exp, c1, c2, err, minappx, maxappx
     )
 
     # final flip correction (as in your scalar code)
@@ -1093,7 +1097,6 @@ def inbeder_vec_numba(
     d2v = np.where(flipped, -d2v, d2v)
 
     return d0.reshape(shp), d1v.reshape(shp), d2v.reshape(shp)
-
 
 
 # ------------------------------ Derivative helpers ------------------------------

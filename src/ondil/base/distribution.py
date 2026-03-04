@@ -9,6 +9,7 @@ import scipy.stats as st
 
 from .. import HAS_SCORINGRULES
 from ..error import check_scoringrules
+from ..robust_math import UMAX as ROBUST_UMAX, UMIN as ROBUST_UMIN
 from ..warnings import OutOfSupportWarning
 from .link import LinkFunction
 
@@ -528,30 +529,59 @@ class ScipyMixin(ABC):
 
 
 class CopulaMixin(ABC):
+    """Base mixin for copula-style models.
+
+    Stores element-level link functions (`links`) and optional parameter-level
+    link functions (`param_links`) used to map unconstrained values into valid
+    parameter domains.
+    """
+
+    UMIN: float = ROBUST_UMIN
+    UMAX: float = ROBUST_UMAX
+
     def __init__(self, links, param_links: dict[int, LinkFunction]) -> None:
+        """Initialize the copula mixin.
+
+        Args:
+            links: Mapping of parameter index to element-wise link function.
+            param_links: Mapping of parameter index to parameter-level link function.
+        """
         self.links = links
         self.param_links = param_links
 
-    def __call__(self, *args, **kwds):
+    def __call__(self, *_args, **_kwds):
+        """Compatibility hook for sklearn-like interfaces."""
         raise NotImplementedError("Not implemented but necessary for sklearn.")
 
 
 class BivariateCopulaMixin(ABC):
+    """Mixin with helper utilities for bivariate copula parameter handling."""
+
     def __init__(self, links, param_links: dict[int, LinkFunction]) -> None:
+        """Initialize the bivariate copula mixin.
+
+        Args:
+            links: Mapping of parameter index to element-wise link function.
+            param_links: Mapping of parameter index to parameter-level link function.
+        """
         self.links = links
         self.param_links = param_links
 
-    def __call__(self, *args, **kwds):
+    def __call__(self, *_args, **_kwds):
+        """Compatibility hook for sklearn-like interfaces."""
         raise NotImplementedError("Not implemented but necessary for sklearn.")
 
     def cube_to_flat(self, x: np.ndarray, param: int):
+        """Convert parameter tensor/cube representation to flat vector form."""
         return x
 
     def flat_to_cube(self, x: np.ndarray, param: int):
+        """Convert flat parameter vector form to tensor/cube representation."""
         return x
 
     @staticmethod
     def set_theta_element(theta: dict, value: np.ndarray, param: int, k: int) -> dict:
+        """Set/update one parameter entry inside the theta dictionary."""
         theta[param] = value
         return theta
 
@@ -562,6 +592,7 @@ class BivariateCopulaMixin(ABC):
         k: int = 0,
         d: int = 0,
     ) -> np.ndarray:
+        """Apply the element-wise link function for a copula parameter."""
         return self.links[param].element_link(y)
 
     def element_link_function_derivative(
@@ -571,6 +602,7 @@ class BivariateCopulaMixin(ABC):
         k: int = 0,
         d: int = 0,
     ) -> np.ndarray:
+        """Apply the first derivative of the element-wise link function."""
         return self.links[param].element_derivative(y)
 
     def element_link_function_second_derivative(
@@ -580,6 +612,7 @@ class BivariateCopulaMixin(ABC):
         k: int = 0,
         d: int = 0,
     ) -> np.ndarray:
+        """Apply the second derivative of the element-wise link function."""
         return self.links[param].element_link_second_derivative(y)
 
     def element_link_inverse(
@@ -589,6 +622,7 @@ class BivariateCopulaMixin(ABC):
         k: int = 0,
         d: int = 0,
     ) -> np.ndarray:
+        """Apply the inverse element-wise link transformation."""
         return self.links[param].inverse(y)
 
     def element_link_inverse_derivative(
@@ -598,38 +632,37 @@ class BivariateCopulaMixin(ABC):
         k: int = 0,
         d: int = 0,
     ) -> np.ndarray:
+        """Apply the derivative of the inverse element-wise link transformation."""
         return self.links[param].element_inverse_derivative(y)
 
     def param_conditional_likelihood(
         self, y: np.ndarray, theta: Dict, eta: np.ndarray, param: int
     ) -> np.ndarray:
-        """Calulate the log-likelihood for (flat) eta for parameter (param)
-        and theta for all other parameters.
+        """Compute conditional log-likelihood for one parameter block.
 
-        Args:
-            y (np.ndarray): True values
-            theta (Dict): Fitted theta.
-            eta (np.ndarray): Fitted eta.
-            param (int): Param for which we take eta.
-
-        Returns:
-            np.ndarray: Log-likelihood.
+        Uses `eta` for the selected `param` and values from `theta` for all
+        remaining parameters.
         """
         fitted = self.flat_to_cube(eta, param=param)
         fitted = self.link_inverse(fitted, param=param)
         return self.log_likelihood(y, theta={**theta, param: fitted})
 
     def param_link_function(self, y, param=0):
+        """Apply parameter-level link function."""
         return self.param_links[param].link(y)
 
     def param_link_inverse(self, y, param=0):
+        """Apply inverse parameter-level link function."""
         return self.param_links[param].inverse(y)
 
     def param_link_function_derivative(self, y, param=0):
+        """Apply first derivative of parameter-level link function."""
         return self.param_links[param].link_derivative(y)
 
     def param_link_function_second_derivative(self, y, param=0):
+        """Apply second derivative of parameter-level link function."""
         return self.param_links[param].link_second_derivative(y)
 
     def param_link_inverse_derivative(self, y, param=0):
+        """Apply derivative of inverse parameter-level link function."""
         return self.param_links[param].inverse_derivative(y)

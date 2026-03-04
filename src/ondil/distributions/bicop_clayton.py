@@ -1,8 +1,12 @@
+# Author: Christian Schulz
+# License: GPL-3.0
+
 import numpy as np
 import scipy.stats as st
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
 from ..links import ClaytonParameterToKendallsTau, Log
+from ..robust_math import UMAX, UMIN
 from ..types import ParameterShapes
 
 
@@ -139,18 +143,16 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
     def hfunc(
         self, u: np.ndarray, v: np.ndarray, theta: np.ndarray, un: int, family_code: int
     ) -> np.ndarray:
-        UMIN = 1e-12
-        UMAX = 1 - 1e-12
         # Apply clipping using masks
-        u_mask_low = u < UMIN
-        u_mask_high = u > UMAX
-        v_mask_low = v < UMIN
-        v_mask_high = v > UMAX
+        u_mask_low = u < self.UMIN
+        u_mask_high = u > self.UMAX
+        v_mask_low = v < self.UMIN
+        v_mask_high = v > self.UMAX
 
-        u = np.where(u_mask_low, UMIN, u)
-        u = np.where(u_mask_high, UMAX, u)
-        v = np.where(v_mask_low, UMIN, v)
-        v = np.where(v_mask_high, UMAX, v)
+        u = np.where(u_mask_low, self.UMIN, u)
+        u = np.where(u_mask_high, self.UMAX, u)
+        v = np.where(v_mask_low, self.UMIN, v)
+        v = np.where(v_mask_high, self.UMAX, v)
 
         theta = theta.copy()  # <- prevents in-place mutation of caller's array
         u = u.reshape(-1, 1)
@@ -190,7 +192,7 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
         t2 = u_rot ** (-theta) + v_rot ** (-theta) - 1
         t1 = np.where(np.isinf(t1), 1e50, t1)
         t2 = np.where(np.isinf(t2), 1e50, t2)
-        t2 = np.maximum(t2, UMIN)
+        t2 = np.maximum(t2, self.UMIN)
         t3 = -1.0 - 1.0 / theta
         h = t1 * (t2**t3)
         mask_4 = (theta < 1e-4).squeeze()
@@ -227,19 +229,16 @@ class BivariateCopulaClayton(BivariateCopulaMixin, CopulaMixin, Distribution):
             np.ndarray: Array of shape (n,) with inverse conditional probabilities.
         """
 
-        UMIN = 1e-12
-        UMAX = 1 - 1e-12
-
         # Apply clipping using masks
-        u_mask_low = u < UMIN
-        u_mask_high = u > UMAX
-        v_mask_low = v < UMIN
-        v_mask_high = v > UMAX
+        u_mask_low = u < self.UMIN
+        u_mask_high = u > self.UMAX
+        v_mask_low = v < self.UMIN
+        v_mask_high = v > self.UMAX
 
-        u = np.where(u_mask_low, UMIN, u)
-        u = np.where(u_mask_high, UMAX, u)
-        v = np.where(v_mask_low, UMIN, v)
-        v = np.where(v_mask_high, UMAX, v)
+        u = np.where(u_mask_low, self.UMIN, u)
+        u = np.where(u_mask_high, self.UMAX, u)
+        v = np.where(v_mask_low, self.UMIN, v)
+        v = np.where(v_mask_high, self.UMAX, v)
         u = u.reshape(-1, 1)
         v = v.reshape(-1, 1)
         theta = theta.copy()  # <- prevents in-place mutation of caller's array
@@ -337,8 +336,6 @@ def _hinv_numerical(
     Returns:
         np.ndarray: Inverse conditional probabilities
     """
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
     tol = 1e-12
     max_iter = 50
 
@@ -350,8 +347,8 @@ def _hinv_numerical(
     temp_copula = BivariateCopulaClayton(family_code=family_code)
     # Evaluate at boundaries
 
-    fl = (temp_copula.hfunc(x0, v, theta.reshape(-1,1), un, family_code) - u)
-    fh = (temp_copula.hfunc(x1, v, theta.reshape(-1,1), un, family_code) - u)
+    fl = temp_copula.hfunc(x0, v, theta.reshape(-1, 1), un, family_code) - u
+    fh = temp_copula.hfunc(x1, v, theta.reshape(-1, 1), un, family_code) - u
     # Initialize result
     ans = (x0 + x1) / 2.0
 
@@ -394,7 +391,6 @@ def _hinv_numerical(
 
 
 def get_effective_rotation(theta_values: np.ndarray, family_code: int) -> np.ndarray:
-    
     """
     Vectorized version of get_effective_rotation().
     Accepts an array of theta_values and returns corresponding rotations.
@@ -548,8 +544,6 @@ def _derivative_2nd(y, theta, family_code):
     """
 
     # Constants for numerical stability
-    UMIN = 1e-12
-    UMAX = 1 - 1e-12
     theta = np.asarray(theta).copy()  # <- prevents in-place mutation of caller's array
 
     # Extract u and v from the y matrix

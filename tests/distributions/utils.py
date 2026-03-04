@@ -1,6 +1,6 @@
 import inspect
 
-from ondil.base.distribution import MultivariateDistributionMixin
+from ondil.base.distribution import MultivariateDistributionMixin, CopulaMixin
 import ondil.distributions
 
 
@@ -21,6 +21,10 @@ def get_univariate_distributions():
     """Get all univariate distribution classes."""
     distributions = []
     for name, obj in inspect.getmembers(ondil.distributions):
-        if inspect.isclass(obj) and not issubclass(obj, MultivariateDistributionMixin):
+        if (
+            inspect.isclass(obj)
+            and not issubclass(obj, MultivariateDistributionMixin)
+            and not issubclass(obj, CopulaMixin)
+        ):
             distributions.append(obj())
     return distributions
