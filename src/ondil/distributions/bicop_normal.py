@@ -16,7 +16,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
     corresponding_gamlss: str = None
     parameter_names = {0: "rho"}
     parameter_support = {0: (-1, 1)}
-    distribution_support = (-1, 1)
+    distribution_support = (0, 1)
     n_params = len(parameter_names)
     parameter_shape = {
         0: ParameterShapes.SCALAR,
