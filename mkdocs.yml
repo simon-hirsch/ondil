@@ -6,6 +6,7 @@ nav:
   - Estimators and Methods : estimators_and_methods.md
   - Estimators : estimators.md
   - Methods : methods.md
+  - Terms and Features : terms_and_features.md
   - Preprocessing: scaler.md
   - Distributions : distributions.md
   - Link Functions : links.md
