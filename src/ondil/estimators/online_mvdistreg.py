@@ -1153,7 +1153,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 theta_ll, theta_fit[:, 0], param=param, k=k
             )
             approx_ll = np.sum(self.distribution.logpdf(y, theta_ll) * weights_forget)
-            approx_ll = np.repeat(approx_ll, 100)
+            approx_ll = np.repeat(approx_ll, self._lambda_n[param])
             for l_idx in range(1, self._lambda_n[param]):
                 theta_ms = self.distribution.set_theta_element(
                     theta_ll, theta_fit[:, l_idx], param=param, k=k
@@ -1230,7 +1230,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 theta_ll, theta_fit[:, 0], param=param, k=k
             )
             approx_ll = np.sum(self.distribution.logpdf(y, theta_ll) * weights_forget)
-            approx_ll = np.repeat(approx_ll, 100)
+            approx_ll = np.repeat(approx_ll, self._lambda_n[param])
             for l_idx in range(1, self._lambda_n[param]):
                 theta_ms = self.distribution.set_theta_element(
                     theta_ll, theta_fit[:, l_idx], param=param, k=k
