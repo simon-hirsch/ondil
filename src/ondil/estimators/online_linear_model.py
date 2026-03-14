@@ -168,7 +168,9 @@ class OnlineLinearModel(OndilEstimatorMixin, RegressorMixin, BaseEstimator):
             self.coef_ = self.coef_path_[best_ic, :]
         else:
             self.coef_ = self._method.fit_beta(
-                self._x_gram, self._y_gram, self._is_regularized
+                x_gram=self._x_gram,
+                y_gram=self._y_gram,
+                is_regularized=self._is_regularized,
             )
 
         return self
