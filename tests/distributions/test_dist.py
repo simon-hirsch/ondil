@@ -14,11 +14,13 @@ CLIP_BOUNDS = (-1e5, 1e5)
 SPECIAL_TOLERANCE_DISTRIBUTIONS = {
     "InverseGaussian": 1e-3,
     "SkewT": 1e-5,
+    "SkewNormal": 1e-3,
 }
 
 SPECIAL_BOUNDS_DISTRIBUTIONS = {
     "PowerExponential": (-1e4, 1e4),
     "Weibull": (1e-3, 100),
+    "SkewNormal": (-1e3, 1e3),
 }
 
 
@@ -100,7 +102,10 @@ def test_distribution_functions(distribution):
     for key in available_functions:
         if key in function_mapping:
             assert np.allclose(function_mapping[key](), R_list.rx2(key), atol=atol), (
-                f"Function {key} doesn't match for {distribution.__class__.__name__}"
+                f"Function {key} doesn't match for {distribution.__class__.__name__} \n"
+                f"Got: {function_mapping[key]().round(3)} for Python \n"
+                f"Got: {np.asarray(R_list.rx2(key)).round(3)} for R \n"
+                f"Difference: {(function_mapping[key]() - R_list.rx2(key)).round(3)}"
             )
 
     # Test CRPS if scoringrules is installed
