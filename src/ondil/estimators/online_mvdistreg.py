@@ -11,7 +11,7 @@ from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import check_is_fitted, validate_data
 
-from ..base import CopulaMixin, Distribution, OndilEstimatorMixin
+from ..base import CopulaMixin, Distribution, OndilEstimatorMixin, EstimationMethod
 from ..design_matrix import make_intercept
 from ..distributions import (
     BivariateCopulaClayton,
@@ -135,7 +135,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         "regularize_intercept": [bool, dict],
         "scale_inputs": [bool, np.ndarray],
         "verbose": [Interval(numbers.Integral, 0, None, closed="left")],
-        "method": [StrOptions({"ols", "lasso"}), dict],
+        "method": [StrOptions({"ols", "lasso"}), dict, EstimationMethod],
         "ic": [StrOptions({"ll", "aic", "bic", "hqc", "max"})],
         "iteration_along_diagonal": [bool],
         "approx_fast_model_selection": [bool],
