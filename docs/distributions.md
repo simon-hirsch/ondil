@@ -14,6 +14,8 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 | ------------------------------------------ | ----------------------------------------------------------- |
 | [`Distribution`](#ondil.base.Distribution) | Base class for all distributions.                           |
 | [`ScipyMixin`](#ondil.base.ScipyMixin)     | Base class for all distributions that are based on `scipy`. |
+| [`CopulaMixin`](#ondil.base.CopulaMixin)   | Base mixin for copula distributions.                        |
+| [`BivariateCopulaMixin`](#ondil.base.BivariateCopulaMixin) | Base mixin for bivariate copula distributions.              |
 
 
 ## List of Distributions
@@ -52,6 +54,16 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 | [`MultivariateStudentTInverseCholesky`](#ondil.distributions.MultivariateStudentTInverseCholesky)                 | Multivariate Student's \$t\$ (inverse Cholesky)          | Inverse Cholesky factorization          | \$\\Sigma = (L L^{\\top})^{-1}\$, where \$L\$ is lower triangular               |
 | [`MultivariateStudentTInverseModifiedCholesky`](#ondil.distributions.MultivariateStudentTInverseModifiedCholesky) | Multivariate Student's \$t\$ (inverse modified Cholesky) | Inverse modified Cholesky factorization | \$\\Sigma = (T D T^{\\top})^{-1}\$, \$T\$ unit lower triangular, \$D\$ diagonal |
 | [`MultivariateStudentTInverseLowRank`](#ondil.distributions.MultivariateStudentTInverseLowRank)                   | Multivariate Student's \$t\$ (inverse low-rank)          | Inverse low-rank factorization          | \$\\Sigma = (U U^{\\top} + D)^{-1}\$, \$U\$ low-rank, \$D\$ diagonal            |
+
+| Copula Distribution                                                   | Description                         | Family Code |
+| --------------------------------------------------------------------- | ----------------------------------- | ----------- |
+| [`BivariateCopulaNormal`](#ondil.distributions.BivariateCopulaNormal) | Bivariate Gaussian copula           | `1`         |
+| [`BivariateCopulaStudentT`](#ondil.distributions.BivariateCopulaStudentT) | Bivariate Student's \$t\$ copula  | `2`         |
+| [`BivariateCopulaClayton`](#ondil.distributions.BivariateCopulaClayton) | Bivariate Clayton copula            | `31`        |
+| [`BivariateCopulaGumbel`](#ondil.distributions.BivariateCopulaGumbel) | Bivariate Gumbel copula             | `41`        |
+
+
+
 
 
 
@@ -115,8 +127,22 @@ All distributions are based on `scipy.stats` distributions. We implement the pro
 
 ::: ondil.distributions.MultivariateStudentTInverseLowRank
 
+## Copula Distributions
+
+::: ondil.distributions.BivariateCopulaNormal
+
+::: ondil.distributions.BivariateCopulaStudentT
+
+::: ondil.distributions.BivariateCopulaClayton
+
+::: ondil.distributions.BivariateCopulaGumbel
+
 ## Base Class
 
 ::: ondil.base.Distribution
 
 ::: ondil.base.ScipyMixin
+
+::: ondil.base.CopulaMixin
+
+::: ondil.base.BivariateCopulaMixin
