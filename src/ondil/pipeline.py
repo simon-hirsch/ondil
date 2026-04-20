@@ -1,11 +1,11 @@
-from sklearn import pipeline, _final_estimator_has
-from sklearn.utils.metaestimators import available_if
-from sklearn.utils.validation import check_is_fitted
+import numpy as np
+from sklearn import _final_estimator_has, pipeline
 from sklearn.utils.metadata_routing import (
     _routing_enabled,
     process_routing,
 )
-import numpy as np
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import check_is_fitted
 
 
 class DistributionalRegressionPipeline(pipeline.Pipeline):
