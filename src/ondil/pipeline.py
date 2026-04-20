@@ -44,7 +44,11 @@ class DistributionalRegressionPipeline(pipeline.Pipeline):
         if not _routing_enabled():
             for _, name, transform in self._iter(with_final=False):
                 Xt = transform.transform(Xt)
-            return self.steps[-1][1].predict_quantile(Xt, quantile=quantile)
+            return self.steps[-1][1].predict_quantile(
+                Xt,
+                quantile=quantile,
+                **params,
+            )
 
         # metadata routing enabled
         routed_params = process_routing(
@@ -53,7 +57,7 @@ class DistributionalRegressionPipeline(pipeline.Pipeline):
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
         return self.steps[-1][1].predict_quantile(
-            Xt, quantile=quantile, **routed_params[self.steps[-1][0]].predict
+            Xt, quantile=quantile, **routed_params[self.steps[-1][0]].predict_quantile
         )
 
     @available_if(_final_estimator_has("predict_distribution_parameters"))
@@ -114,5 +118,5 @@ class DistributionalRegressionPipeline(pipeline.Pipeline):
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
         return self.steps[-1][1].predict_distribution_parameters(
-            Xt, **routed_params[self.steps[-1][0]].predict
+            Xt, **routed_params[self.steps[-1][0]].predict_distribution_parameters
         )
