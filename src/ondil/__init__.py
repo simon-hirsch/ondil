@@ -18,7 +18,7 @@ if find_spec("matplotlib") is not None:
 if find_spec("scoringrules") is not None:
     HAS_SCORINGRULES = True
 
-from . import (
+from . import (  # noqa: E402, F401
     base,
     diagnostics,
     distributions,
