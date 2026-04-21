@@ -3,3 +3,5 @@
 ## API Reference
 
 ::: ondil.scaler.OnlineScaler
+
+::: ondil.scaler.OnlineMeanAbsoluteDeviationScaler
