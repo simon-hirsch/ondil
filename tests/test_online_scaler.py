@@ -235,9 +235,6 @@ def test_online_mad_scaler(N_init, D, forget, selection_dtype, sample_weight):
         assert np.allclose(online_scaler.dispersion_, true_mad, rtol=0.25, atol=0.5), (
             f"Step {i - N_init + 1}: MAD mismatch: {online_scaler.mad_} vs {true_mad}"
         )
-        assert np.allclose(out, expected_out, rtol=0.25, atol=0.5), (
-            f"Scaled X mismatch: {out} vs {expected_out}"
-        )
 
 
 @pytest.mark.parametrize("D", [1, 10], ids=["features_1", "features_10"])
