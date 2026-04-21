@@ -106,7 +106,6 @@ def test_pipeline_update_consistent_with_direct_updates(synthetic_data):
     estimator_direct.fit(X_scaled, y_fit)
 
     # Update directly
-    X_update_scaled = scaler_direct.transform(X_update)
     scaler_direct.update(X_update)
     X_update_scaled_after = scaler_direct.transform(X_update)
     estimator_direct.update(X_update_scaled_after, y_update)
