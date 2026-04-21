@@ -57,16 +57,7 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
         self._cumulative_w = 0  # Track cumulative weights for exponential forgetting
 
     @property
-    def std_(self) -> float | np.ndarray:
-        r"""Standard deviation of the scaled variables."""
-        check_is_fitted(self, ["mean_", "var_"])
-        if self._do_scale:
-            return np.sqrt(self.var_)
-        else:
-            return 1.0
-
-    @property
-    def scale_(self):
+    def dispersion_(self):
         r"""Scale factor for the scaled variables."""
         check_is_fitted(self, ["mean_", "var_"])
         if self._do_scale:
@@ -189,7 +180,9 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
 
         if self._do_scale:
             out = np.copy(X)
-            out[:, self._selection] = (X[:, self._selection] - self.mean_) / self.scale_
+            out[:, self._selection] = (
+                X[:, self._selection] - self.mean_
+            ) / self.dispersion_
             return out
         else:
             return X
@@ -214,7 +207,9 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
 
         if self._do_scale:
             out = np.copy(X)
-            out[:, self._selection] = X[:, self._selection] * self.scale_ + self.mean_
+            out[:, self._selection] = (
+                X[:, self._selection] * self.dispersion_ + self.mean_
+            )
             return out
         else:
             return X
@@ -228,6 +223,15 @@ class OnlineMeanAbsoluteDeviationScaler(OnlineScaler):
     `OnlineMeanAbsoluteDeviationScaler` uses the mean and mean absolute
     deviation (MAD) for scaling, which can provide better performance in the
     presence of outliers.
+
+    !!! note
+        The MAD does not have a closed-form solution and is estimated using an
+        online update rule. As a result, the tracking of the MAD is approximate.
+        The mean is tracked exactly, but the MAD estimation can deviate,
+        especially in the early stages of fitting or with small sample sizes.
+        For more details on the estimation of the MAD and its properties see the
+        documentation and the tests for this scaler.
+
     """
 
     def _prepare_estimator(self, X: np.ndarray):
@@ -250,17 +254,8 @@ class OnlineMeanAbsoluteDeviationScaler(OnlineScaler):
         self._cumulative_w = 0
 
     @property
-    def std_(self):
+    def dispersion_(self):
         r"""Dispersion of the scaled variables (equal to MAD for this scaler)."""
-        check_is_fitted(self, ["mean_", "mad_"])
-        if self._do_scale:
-            return self.mad_
-        else:
-            return 1.0
-
-    @property
-    def scale_(self):
-        r"""Scale factor for the scaled variables based on mean absolute deviation."""
         check_is_fitted(self, ["mean_", "mad_"])
         if self._do_scale:
             return self.mad_
@@ -355,7 +350,9 @@ class OnlineMeanAbsoluteDeviationScaler(OnlineScaler):
 
         if self._do_scale:
             out = np.copy(X)
-            out[:, self._selection] = (X[:, self._selection] - self.mean_) / self.scale_
+            out[:, self._selection] = (
+                X[:, self._selection] - self.mean_
+            ) / self.dispersion_
             return out
         else:
             return X
@@ -373,7 +370,9 @@ class OnlineMeanAbsoluteDeviationScaler(OnlineScaler):
 
         if self._do_scale:
             out = np.copy(X)
-            out[:, self._selection] = X[:, self._selection] * self.scale_ + self.mean_
+            out[:, self._selection] = (
+                X[:, self._selection] * self.dispersion_ + self.mean_
+            )
             return out
         else:
             return X
