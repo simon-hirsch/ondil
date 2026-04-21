@@ -213,3 +213,9 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
             return out
         else:
             return X
+
+    def update_transform(
+        self, X: np.ndarray, y=None, sample_weight: np.ndarray = None
+    ) -> np.ndarray:
+        """Convenience method to update the scaler and transform the new data in one step."""
+        return self.update(X, y=y, sample_weight=sample_weight).transform(X)
