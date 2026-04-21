@@ -1,5 +1,3 @@
-# ruff: noqa: E402
-
 from importlib.metadata import version
 from importlib.util import find_spec
 
@@ -29,6 +27,7 @@ from . import (
     information_criteria,
     links,
     methods,
+    pipeline,
     scaler,
     utils,
     warnings,
@@ -39,13 +38,14 @@ __version__ = version("ondil")
 __all__ = [
     "base",
     "diagnostics",
+    "distributions",
     "error",
+    "estimators",
     "information_criteria",
     "links",
     "methods",
-    "distributions",
-    "estimators",
-    "utils",
+    "pipeline",
     "scaler",
+    "utils",
     "warnings",
 ]
