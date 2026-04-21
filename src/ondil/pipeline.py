@@ -1,6 +1,6 @@
 import numpy as np
-from sklearn.pipeline import _final_estimator_has, pipeline
-from sklearn.utils.metadataimport import (
+from sklearn.pipeline import _final_estimator_has, Pipeline
+from sklearn.utils.metadata_routing import (
     _routing_enabled,
     process_routing,
 )
@@ -8,7 +8,7 @@ from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import check_is_fitted
 
 
-class DistributionalRegressionPipeline(pipeline.Pipeline):
+class DistributionalRegressionPipeline(Pipeline):
     """Pipeline of transforms with a final estimator that supports distributional regression."""
 
     @available_if(_final_estimator_has("predict_quantile"))
@@ -120,3 +120,62 @@ class DistributionalRegressionPipeline(pipeline.Pipeline):
         return self.steps[-1][1].predict_distribution_parameters(
             Xt, **routed_params[self.steps[-1][0]].predict_distribution_parameters
         )
+
+    def update(
+        self,
+        X: np.ndarray,
+        y: np.ndarray = None,
+        **update_params,
+    ):
+        """Update the pipeline with partial data.
+
+        Call `transform` of each transformer in the pipeline (or `update_transform`
+        if available). The transformed data are finally passed to the final estimator
+        that calls `update` method.
+
+        Implements online learning by allowing incremental updates to all steps in the
+        pipeline. Non-terminal steps are expected to be transformers with a `transform`
+        method (or optionally an `update_transform` method). The terminal step must be
+        an estimator with an `update` method.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data. Must fulfill input requirements of first step of the pipeline.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
+            Training targets. Will be passed to the `update` method of the final estimator.
+
+        **update_params : dict of str -> object
+            Parameters passed to the `update` method of the final estimator.
+            If `enable_metadata_routing=True`, parameters are also passed to
+            intermediate transformers and steps if they request them.
+
+        Returns
+        -------
+        self : DistributionalRegressionPipeline
+            This estimator (for method chaining).
+        """
+        check_is_fitted(self)
+        Xt = X
+
+        if not _routing_enabled():
+            for _, name, transformer in self._iter(with_final=False):
+                if hasattr(transformer, "update_transform"):
+                    Xt = transformer.update_transform(Xt)
+                else:
+                    Xt = transformer.transform(Xt)
+            self.steps[-1][1].update(Xt, y, **update_params)
+            return self
+
+        # metadata routing enabled
+        routed_params = process_routing(self, "update", **update_params)
+        for _, name, transformer in self._iter(with_final=False):
+            if hasattr(transformer, "update_transform"):
+                Xt = transformer.update_transform(
+                    Xt, **routed_params[name].update_transform
+                )
+            else:
+                Xt = transformer.transform(Xt, **routed_params[name].transform)
+        self.steps[-1][1].update(Xt, y, **routed_params[self.steps[-1][0]].update)
+        return self
