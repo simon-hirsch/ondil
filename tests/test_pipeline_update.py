@@ -3,9 +3,9 @@
 import numpy as np
 import pytest
 
+from ondil.estimators import OnlineLinearModel
 from ondil.pipeline import DistributionalRegressionPipeline
 from ondil.scaler import OnlineScaler
-from ondil.estimators import OnlineLinearModel
 
 
 @pytest.fixture

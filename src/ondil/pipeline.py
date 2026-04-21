@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.pipeline import _final_estimator_has, Pipeline
+from sklearn.pipeline import Pipeline, _final_estimator_has
 from sklearn.utils.metadata_routing import (
     _routing_enabled,
     process_routing,

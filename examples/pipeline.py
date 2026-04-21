@@ -12,10 +12,9 @@ from sklearn.datasets import load_diabetes
 from sklearn.preprocessing import SplineTransformer
 
 from ondil.distributions import Normal
-from ondil.links import InverseSoftPlusShiftValue
 from ondil.estimators import OnlineDistributionalRegression
+from ondil.links import InverseSoftPlusShiftValue
 from ondil.pipeline import DistributionalRegressionPipeline
-
 
 np.set_printoptions(precision=3, suppress=True)
 
