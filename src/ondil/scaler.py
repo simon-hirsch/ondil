@@ -221,6 +221,15 @@ class OnlineScaler(OndilEstimatorMixin, TransformerMixin, BaseEstimator):
 
 
 class OnlineMeanAbsoluteDeviationScaler(OnlineScaler):
+    """Robust online scaler using mean absolute deviation (MAD)
+
+    This scaler is more robust to outliers than the standard `OnlineScaler`
+    which uses mean and standard deviation for scaling. The
+    `OnlineMeanAbsoluteDeviationScaler` uses the mean and mean absolute
+    deviation (MAD) for scaling, which can provide better performance in the
+    presence of outliers.
+    """
+
     def _prepare_estimator(self, X: np.ndarray):
         """Add derived attributes to estimator for mean absolute deviation scaling."""
         if isinstance(self.to_scale, np.ndarray):
