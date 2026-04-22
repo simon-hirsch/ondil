@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ondil"
-version = "0.4.6"
+version = "0.4.7"
 authors = [
   {name="Simon Hirsch", email="simon.hirsch@stud.uni-due.de"},
   {name="Jonathan Berrisch", email="jonathan.berrisch@uni-due.de"},
@@ -38,7 +38,7 @@ classifiers = [
 ]
 dependencies=[
     "scipy >= 1.00, <2.2.0",
-    "numpy >= 1.2, <=2.1.0",
+    "numpy >= 1.2, <=2.4.0",
     "numba >= 0.59.1, < 1.0.0",
     "scikit-learn >= 1.5",
     "loguru",
@@ -75,6 +75,11 @@ known-first-party = ["ondil"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --tb=short"
 
 [tool.setuptools.packages.find]
 where = ["src"]

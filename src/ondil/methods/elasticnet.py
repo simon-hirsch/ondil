@@ -125,7 +125,11 @@ class ElasticNetPath(EstimationMethod):
                 regularization_weights[is_regularized]
             )
 
-        return np.max(abs_gram)
+        lambda_max = np.max(abs_gram)
+        if np.isclose(lambda_max, 0.0):
+            lambda_max = 1.0
+
+        return lambda_max
 
     @staticmethod
     def _validate_bounds(
