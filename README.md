@@ -144,7 +144,7 @@ If you use `ondil` in your research, please cite the following paper(s), dependi
 | Task | State |
 |------|-------|
 | Tests (OS) | [![Tests](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests_os.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests_os.yml) |
-| Tests (Dependencys) | [![Tests](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests_os.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests_os.yml) |
+| Tests (Dependencys) | [![Tests](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests_deps.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests_deps.yml) |
 | Build Docs | [![Docs](https://github.com/simon-hirsch/ondil/actions/workflows/ci_build_docs.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_build_docs.yml) |
 
 
