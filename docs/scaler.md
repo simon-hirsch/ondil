@@ -18,7 +18,7 @@ Transforms each feature as: `z = (x - mean) / std` and hence
 
 Transforms each feature as: `zt = (x - mean) / MAD` where:
 
-- `MAD = mean(|x - center|)` is the mean absolute deviation from the mean.
+- `MAD = mean(|x - mean|)` is the mean absolute deviation from the mean.
 - Reduces the influence of outliers compared to standard deviation-based scaling.
 - Better for heavy-tailed, skewed, or contaminated datasets.
 - May be less efficient than mean-STD scaling on normal data
