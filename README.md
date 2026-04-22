@@ -4,7 +4,6 @@
 [![License](https://img.shields.io/github/license/simon-hirsch/rolch)](https://opensource.org/license/gpl-3-0)
 ![GitHub Release](https://img.shields.io/github/v/release/simon-hirsch/ondil?display_name=release&label=Release)
 [![Downloads](https://static.pepy.tech/badge/ondil)](https://pepy.tech/project/ondil)
-[![Tests](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests.yml)
 [![Docs](https://github.com/simon-hirsch/ondil/actions/workflows/ci_build_docs.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_build_docs.yml)
 [![CodeFactor](https://www.codefactor.io/repository/github/simon-hirsch/ondil/badge)](https://www.codefactor.io/repository/github/simon-hirsch/ondil)
 
@@ -139,3 +138,13 @@ If you use `ondil` in your research, please cite the following paper(s), dependi
   year={2025}
 }
 ```
+
+## Automation
+
+| Task | State |
+|------|-------|
+| Tests (OS) | [![Tests](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests_os.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests_os.yml) |
+| Tests (Dependencys) | [![Tests](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests_os.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_run_tests_os.yml) |
+| Build Docs | [![Docs](https://github.com/simon-hirsch/ondil/actions/workflows/ci_build_docs.yml/badge.svg?branch=main)](https://github.com/simon-hirsch/ondil/actions/workflows/ci_build_docs.yml) |
+
+
