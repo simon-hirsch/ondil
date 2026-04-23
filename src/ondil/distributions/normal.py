@@ -46,6 +46,7 @@ class Normal(ScipyMixin, Distribution):
         self,
         loc_link: LinkFunction = Identity(),
         scale_link: LinkFunction = Log(),
+        start_value_mixing: float = 0.5,
     ) -> None:
         """Initialize the Normal.
 
@@ -59,6 +60,7 @@ class Normal(ScipyMixin, Distribution):
                 1: scale_link,
             }
         )
+        self.start_value_mixing = start_value_mixing
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
@@ -88,9 +90,19 @@ class Normal(ScipyMixin, Distribution):
         if sorted(params) == [0, 1]:
             return np.zeros_like(y)
 
+    def constant_initial_values(self, y: np.ndarray) -> np.ndarray:
+        theta = [np.mean(y), np.std(y, ddof=1)]
+        theta = np.tile(theta, (y.shape[0], 1))
+        return theta
+
     def initial_values(self, y: np.ndarray) -> np.ndarray:
-        initial_params = [np.mean(y), np.std(y, ddof=1)]
-        return np.tile(initial_params, (y.shape[0], 1))
+        r = np.abs(y - np.mean(y))
+        theta = np.vstack((
+            (y * self.start_value_mixing) + (1 - self.start_value_mixing) * np.mean(y),
+            (r * self.start_value_mixing)
+            + (1 - self.start_value_mixing) * np.std(y, ddof=1),
+        )).T
+        return theta
 
 
 class NormalMeanVariance(ScipyMixin, Distribution):
@@ -127,6 +139,7 @@ class NormalMeanVariance(ScipyMixin, Distribution):
         self,
         loc_link: LinkFunction = Identity(),
         scale_link: LinkFunction = Log(),
+        start_value_optimism: float = 0.25,
     ) -> None:
         """Initialize the NormalMeanVariance.
 
@@ -140,6 +153,7 @@ class NormalMeanVariance(ScipyMixin, Distribution):
                 1: scale_link,
             }
         )
+        self.start_value_optimism = start_value_optimism
 
     def theta_to_scipy_params(self, theta: np.ndarray) -> dict:
         """Map GAMLSS Parameters to scipy parameters.
@@ -183,6 +197,19 @@ class NormalMeanVariance(ScipyMixin, Distribution):
         if sorted(params) == [0, 1]:
             return np.zeros_like(y)
 
+    def constant_initial_values(self, y: np.ndarray) -> np.ndarray:
+        initial_theta = [np.mean(y), np.var(y, ddof=1)]
+        initial_theta = np.tile(initial_theta, (y.shape[0], 1))
+        return initial_theta
+
     def initial_values(self, y: np.ndarray) -> np.ndarray:
-        initial_params = [np.mean(y), np.var(y, ddof=1)]
-        return np.tile(initial_params, (y.shape[0], 1))
+        initial_theta = np.vstack((
+            self.start_value_optimism * y
+            + (1 - self.start_value_optimism) * np.mean(y),
+            self.start_value_optimism
+            * (
+                np.abs(y - np.mean(y)) ** 2
+                + (1 - self.start_value_optimism) * np.var(y, ddof=1)
+            ),
+        )).T
+        return initial_theta

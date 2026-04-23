@@ -47,6 +47,13 @@ class Distribution(ABC):
         return None
 
     @property
+    def _svm(self):
+        if self.start_value_mixing is not None:
+            return self.start_value_mixing
+        else:
+            return 0.5
+
+    @property
     @abstractmethod
     def parameter_names(self) -> dict:
         """Parameter name for each column of theta."""
@@ -211,6 +218,7 @@ class Distribution(ABC):
         param: int,
     ) -> np.ndarray:
         """Calculate the conditional initial values for the GAMLSS fit."""
+        raise NotImplementedError("Not implemented")
 
     @abstractmethod
     def cdf(self, y: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -483,6 +491,17 @@ class ScipyMixin(ABC):
             np.ndarray: An array of means corresponding to the parameters in `theta`.
         """
         return self.scipy_dist(**self.theta_to_scipy_params(theta)).mean()
+
+    def variance(self, theta: np.ndarray) -> np.ndarray:
+        """Compute the variance of the distribution for the given parameters.
+
+        Args:
+            theta (np.ndarray): An array of parameters for the distribution.
+
+        Returns:
+            np.ndarray: An array of variances corresponding to the parameters in `theta`.
+        """
+        return self.scipy_dist(**self.theta_to_scipy_params(theta)).var()
 
     def _scipy_mle_objective(
         self,

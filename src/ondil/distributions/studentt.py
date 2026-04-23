@@ -38,6 +38,7 @@ class StudentT(ScipyMixin, Distribution):
         loc_link: LinkFunction = Identity(),
         scale_link: LinkFunction = Log(),
         tail_link: LinkFunction = LogShiftTwo(),
+        start_value_optimism: float = 0.0,
     ) -> None:
         super().__init__(
             links={
@@ -46,6 +47,7 @@ class StudentT(ScipyMixin, Distribution):
                 2: tail_link,
             }
         )
+        self.start_value_optimism = start_value_optimism
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
@@ -117,6 +119,19 @@ class StudentT(ScipyMixin, Distribution):
             _, sigma, nu = self.theta_to_params(theta)
             return 2 / (sigma * (nu + 3) * (nu + 1))
 
-    def initial_values(self, y: np.ndarray) -> np.ndarray:
+    def constant_initial_values(self, y: np.ndarray) -> np.ndarray:
         params = st.t.fit(y)
         return np.tile([params[1], params[2], params[0]], (y.shape[0], 1))
+
+    def initial_values(self, y: np.ndarray) -> np.ndarray:
+        constant_values = self.constant_initial_values(y=y)
+        dynamic_values = np.zeros_like(constant_values)
+        dynamic_values[:, 0] = y  # mu
+        dynamic_values[:, 1] = np.abs(y - np.mean(y))  # sigma
+        dynamic_values[:, 2] = (
+            2.5 + np.abs(y - np.mean(y)) / constant_values[:, 1]
+        )  # nu
+        return (
+            self.start_value_optimism * constant_values
+            + (1 - self.start_value_optimism) * dynamic_values
+        )

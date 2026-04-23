@@ -24,19 +24,25 @@ from . import (  # noqa: E402, F401
     distributions,
     error,
     estimators,
+    incremental_statistics,
     information_criteria,
     links,
+    logging,
     methods,
     pipeline,
     scaler,
+    terms,
     utils,
     warnings,
 )
+
+logging.set_log_level("INFO")
 
 __version__ = version("ondil")
 
 __all__ = [
     "base",
+    "terms",
     "diagnostics",
     "distributions",
     "error",
@@ -48,4 +54,5 @@ __all__ = [
     "scaler",
     "utils",
     "warnings",
+    "incremental_statistics",
 ]

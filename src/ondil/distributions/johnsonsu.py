@@ -46,6 +46,7 @@ class JSU(ScipyMixin, Distribution):
         scale_link: LinkFunction = Log(),
         skew_link: LinkFunction = Identity(),
         tail_link: LinkFunction = Log(),
+        start_value_mixing: float = 0.5,
         use_gamlss_init_values: bool = False,
     ) -> None:
         super().__init__(
@@ -57,6 +58,7 @@ class JSU(ScipyMixin, Distribution):
             }
         )
         self.gamlss_init_values = use_gamlss_init_values
+        self.start_value_mixing = start_value_mixing
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
@@ -196,7 +198,7 @@ class JSU(ScipyMixin, Distribution):
             d2ldvdt = -(dldv * dldt)
             return d2ldvdt
 
-    def initial_values(self, y: np.ndarray) -> np.ndarray:
+    def constant_initial_values(self, y: np.ndarray) -> np.ndarray:
         out = np.empty((y.shape[0], self.n_params))
         if self.gamlss_init_values:
             out[:, 0] = (np.repeat(np.mean(y), y.shape[0]) + y) / 2
@@ -210,3 +212,17 @@ class JSU(ScipyMixin, Distribution):
             out[:, 2] = params[0]
             out[:, 3] = params[1]
         return out
+
+    def initial_values(self, y: np.ndarray) -> np.ndarray:
+        r = np.abs(y - np.mean(y))
+        y_mean = np.mean(y)
+        y_std = np.std(y, ddof=1)
+        z = np.abs((y - y_mean) / y_std)
+        theta = np.vstack((
+            (y * self.start_value_mixing) + (1 - self.start_value_mixing) * np.mean(y),
+            (r * self.start_value_mixing)
+            + (1 - self.start_value_mixing) * np.std(y, ddof=1),
+            (y - np.median(y)) / np.var(y, ddof=1),
+            np.clip(1.5 / np.maximum(z, 0.5), 0.3, 2.0),
+        )).T
+        return theta
