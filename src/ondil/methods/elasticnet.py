@@ -176,6 +176,8 @@ class ElasticNetPath(EstimationMethod):
         lambda_path = np.geomspace(
             lambda_max, lambda_max * self.lambda_eps, self.lambda_n
         )
+        # Cache for later EDF computation (compute_edf needs the same grid)
+        self._last_lambda_path = lambda_path
 
         beta_path = np.zeros((self.lambda_n, x_gram.shape[0]))
         beta_path, _ = online_coordinate_descent_path(
@@ -203,6 +205,8 @@ class ElasticNetPath(EstimationMethod):
         lambda_path = np.geomspace(
             lambda_max, lambda_max * self.lambda_eps, self.lambda_n
         )
+        # Cache for later EDF computation (compute_edf needs the same grid)
+        self._last_lambda_path = lambda_path
         if self.auto_regularization_weights:
             reg_weights = self._calculate_regularization_weights(x_gram=x_gram)
         else:
@@ -231,3 +235,80 @@ class ElasticNetPath(EstimationMethod):
 
     def update_beta(self, x_gram, y_gram, is_regularized):
         pass
+
+    def compute_edf(self, x_gram, beta_path, is_regularized):
+        r"""Effective degrees of freedom along the elastic-net path.
+
+        For each lambda in the (cached) regularization grid, computes
+        $$\mathrm{edf}(\lambda) = \mathrm{trace}\!\left[\,G_A\,\big(G_A + \lambda\,J_A\big)^{-1}\right]$$
+        where $A$ is the active set at that lambda (non-zero coefficients
+        plus the unregularized columns, e.g. the intercept), $G_A$ is the
+        weighted Gram matrix restricted to $A$, and
+        $J_A = \mathrm{diag}\!\big((1-\alpha)\,w_j\big)_{j \in A}$ for
+        regularized columns (zero on unregularized columns). This matches
+        the L2 contribution to the Hessian implied by the coordinate
+        descent update in :mod:`coordinate_descent`, where the diagonal
+        augmentation is $\lambda\,w_j\,(1-\alpha)$.
+
+        Special cases:
+            * $\alpha = 1$ (pure LASSO): $J_A = 0$, so
+              $\mathrm{edf}(\lambda) = |A|$, i.e. the number of non-zero
+              coefficients — recovering the standard LASSO degrees of
+              freedom estimator (Zou et al., 2007).
+            * $\alpha = 0$ (pure Ridge): $J_A = \mathrm{diag}(w_j)$ and
+              $A$ contains everything non-intercept-excluded; reduces to
+              the familiar ridge hat-matrix trace.
+
+        Args:
+            x_gram: Weighted Gram matrix $X^\top W X$ of shape (J, J).
+            beta_path: Coefficient path of shape ``(lambda_n, J)``.
+            is_regularized: Boolean array of shape ``(J,)`` indicating
+                which columns are subject to penalty.
+
+        Returns:
+            np.ndarray of shape ``(lambda_n,)`` with one EDF per lambda.
+        """
+        if not hasattr(self, "_last_lambda_path"):
+            raise RuntimeError(
+                "compute_edf requires fit_beta_path or update_beta_path to "
+                "have run first so that the lambda grid is cached."
+            )
+        lambda_path = self._last_lambda_path
+
+        # Resolve regularization weights with the same rules as fit_beta_path
+        if self.auto_regularization_weights or (
+            self.regularization_weights is not None
+        ):
+            reg_weights = self._calculate_regularization_weights(x_gram=x_gram)
+        else:
+            reg_weights = np.ones(x_gram.shape[0])
+
+        is_regularized = np.asarray(is_regularized, dtype=bool)
+        edf = np.empty(self.lambda_n)
+
+        for l_idx in range(self.lambda_n):
+            # Active set: non-zero coefs plus always-on (unregularized) cols
+            active = (beta_path[l_idx, :] != 0) | (~is_regularized)
+            if not np.any(active):
+                edf[l_idx] = 0.0
+                continue
+
+            G_A = x_gram[np.ix_(active, active)]
+            # Penalty Hessian on the active set: (1-alpha)*w_j for
+            # regularized columns; zero for unregularized (e.g. intercept)
+            pen_diag = np.where(
+                is_regularized[active],
+                (1.0 - self.alpha) * reg_weights[active],
+                0.0,
+            )
+            J_A = np.diag(pen_diag)
+            A_mat = G_A + lambda_path[l_idx] * J_A
+
+            try:
+                sol = np.linalg.solve(A_mat, G_A)
+                edf[l_idx] = float(np.trace(sol))
+            except np.linalg.LinAlgError:
+                # Fallback: if singular, drop to active-set count
+                edf[l_idx] = float(np.sum(active))
+
+        return edf
