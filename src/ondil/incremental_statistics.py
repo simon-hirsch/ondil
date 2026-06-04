@@ -34,7 +34,7 @@ def calculate_statistics(
     forget_weight = init_forget_vector(forget, X.shape[0])
     effective_weight = sample_weight * forget_weight
 
-    mean = np.average(X, weights=sample_weight * effective_weight, axis=0)
+    mean = np.average(X, weights=effective_weight, axis=0)
     diff_sq = (X - mean) ** 2
     var = np.average(diff_sq, weights=effective_weight, axis=0)
     weight = np.sum(effective_weight)
