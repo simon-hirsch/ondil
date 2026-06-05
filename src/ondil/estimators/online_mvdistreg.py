@@ -960,9 +960,9 @@ class MultivariateOnlineDistributionalRegressionPath(
                 prev_beta_path = copy.copy(self.coef_path_)
 
             # This will check if we
-            # if (inner_iteration == 0) and (outer_iteration == 0) & (a == 0):
-            #     theta[a] = self.distribution.set_initial_guess(y, theta[a], p)
-            #     theta = self._handle_path_regularization(theta=theta, p=p, a=a)
+            #if (inner_iteration == 0) and (outer_iteration == 0) & (a == 0):
+            #    theta[a] = self.distribution.set_initial_guess(y, theta[a], p)
+            #    theta = self._handle_path_regularization(theta=theta, p=p, a=a)
 
             # Iterate through all elements of the distribution parameter
             for k in self._iter_index[p]:
@@ -1602,10 +1602,10 @@ class MultivariateOnlineDistributionalRegressionPath(
         out = self.distribution.flat_to_cube(array, 0)
         # out = self.distribution.link_inverse(out, 0)
         out = np.tanh(out / 2) * (1 - 1e-8)
-        if issubclass(self.distribution.__class__, CopulaMixin):
-            out = self.distribution.param_link_inverse(out * (1 - 1e-8), param=0) * (
-                1 - 1e-8
-            )
+        #if issubclass(self.distribution.__class__, CopulaMixin):
+        #    out = self.distribution.param_link_inverse(out * (1 - 1e-8), param=0) * (
+        #        1 - 1e-8
+        #    )
         return out
 
     # Different UV - MV
