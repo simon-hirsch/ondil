@@ -13,6 +13,7 @@ from .linear import (
     RegularizedLinearTerm,
 )
 from .special import ScikitLearnEstimatorTerm
+from .splines import PSplineTerm
 from .time_series import (
     RegularizedTimeSeriesTerm,
     TimeSeriesTerm,
@@ -24,6 +25,7 @@ __all__ = [
     "LinearTerm",
     "RegularizedLinearTerm",
     "InterceptTerm",
+    "PSplineTerm",
     "LaggedResidual",
     "LaggedSquaredResidual",
     "LaggedAbsoluteResidual",
