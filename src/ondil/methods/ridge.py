@@ -283,7 +283,6 @@ class LinearConstrainedCoordinateDescent(EstimationMethod):
         is_regularized,
         **kwargs,
     ):
-        self._validate_bounds(x_gram=x_gram)
         beta = np.zeros(x_gram.shape[1])
 
         logger.debug(f"Got following kwargs: {[*kwargs.keys()]}")
