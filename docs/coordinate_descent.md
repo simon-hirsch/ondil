@@ -10,4 +10,4 @@ This submodule holds the functions related to the online coordinate descent (OCO
 
 ::: ondil.coordinate_descent.online_coordinate_descent_path
 
-::: ondil.coordinate_descent.soft_threshold
+::: ondil.coordinate_descent.utils.soft_threshold

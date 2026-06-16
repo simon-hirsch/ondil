@@ -9,7 +9,7 @@ from ..types import ParameterShapes
 
 
 class Poisson(ScipyMixin, Distribution):
-    """The Poisson Distribution for GAMLSS.
+    r"""The Poisson Distribution for GAMLSS.
 
     The distribution function is defined as in GAMLSS as:
     $$
@@ -51,8 +51,10 @@ class Poisson(ScipyMixin, Distribution):
     def __init__(
         self,
         loc_link: LinkFunction = Log(),
+        start_value_mixing: float = 0.5,
     ) -> None:
         super().__init__(links={0: loc_link})
+        self.start_value_mixing = start_value_mixing
 
     def dl1_dp1(self, y: np.ndarray, theta: np.ndarray, param: int = 0) -> np.ndarray:
         self._validate_dln_dpn_inputs(y, theta, param)
@@ -78,4 +80,9 @@ class Poisson(ScipyMixin, Distribution):
         return np.zeros_like(y)
 
     def initial_values(self, y: np.ndarray) -> np.ndarray:
-        return (y + y.mean() / 2).reshape(-1, 1)
+        return (
+            (self.start_value_mixing) * y + (1 - self.start_value_mixing) * y.mean()
+        ).reshape(-1, 1)
+
+    def constant_initial_values(self, y: np.ndarray) -> np.ndarray:
+        return np.full((y.shape[0], 1), y.mean())

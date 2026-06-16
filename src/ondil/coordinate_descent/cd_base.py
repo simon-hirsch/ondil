@@ -3,30 +3,14 @@ from typing import Literal, Tuple
 import numba as nb
 import numpy as np
 
+from .utils import get_start_beta, soft_threshold
+
 
 @nb.njit()
-def soft_threshold(value: float, threshold: float):
-    r"""The soft thresholding function.
-
-    For value \(x\) and threshold \(\\lambda\), the soft thresholding function \(S(x, \\lambda)\) is
-    defined as:
-
-    $$S(x, \\lambda) = sign(x)(|x| - \\lambda)$$
-
-    Args:
-        value (float): The value
-        threshold (float): The threshold
-
-    Returns:
-        out (float): The thresholded value
-    """
-    return np.sign(value) * np.maximum(np.abs(value) - threshold, 0)
+def beta_update(x_gram, y_gram, beta_now, j):
+    return y_gram[j] - (x_gram[j, :] @ beta_now) + x_gram[j, j] * beta_now[j]
 
 
-# @nb.njit([
-#     "(float64[:,:], float64[:], float64[:], float64, bool[:], str, float64, int64)",
-#    "(float32[:,:], float32[:], float32[:], float32, bool[:], str, float32, int32)",
-# ])
 @nb.njit()
 def online_coordinate_descent(
     x_gram: np.ndarray,
@@ -75,9 +59,8 @@ def online_coordinate_descent(
             JJ = np.random.permutation(J)
         for j in JJ:
             if (i < 2) | (beta_now[j] != 0):
-                update = (
-                    y_gram[j] - (x_gram[j, :] @ beta_now) + x_gram[j, j] * beta_now[j]
-                )
+                update = beta_update(x_gram, y_gram, beta_now, j)
+
                 if is_regularized[j]:
                     update = soft_threshold(
                         update, alpha * regularization * regularization_weights[j]
@@ -102,10 +85,6 @@ def online_coordinate_descent(
     return beta_now, i
 
 
-# @nb.njit([
-#     "(float64[:, :])(float64[:, :], float64[:], float64[:, :], float64[:], bool[:], str, float64, int64)",
-#     "(float32[:, :])(float32[:, :], float32[:], float32[:, :], float32[:], bool[:], str, float32, int32)",
-# ])
 @nb.njit()
 def online_coordinate_descent_path(
     x_gram: np.ndarray,
@@ -133,9 +112,12 @@ def online_coordinate_descent_path(
         beta_path (np.ndarray): The current coefficent path
         lambda_path (np.ndarray): The lambda grid
         is_regularized (bool): Vector of bools indicating whether the coefficient is regularized
+        alpha (float): The elastic net mixing parameter
         early_stop (int, optional): Early stopping criterion. 0 implies no early stopping. Defaults to 0.
         beta_lower_bound (np.ndarray): Lower bounds for beta
-        beta_upper_bound (np.ndarray): Upper bounds for beta
+        beta_upper_bound (np.ndarray): Upper bounds for beta.
+        constraint_matrix (np.ndarray): The constraint matrix A
+        constraint_bounds (np.ndarray): The constraint bounds b
         which_start_value (Literal['previous_lambda', 'previous_fit', 'average'], optional): Values to warm-start the coordinate descent. Defaults to "previous_lambda".
         selection (Literal['cyclic', 'random'], optional): Apply cyclic or random coordinate descent. Defaults to "cyclic".
         tolerance (float, optional): Tolerance for the beta update. Will be passed through to the parameter update. Defaults to 1e-4.
@@ -152,14 +134,7 @@ def online_coordinate_descent_path(
         regularization_weights = np.ones(beta_path.shape[1])
 
     for i, regularization in enumerate(lambda_path):
-        # Select the according start values for the next CD update
-        if which_start_value == "average":
-            beta = (beta_path_new[max(i - 1, 0), :] + beta_path[max(i, 0), :]) / 2
-        if which_start_value == "previous_lambda":
-            beta = beta_path_new[max(i - 1, 0), :]
-        else:
-            beta = beta_path[max(i, 0), :]
-
+        beta = get_start_beta(beta_path, beta_path_new, i, which_start_value)
         if (early_stop > 0) and np.count_nonzero(beta) >= early_stop:
             beta_path_new[i, :] = beta
             iterations[i] = 0

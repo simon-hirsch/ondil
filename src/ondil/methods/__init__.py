@@ -1,8 +1,12 @@
 from .elasticnet import ElasticNetPath
 from .factory import get_estimation_method
 from .lasso_path import LassoPath
+from .linear_constrained import (
+    LinearConstrainedCoordinateDescent,
+    LinearConstrainedElasticNetPath,
+)
 from .recursive_least_squares import OrdinaryLeastSquares
-from .ridge import Ridge
+from .ridge import CoordinateDescent, Ridge
 
 __all__ = [
     "get_estimation_method",
@@ -10,4 +14,7 @@ __all__ = [
     "Ridge",
     "ElasticNetPath",
     "OrdinaryLeastSquares",
+    "LinearConstrainedCoordinateDescent",
+    "LinearConstrainedElasticNetPath",
+    "CoordinateDescent",
 ]

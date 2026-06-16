@@ -99,8 +99,11 @@ def test_distribution_functions(distribution):
 
     for key in available_functions:
         if key in function_mapping:
+            print(f"Testing {key} for {distribution.__class__.__name__}")
             assert np.allclose(function_mapping[key](), R_list.rx2(key), atol=atol), (
-                f"Function {key} doesn't match for {distribution.__class__.__name__}"
+                f"Function {key} doesn't match for {distribution.__class__.__name__}\n"
+                f"Results: {np.round(R_list.rx2(key)[:10], 3)} (R)\n"
+                f"Results: {np.round(function_mapping[key]()[:10], 3)} (Python)"
             )
 
     # Test CRPS if scoringrules is installed
