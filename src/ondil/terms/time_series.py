@@ -268,6 +268,29 @@ class TimeSeriesTerm(_LinearBaseTerm):
         X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self._state.coef_
 
+    def predict_contributions(
+        self,
+        X: np.ndarray,
+        distribution: Distribution,
+    ) -> np.ndarray:
+        """Predict contributions of each feature to the linear predictor.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        distribution : Distribution
+            The distribution object (unused).
+
+        Returns
+        -------
+        np.ndarray
+            Contributions of each feature to the linear predictor.
+        """
+        X_mat = self.make_design_matrix_out_of_sample(X=X, distribution=distribution)
+        X_mat = self.remove_problematic_columns(X_mat)
+        return X_mat * self._state.coef_
+
     def update(
         self,
         X: np.ndarray,  # for api compatibility; not used

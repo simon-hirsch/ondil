@@ -444,6 +444,29 @@ class OnlineStructuredAdditiveDistributionRegressor(
 
         return fitted_values
 
+    def predict_contributions(
+        self,
+        X: np.ndarray,
+    ):
+        if self.scaler_:
+            X_scaled = self.scaler_.transform(X)
+        else:
+            X_scaled = X
+
+        contributions = {}
+
+        for param in range(self.distribution.n_params):
+            for t, term in enumerate(self.terms_[param]):
+                if hasattr(term, "predict_contributions"):
+                    contribution = term.predict_contributions(
+                        X=X_scaled,
+                        distribution=self.distribution,
+                    )
+                    term_name = (param, term.__class__.__name__, t)
+                    contributions[term_name] = contribution
+
+        return contributions
+
     def _outer_update(
         self,
         X: np.ndarray,

@@ -302,6 +302,29 @@ class LinearTerm(_LinearBaseTerm):
         # X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self.coef_
 
+    def predict_contributions(
+        self,
+        X: np.ndarray,
+        distribution: Distribution,
+    ):
+        """Predict contributions of each feature to the linear predictor.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        distribution : Distribution
+            The distribution object (unused).
+
+        Returns
+        -------
+        np.ndarray
+            Contributions of each feature to the linear predictor.
+        """
+        X_mat = self.make_design_matrix(X=X)
+        # X_mat = self.remove_problematic_columns(X_mat)
+        return X_mat * self.coef_
+
     def fit(
         self,
         X: np.ndarray,
@@ -832,6 +855,29 @@ class RegularizedLinearTerm(_LinearPathModelSelection):
         X_mat = self.make_design_matrix(X=X)
         # X_mat = self.remove_problematic_columns(X_mat)
         return X_mat @ self.coef_
+
+    def predict_contributions(
+        self,
+        X: np.ndarray,
+        distribution: Distribution,
+    ):
+        """Predict contributions of each feature to the linear predictor.
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input feature matrix.
+        distribution : Distribution
+            The distribution object (unused).
+
+        Returns
+        -------
+        np.ndarray
+            Contributions of each feature to the linear predictor.
+        """
+        X_mat = self.make_design_matrix(X=X)
+        # X_mat = self.remove_problematic_columns(X_mat)
+        return X_mat * self.coef_
 
     def fit(
         self,
