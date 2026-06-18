@@ -48,6 +48,36 @@ Terms are the fundamental building blocks that define different types of relatio
 - `RegularizedLinearTerm`: Linear terms with LASSO/ridge regularization
 - `InterceptTerm`: Simple intercept-only terms
 
+#### Smooth Terms
+- `PSplineTerm`: Univariate penalized B-spline (P-spline) smooths
+
+A `PSplineTerm` fits a smooth function of a single feature using a B-spline basis
+with equidistant knots and a difference penalty on adjacent spline coefficients.
+The penalty strength is either fixed (`lambda_`) or selected over a geometric grid
+by minimizing an information criterion, using the effective degrees of freedom
+$\mathrm{edf}(\lambda) = \mathrm{tr}\big((G + \lambda S)^{-1} G\big)$.
+Knots are fixed from the data range at `fit` time (with configurable relative
+`knot_padding`); predictions beyond the boundary knots use linear extrapolation,
+and online `update` calls reuse the initial knots and centering, so the Gram-matrix
+updates remain exact.
+
+```python
+from ondil.terms import InterceptTerm, PSplineTerm
+
+terms = {
+    0: [InterceptTerm(), PSplineTerm(feature=0, n_splines=20)],
+    1: [InterceptTerm()],
+}
+```
+
+!!! note
+    The term is centered (sum-to-zero) and carries no intercept, so combine it
+    with an `InterceptTerm`. With the default second-order difference penalty,
+    an unpenalized linear trend in the feature remains, which overlaps with a
+    `LinearTerm` on the same feature. The effective degrees of freedom are
+    per-term (conditional on the other terms in the backfitting loop), not a
+    joint mgcv-style EDF.
+
 #### Time Series Terms
 - `TimeSeriesTerm`: Autoregressive terms using lagged features
 - `RegularizedTimeSeriesTerm`: Time series terms with regularization
