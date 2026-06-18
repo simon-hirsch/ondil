@@ -1048,20 +1048,23 @@ class MultivariateOnlineDistributionalRegressionPath(
                                 tau[a][p], param=p
                             ).squeeze()
                         )
-                        wt = (
+                        wt = -(
                             self.distribution.param_link_function_derivative(
                                 tau[a][p], param=p
                             ).squeeze()
                             ** 2
-                            * (
-                                dl1_link**2 * (dl2dp2 / dp - dl1dp1**2)
-                                + dl2_link * dl1dp1
-                            )
+                            * dl1_link**2
+                            * (dl2dp2 / dp - dl1dp1**2)
+                            + self.distribution.param_link_function_derivative(
+                                tau[a][p], param=p
+                            ).squeeze()
+                            * dl2_link
+                            * dl1dp1
                             + self.distribution.param_link_function_second_derivative(
                                 tau[a][p], param=p
                             ).squeeze()
                             * dl1dp1
-                            * dl1_link
+                            * dl1_link**2
                         )
 
                         sel = (~np.isnan(wt)) & (~np.isinf(wt)) & (wt > 0)
@@ -1602,10 +1605,10 @@ class MultivariateOnlineDistributionalRegressionPath(
         out = self.distribution.flat_to_cube(array, 0)
         # out = self.distribution.link_inverse(out, 0)
         out = np.tanh(out / 2) * (1 - 1e-8)
-        #if issubclass(self.distribution.__class__, CopulaMixin):
-        #    out = self.distribution.param_link_inverse(out * (1 - 1e-8), param=0) * (
-        #        1 - 1e-8
-        #    )
+        if issubclass(self.distribution.__class__, CopulaMixin):
+            out = self.distribution.param_link_inverse(out * (1 - 1e-8), param=0) * (
+               1 - 1e-8
+            )
         return out
 
     # Different UV - MV
@@ -1902,20 +1905,23 @@ class MultivariateOnlineDistributionalRegressionPath(
                                 tau[a][p], param=p
                             ).squeeze()
                         )
-                        wt = (
+                        wt = -(
                             self.distribution.param_link_function_derivative(
                                 tau[a][p], param=p
                             ).squeeze()
                             ** 2
-                            * (
-                                dl1_link**2 * (dl2dp2 / dp - dl1dp1**2)
-                                + dl2_link * dl1dp1
-                            )
+                            * dl1_link**2
+                            * (dl2dp2 / dp - dl1dp1**2)
+                            + self.distribution.param_link_function_derivative(
+                                tau[a][p], param=p
+                            ).squeeze()
+                            * dl2_link
+                            * dl1dp1
                             + self.distribution.param_link_function_second_derivative(
                                 tau[a][p], param=p
                             ).squeeze()
                             * dl1dp1
-                            * dl1_link
+                            * dl1_link**2
                         )
 
                         sel = (~np.isnan(wt)) & (wt > 0)
