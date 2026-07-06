@@ -666,3 +666,14 @@ class BivariateCopulaMixin(ABC):
     def param_link_inverse_derivative(self, y, param=0):
         """Apply derivative of inverse parameter-level link function."""
         return self.param_links[param].inverse_derivative(y)
+
+    def expected_fisher_information(self, theta, param=0):
+        """Analytic expected Fisher information I(theta) = E[-d^2 ell / d theta^2].
+
+        Used as the always-positive fallback for the Fisher-scoring weight
+        (eq:weight_fisher) when the observed information is non-positive for
+        every observation. Families with a closed form override this; the
+        default returns NaN to signal that no analytic expression is available,
+        in which case the estimator uses the observed information instead.
+        """
+        return np.full(np.shape(theta), np.nan)

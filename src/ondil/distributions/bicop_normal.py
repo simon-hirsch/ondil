@@ -100,6 +100,14 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
     def dl2_dpp(self, y: np.ndarray, theta: Dict, param: int = 0):
         raise NotImplementedError("Not implemented.")
 
+    def expected_fisher_information(self, theta, param: int = 0):
+        """Expected Fisher information of the Gaussian copula correlation rho.
+
+        Closed form I(rho) = E[-d^2 ell / d rho^2] = (1 + rho^2) / (1 - rho^2)^2.
+        """
+        rho = self.theta_to_params(theta).squeeze()
+        return (1.0 + rho**2) / (1.0 - rho**2) ** 2
+
     def initial_values(self, y, param=0):
         M = y.shape[0]
         # Compute the empirical Pearson correlation for each sample
