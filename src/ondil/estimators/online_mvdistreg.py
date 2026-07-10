@@ -1032,23 +1032,25 @@ class MultivariateOnlineDistributionalRegressionPath(
                             y, theta=theta[a], param=p, k=k
                         )
 
-                        # cap z to avoid cosh overflow warnings; does not change values meaningfully
-                        z = np.clip(eta[a][p] / 2.0, -700.0, 700.0)
-                        sech2 = 1.0 / np.cosh(z) ** 2
+                        # eta_half = eta/2, capped to avoid cosh overflow; values unchanged
+                        eta_half = np.clip(eta[a][p] / 2.0, -700.0, 700.0)
+                        sech2 = 1.0 / np.cosh(eta_half) ** 2
                         # first and second derivative of the inverse Fisher z-transformation
                         dl1_link = (0.5 * sech2).squeeze()
-                        dl2_link = (-0.5 * np.tanh(z) * sech2).squeeze()
+                        dl2_link = (-0.5 * np.tanh(eta_half) * sech2).squeeze()
 
                         dp = self.distribution.pdf(y=y, theta=theta[a])
 
-                        u = dl1dp1 * dl1_link
-                        u = (
-                            u
+                        # score s = d(loglik)/d(eta) (paper Alg. 1), via chain rule
+                        score = dl1dp1 * dl1_link
+                        score = (
+                            score
                             * self.distribution.param_link_function_derivative(
                                 tau[a][p], param=p
                             ).squeeze()
                         )
-                        wt = -(
+                        # weights W = -d^2(loglik)/d(eta)^2 (paper Alg. 1)
+                        weights = -(
                             self.distribution.param_link_function_derivative(
                                 tau[a][p], param=p
                             ).squeeze()
@@ -1067,26 +1069,27 @@ class MultivariateOnlineDistributionalRegressionPath(
                             * dl1_link**2
                         )
 
-                        sel = (~np.isnan(wt)) & (~np.isinf(wt)) & (wt > 0)
+                        sel = (~np.isnan(weights)) & (~np.isinf(weights)) & (weights > 0)
 
                         if not np.any(sel):
-                            wt = (
+                            weights = (
                                 (1 + theta[a][p] ** 2) / (1 - theta[a][p] ** 2) ** 2
                             ).squeeze()
-                            wt = (
+                            weights = (
                                 dl1_link
                                 * self.distribution.param_link_function_derivative(
                                     tau[a][p], param=p
                                 ).squeeze()
-                            ) ** 2 * wt
+                            ) ** 2 * weights
                         else:
-                            wt[~sel] = np.mean(wt[sel])
+                            weights[~sel] = np.mean(weights[sel])
 
-                        ratio = u / wt
-                        qq = np.quantile(ratio, [0.025, 0.975])
+                        w_inv_score = score / weights
+                        qq = np.quantile(w_inv_score, [0.025, 0.975])
 
-                        clipped = np.clip(ratio, qq[0], qq[1])
-                        wv = eta[a][p].squeeze() + clipped
+                        clipped = np.clip(w_inv_score, qq[0], qq[1])
+                        # working response z = eta + W^{-1} s (paper Alg. 1)
+                        working_response = eta[a][p].squeeze() + clipped
 
                 else:
                     if (
@@ -1125,8 +1128,8 @@ class MultivariateOnlineDistributionalRegressionPath(
                         dl2dp2 * dl1_link - dl1dp1 * dl2_link
                     ) / dl1_link**3
 
-                    wt = np.fmax(-dl2_deta2, 1e-10)
-                    wv = eta[:, k] + dl1_deta1 / wt
+                    weights = np.fmax(-dl2_deta2, 1e-10)
+                    working_response = eta[:, k] + dl1_deta1 / weights
 
                 # Create the more arrays
                 x = make_model_array(
@@ -1145,17 +1148,19 @@ class MultivariateOnlineDistributionalRegressionPath(
                         np.linalg.matrix_rank(x),
                     )
 
+                # x_gram = G = X^T W X ; y_gram = h = X^T W z
+                # (weighted-LS statistics; shared by the copula and marginal paths)
                 self._x_gram[p][k][a] = self._method[p][k].init_x_gram(
                     X=x,
-                    weights=wt ** self._weight_delta[p],
+                    weights=weights ** self._weight_delta[p],
                     forget=self._forget[p],
                 )
                 self._y_gram[p][k][a] = (
                     self._method[p][k]
                     .init_y_gram(
                         X=x,
-                        y=wv,
-                        weights=wt ** self._weight_delta[p],
+                        y=working_response,
+                        weights=weights ** self._weight_delta[p],
                         forget=self._forget[p],
                     )
                     .squeeze()
@@ -1891,21 +1896,22 @@ class MultivariateOnlineDistributionalRegressionPath(
                         )
 
                         # cap z to avoid cosh overflow warnings; does not change values meaningfully
-                        z = np.clip(eta[a][p] / 2.0, -700.0, 700.0)
-                        sech2 = 1.0 / np.cosh(z) ** 2
+                        eta_half = np.clip(eta[a][p] / 2.0, -700.0, 700.0)
+                        sech2 = 1.0 / np.cosh(eta_half) ** 2
                         # first and second derivative of the inverse Fisher z-transformation
                         dl1_link = (0.5 * sech2).squeeze()
-                        dl2_link = (-0.5 * np.tanh(z) * sech2).squeeze()
+                        dl2_link = (-0.5 * np.tanh(eta_half) * sech2).squeeze()
 
                         dp = self.distribution.pdf(y=y, theta=theta[a])
-                        u = dl1dp1 * dl1_link
-                        u = (
-                            u
+                        score = dl1dp1 * dl1_link
+                        score = (
+                            score
                             * self.distribution.param_link_function_derivative(
                                 tau[a][p], param=p
                             ).squeeze()
                         )
-                        wt = -(
+                        # weights W = -d^2(loglik)/d(eta)^2 (paper Alg. 1)
+                        weights = -(
                             self.distribution.param_link_function_derivative(
                                 tau[a][p], param=p
                             ).squeeze()
@@ -1924,42 +1930,43 @@ class MultivariateOnlineDistributionalRegressionPath(
                             * dl1_link**2
                         )
 
-                        sel = (~np.isnan(wt)) & (wt > 0)
+                        sel = (~np.isnan(weights)) & (weights > 0)
 
-                        if np.isscalar(wt) or wt.size == 1:
+                        if np.isscalar(weights) or weights.size == 1:
                             # Handle scalar case
-                            if not sel or wt <= 0 or np.isnan(wt):
-                                wt = (
+                            if not sel or weights <= 0 or np.isnan(weights):
+                                weights = (
                                     (1 + theta[a][p] ** 2) / (1 - theta[a][p] ** 2) ** 2
                                 ).squeeze()
-                                wt = (
+                                weights = (
                                     dl1_link
                                     * self.distribution.param_link_function_derivative(
                                         tau[a][p], param=p
                                     ).squeeze()
-                                ) ** 2 * wt
+                                ) ** 2 * weights
                         else:
                             # Handle array case
                             if not np.any(sel):
-                                wt = (
+                                weights = (
                                     (1 + theta[a][p] ** 2) / (1 - theta[a][p] ** 2) ** 2
                                 ).squeeze()
-                                wt = (
+                                weights = (
                                     dl1_link
                                     * self.distribution.param_link_function_derivative(
                                         tau[a][p], param=p
                                     ).squeeze()
-                                ) ** 2 * wt
+                                ) ** 2 * weights
                             else:
-                                wt[~sel] = np.mean(wt[sel])
+                                weights[~sel] = np.mean(weights[sel])
 
                         # Compute quantiles for clipping
-                        ratio = u / wt
-                        qq = np.quantile(ratio, [0.025, 0.975])
+                        w_inv_score = score / weights
+                        qq = np.quantile(w_inv_score, [0.025, 0.975])
 
-                        # Clip the ratio to the quantiles
-                        clipped = np.clip(ratio, qq[0], qq[1])
-                        wv = eta[a][p].squeeze() + clipped
+                        # Clip w_inv_score to the quantiles
+                        clipped = np.clip(w_inv_score, qq[0], qq[1])
+                        # working response z = eta + W^{-1} s (paper Alg. 1)
+                        working_response = eta[a][p].squeeze() + clipped
 
                     else:
                         if (
@@ -1998,8 +2005,8 @@ class MultivariateOnlineDistributionalRegressionPath(
                             dl2dp2 * dl1_link - dl1dp1 * dl2_link
                         ) / dl1_link**3
 
-                        wt = np.fmax(-dl2_deta2, 1e-10)
-                        wv = eta[:, k] + dl1_deta1 / wt
+                        weights = np.fmax(-dl2_deta2, 1e-10)
+                        working_response = eta[:, k] + dl1_deta1 / weights
 
                     # Make model arrays
                     x = make_model_array(
@@ -2007,10 +2014,12 @@ class MultivariateOnlineDistributionalRegressionPath(
                         eq=self._equation[p][k],
                         fit_intercept=self._fit_intercept[p],
                     )
+                    # x_gram = G = X^T W X ; y_gram = h = X^T W z
+                    # (weighted-LS statistics; shared by the copula and marginal paths)
                     self._x_gram[p][k][a] = self._method[p][k].update_x_gram(
                         gram=self._x_gram_old[p][k][a],
                         X=x,
-                        weights=wt ** self._weight_delta[p],
+                        weights=weights ** self._weight_delta[p],
                         forget=self._forget[p],
                     )
                     self._y_gram[p][k][a] = (
@@ -2018,8 +2027,8 @@ class MultivariateOnlineDistributionalRegressionPath(
                         .update_y_gram(
                             gram=np.expand_dims(self._y_gram_old[p][k][a], -1),
                             X=x,
-                            y=wv,
-                            weights=wt ** self._weight_delta[p],
+                            y=working_response,
+                            weights=weights ** self._weight_delta[p],
                             forget=self._forget[p],
                         )
                         .squeeze()

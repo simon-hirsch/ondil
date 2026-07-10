@@ -7,7 +7,7 @@ import numpy as np
 import scipy.stats as st
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
-from ..links import FisherZLink, ParameterToKendallsTau
+from ..links import FisherZLink, GaussianParameterToKendallsTau
 from ..robust_math import UMAX, UMIN
 from ..types import ParameterShapes
 
@@ -25,7 +25,7 @@ class BivariateCopulaNormal(BivariateCopulaMixin, CopulaMixin, Distribution):
     def __init__(
         self,
         link: LinkFunction = FisherZLink(),
-        param_link: LinkFunction = ParameterToKendallsTau(),
+        param_link: LinkFunction = GaussianParameterToKendallsTau(),
         family_code: int = 1,
     ):
         super().__init__(

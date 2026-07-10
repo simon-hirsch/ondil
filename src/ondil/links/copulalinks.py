@@ -5,7 +5,7 @@ from ..base import LinkFunction
 
 class FisherZLink(LinkFunction):
     """
-    The Fisher Z transform.
+    The (scaled) Fisher Z transform between Kendall's tau and the linear predictor.
 
     The relationship is:
 
@@ -15,8 +15,12 @@ class FisherZLink(LinkFunction):
 
         r = tanh(z / 2)
 
-    This mapping transforms r in (-1, 1)
-    to the real line and vice versa.
+    This mapping transforms r in (-1, 1) to the real line and vice versa.
+
+    Paper correspondence: ``.inverse`` is the inverse link ``g(eta) = tanh(eta/2)``
+    that maps the linear predictor eta to Kendall's tau; ``.link`` is ``g^{-1}``
+    (tau -> eta). Note ``.inverse`` goes tau <- eta, the opposite of the usual
+    "link maps parameter -> predictor" reading.
     """
 
     # r support (avoid ±1 exactly)
@@ -86,14 +90,19 @@ class GumbelLink(LinkFunction):
     def inverse_derivative(self, x: np.ndarray) -> np.ndarray:
         return np.exp(x)
 
-class ParameterToKendallsTau(LinkFunction):
+class GaussianParameterToKendallsTau(LinkFunction):
     """
-    Link function mapping Gaussian copula parameter to Kendall's tau.
+    Link function mapping the Gaussian copula parameter to Kendall's tau.
 
     The relationship is:
        tau = (2/pi) * arcsin(rho)
     The inverse is:
         rho = sin(pi/2 * tau)
+
+    Paper correspondence: ``.inverse`` is the family transform ``f: tau -> theta``
+    (Table 1, Gaussian column), i.e. ``rho = sin(pi/2 * tau)``; ``.link`` is
+    ``f^{-1}`` (theta -> tau). The class is named after its ``.link`` direction
+    (Parameter -> Kendall's tau), so ``.inverse`` goes the other way round.
     """
 
     # The tau parameter is in (-1, 1), but for the Gaussian copula, rho is also in (-1, 1).
@@ -123,7 +132,9 @@ class ParameterToKendallsTau(LinkFunction):
 
 class GumbelParameterToKendallsTau(LinkFunction):
     """
-    Link function implementing the custom transform
+    Link function mapping the Gumbel copula parameter to Kendall's tau.
+
+    The relationship is:
 
         z = sign(x) - 1/x
 
@@ -133,6 +144,11 @@ class GumbelParameterToKendallsTau(LinkFunction):
 
     This mapping is defined for x ≠ 0 and |z| ∈ (0, 1).
     For numerical stability, values near 0 and ±1 are clipped.
+
+    Paper correspondence: ``.inverse`` is the family transform ``f: tau -> theta``
+    (Table 1, Gumbel column), i.e. ``theta = sign(tau)/(1-|tau|)``; ``.link`` is
+    ``f^{-1}`` (theta -> tau). Named after ``.link`` (Parameter -> Kendall's tau),
+    so ``.inverse`` goes the other way round.
     """
 
     link_support = (np.nextafter(0.0, 1.0), np.nextafter(1.0, 0.0))
@@ -190,6 +206,11 @@ class ClaytonParameterToKendallsTau(LinkFunction):
     This mapping transforms the copula parameter theta to a bounded
     dependence measure tau in (-1, 1). For numerical stability,
     values near ±1 are clipped.
+
+    Paper correspondence: ``.inverse`` is the family transform ``f: tau -> theta``
+    (Table 1, Clayton column), i.e. ``theta = 2*tau/(1-|tau|)``; ``.link`` is
+    ``f^{-1}`` (theta -> tau). Named after ``.link`` (Parameter -> Kendall's tau),
+    so ``.inverse`` goes the other way round.
     """
 
     # tau support (avoid ±1 exactly)

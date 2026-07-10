@@ -11,7 +11,7 @@ from numba import njit, prange
 from scipy.optimize import minimize_scalar
 
 from ..base import BivariateCopulaMixin, CopulaMixin, Distribution, LinkFunction
-from ..links import FisherZLink, ParameterToKendallsTau, LogShiftTwo
+from ..links import FisherZLink, GaussianParameterToKendallsTau, LogShiftTwo
 from ..robust_math import UMAX, UMIN
 from ..types import ParameterShapes
 
@@ -115,8 +115,8 @@ class BivariateCopulaStudentT(BivariateCopulaMixin, CopulaMixin, Distribution):
         self,
         link_1: LinkFunction = FisherZLink(),
         link_2: LinkFunction = LogShiftTwo(),
-        param_link_1: LinkFunction = ParameterToKendallsTau(),
-        param_link_2: LinkFunction = ParameterToKendallsTau(),
+        param_link_1: LinkFunction = GaussianParameterToKendallsTau(),
+        param_link_2: LinkFunction = GaussianParameterToKendallsTau(),
         family_code: int = 2,
         nu_bounds: Tuple[float, float] = _NU_BOUNDS,
         nu_xatol: float = 1e-4,

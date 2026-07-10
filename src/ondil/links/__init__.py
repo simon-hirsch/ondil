@@ -1,7 +1,7 @@
 from .copulalinks import (
     FisherZLink,
     GumbelLink,
-    ParameterToKendallsTau,
+    GaussianParameterToKendallsTau,
     ClaytonParameterToKendallsTau,
     GumbelParameterToKendallsTau,
 )
@@ -33,7 +33,7 @@ __all__ = [
     "MatrixDiagTriu",
     "MatrixDiagTril",
     "FisherZLink",
-    "ParameterToKendallsTau",
+    "GaussianParameterToKendallsTau",
     "GumbelParameterToKendallsTau",
     "ClaytonParameterToKendallsTau",
 ]

@@ -27,7 +27,7 @@ import scipy.stats as st
 
 from ondil.distributions import BivariateCopulaNormal
 from ondil.estimators import MultivariateOnlineDistributionalRegressionPath
-from ondil.links import FisherZLink, ParameterToKendallsTau
+from ondil.links import FisherZLink, GaussianParameterToKendallsTau
 from ondil.methods import LassoPath
 
 np.set_printoptions(precision=4, suppress=True)
@@ -65,7 +65,7 @@ print(f"  rho range: [{rho.min():.3f}, {rho.max():.3f}]\n")
 # -------------------------------------------------------------------------
 distribution = BivariateCopulaNormal(
     link=FisherZLink(),
-    param_link=ParameterToKendallsTau(),
+    param_link=GaussianParameterToKendallsTau(),
 )
 
 # Single dependence parameter (n_params=1, 1 element) - the exact scope
