@@ -155,7 +155,7 @@ def online_coordinate_descent_path(
         # Select the according start values for the next CD update
         if which_start_value == "average":
             beta = (beta_path_new[max(i - 1, 0), :] + beta_path[max(i, 0), :]) / 2
-        if which_start_value == "previous_lambda":
+        elif which_start_value == "previous_lambda":
             beta = beta_path_new[max(i - 1, 0), :]
         else:
             beta = beta_path[max(i, 0), :]

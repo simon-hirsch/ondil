@@ -11,9 +11,13 @@ from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import check_is_fitted, validate_data
 
-from ..base import Distribution, OndilEstimatorMixin
+from ..base import CopulaMixin, Distribution, OndilEstimatorMixin, EstimationMethod
 from ..design_matrix import make_intercept
-from ..distributions import MultivariateNormalInverseCholesky
+from ..distributions import (
+    BivariateCopulaClayton,
+    BivariateCopulaGumbel,
+    MultivariateNormalInverseCholesky,
+)
 from ..gram import init_forget_vector
 from ..information_criteria import InformationCriterion
 from ..methods import get_estimation_method
@@ -131,7 +135,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         "regularize_intercept": [bool, dict],
         "scale_inputs": [bool, np.ndarray],
         "verbose": [Interval(numbers.Integral, 0, None, closed="left")],
-        "method": [StrOptions({"ols", "lasso"}), dict],
+        "method": [StrOptions({"ols", "lasso"}), dict, EstimationMethod],
         "ic": [StrOptions({"ll", "aic", "bic", "hqc", "max"})],
         "iteration_along_diagonal": [bool],
         "approx_fast_model_selection": [bool],
@@ -180,7 +184,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         early_stopping_rel_tol: float = 0.001,
         weight_delta: float | Dict[int, float] = 1.0,
         max_iterations_inner: int = 10,
-        max_iterations_outer: int = 10,
+        max_iterations_outer: int = 20,
         overshoot_correction: Optional[Dict[int, float]] = None,
         dampen_estimation: bool | int = False,
         debug: bool = False,
@@ -292,7 +296,6 @@ class MultivariateOnlineDistributionalRegressionPath(
             # No warning since we expect that floats/strings/ints are either the defaults
             # Or given on purpose for all params the ame
             attribute = {p: attribute for p in range(self.distribution.n_params)}
-
         return attribute
 
     def _prepare_estimator(self):
@@ -397,6 +400,14 @@ class MultivariateOnlineDistributionalRegressionPath(
         else:
             # If no regularization is allowed, we just return the theta
             return theta
+
+    def _make_initial_eta(self, theta: np.ndarray):
+        eta = {
+            a: {p: 0 for p in range(self.distribution.n_params)}
+            for a in range(self.adr_steps_)
+        }
+
+        return eta
 
     # Only MV
     def _is_element_adr_regularized(self, p: int, k: int, a: int):
@@ -606,6 +617,8 @@ class MultivariateOnlineDistributionalRegressionPath(
         self.adr_steps_ = self.distribution.get_regularization_size(self.dim_)
         if self.max_regularisation_size is not None:
             self.adr_steps_ = np.fmin(self.adr_steps_, self.max_regularisation_size)
+        else:
+            self.adr_steps_ = 1
 
         self.optimal_adr_ = self.adr_steps_
 
@@ -640,7 +653,6 @@ class MultivariateOnlineDistributionalRegressionPath(
 
         self._prepare_adr_regularization()
         theta = self._make_initial_theta(y)
-
         # Current information
         self._current_likelihood = np.array([
             np.sum(self.distribution.logpdf(y=y, theta=theta[a]))
@@ -706,7 +718,6 @@ class MultivariateOnlineDistributionalRegressionPath(
 
     def _outer_fit(self, X, y, theta):
         adr_start = time.time()
-
         for a in range(self.adr_steps_):
             adr_it_start = time.time()
             outer_start = time.time()
@@ -735,7 +746,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 # Get the global likelihood
                 global_likelihood = self._current_likelihood[a]
 
-                converged, _ = self._check_outer_convergence(
+                converged, decreasing = self._check_outer_convergence(
                     global_old_likelihood, global_likelihood
                 )
 
@@ -930,12 +941,10 @@ class MultivariateOnlineDistributionalRegressionPath(
         converged = False
         decreasing = False
         old_likelihood = self._current_likelihood[a]
-
         weights_forget = init_forget_vector(
             forget=self.learning_rate,
             size=self.n_observations_,
         )
-
         for inner_iteration in range(self.max_iterations_inner):
             # If the likelihood is at some point decreasing, we're breaking
             # Hence we need to store previous iteration values:
@@ -967,31 +976,146 @@ class MultivariateOnlineDistributionalRegressionPath(
                     eta = self.distribution.link_function(theta[a][p], p)
                     eta = self.distribution.cube_to_flat(eta, param=p)
 
-                    # Derivatives wrt to the parameter
-                    dl1dp1 = self.distribution.element_dl1_dp1(
-                        y, theta=theta[a], param=p, k=k
-                    )
-                    dl2dp2 = self.distribution.element_dl2_dp2(
+                    if issubclass(self.distribution.__class__, CopulaMixin):
+                        if (p == 1):
+                            # Profile MLE for nu at the current rho. Skip the
+                            # IWLS / weighted-regression machinery entirely.
+                            nu_new = self.distribution.update_nu(y, theta[a])
+                            theta[a][p] = nu_new
+                            # Encode the constant nu in link space so coef_ /
+                            # coef_path_ stay consistent for downstream code.
+                            eta_nu = self.distribution.link_function(nu_new, p)
+                            intercept_value = float(np.mean(eta_nu))
+
+                            coef = np.zeros(self.n_features_[p][k])
+                            coef[0] = intercept_value
+                            self.coef_[p][k][a] = coef
+                            if self._method[p][k]._path_based_method:
+                                self.coef_path_[p][k][a] = np.tile(
+                                    coef, (self._lambda_n[p], 1)
+                                )
+                            else:
+                                self.coef_path_[p][k][a] = None
+                            # Skip the rest of the loop body for this k.
+                            continue
+                        else:
+                            if (inner_iteration == 0) and (outer_iteration == 0):
+                                tau = self._make_initial_eta(theta)
+                                tau[a][p] = self.distribution.set_initial_guess(
+                                    y, theta[a], p
+                                )[p]
+                                eta = self._make_initial_eta(theta)
+                                theta[a][p] = self.distribution.param_link_inverse(
+                                    tau[a][p], p
+                                )
+
+                            else:
+                                eta = self._make_initial_eta(theta)
+                                tau = self._make_initial_eta(theta)
+
+                            tau[a][p] = self.distribution.param_link_function(
+                                theta[a][p], p
+                            )
+                            # Fisher z-transformation for the tau to get the eta
+                            eta[a][p] = 2.0 * np.arctanh(
+                                np.clip(tau[a][p], -1 + 1e-12, 1 - 1e-12)
+                            )
+
+                            dl1dp1 = self.distribution.element_dl1_dp1(
+                                y, theta=theta[a], param=p, k=k
+                            )
+
+                            dl2dp2 = self.distribution.element_dl2_dp2(
+                                y, theta=theta[a], param=p, k=k
+                            )
+
+                            # eta_half = eta/2, capped to avoid cosh overflow; values unchanged
+                            eta_half = np.clip(eta[a][p] / 2.0, -700.0, 700.0)
+                            sech2 = 1.0 / np.cosh(eta_half) ** 2
+                            # first and second derivative of the inverse Fisher z-transformation
+                            dl1_link = (0.5 * sech2).squeeze()
+                            dl2_link = (-0.5 * np.tanh(eta_half) * sech2).squeeze()
+
+                            dp = self.distribution.pdf(y=y, theta=theta[a])
+
+                            # score s = d(loglik)/d(eta) (paper Alg. 1), via chain rule
+                            score = dl1dp1 * dl1_link
+                            score = (
+                                score
+                                * self.distribution.param_link_function_derivative(
+                                    tau[a][p], param=p
+                                ).squeeze()
+                            )
+                            # weights W = -d^2(loglik)/d(eta)^2 (paper Alg. 1)
+                            weights = -(
+                                self.distribution.param_link_function_derivative(
+                                    tau[a][p], param=p
+                                ).squeeze()
+                                ** 2
+                                * dl1_link**2
+                                * (dl2dp2 / dp - dl1dp1**2)
+                                + self.distribution.param_link_function_derivative(
+                                    tau[a][p], param=p
+                                ).squeeze()
+                                * dl2_link
+                                * dl1dp1
+                                + self.distribution.param_link_function_second_derivative(
+                                    tau[a][p], param=p
+                                ).squeeze()
+                                * dl1dp1
+                                * dl1_link**2
+                            )
+
+                            sel = (~np.isnan(weights)) & (~np.isinf(weights)) & (weights > 0)
+
+                            if not np.any(sel):
+                                weights = (
+                                    _expected_information(self.distribution, theta[a][p])
+                                ).squeeze()
+                                weights = (
+                                    dl1_link
+                                    * self.distribution.param_link_function_derivative(
+                                        tau[a][p], param=p
+                                    ).squeeze()
+                                ) ** 2 * weights
+                            else:
+                                weights[~sel] = np.mean(weights[sel])
+
+                            w_inv_score = score / weights
+                            qq = np.quantile(w_inv_score, [0.025, 0.975])
+
+                            clipped = np.clip(w_inv_score, qq[0], qq[1])
+                            # working response z = eta + W^{-1} s (paper Alg. 1)
+                            working_response = eta[a][p].squeeze() + clipped
+
+                    else:
+
+                        dl1dp1 = self.distribution.element_dl1_dp1(
+                            y, theta=theta[a], param=p, k=k
+                        )
+
+                        dl2dp2 = self.distribution.element_dl2_dp2(
                         y, theta=theta[a], param=p, k=k, clip=False
-                    )
+                        )
 
-                    dl1_link = self.distribution.link_function_derivative(
-                        theta[a][p], p
-                    )
-                    dl2_link = self.distribution.link_function_second_derivative(
-                        theta[a][p],
-                        p,
-                    )
-                    dl1_link = self.distribution.cube_to_flat(dl1_link, param=p)
-                    dl1_link = dl1_link[:, k]
-                    dl2_link = self.distribution.cube_to_flat(dl2_link, param=p)
-                    dl2_link = dl2_link[:, k]
+                        dl1_link = self.distribution.link_function_derivative(
+                            theta[a][p], p
+                        )
+                        dl2_link = self.distribution.link_function_second_derivative(
+                            theta[a][p], p
+                        )
+                        dl1_link = self.distribution.cube_to_flat(dl1_link, param=p)
+                        dl1_link = dl1_link[:, k]
+                        dl2_link = self.distribution.cube_to_flat(dl2_link, param=p)
+                        dl2_link = dl2_link[:, k]
 
-                    dl1_deta1 = dl1dp1 * (1 / dl1_link)
-                    dl2_deta2 = (dl2dp2 * dl1_link - dl1dp1 * dl2_link) / dl1_link**3
+                        dl1_deta1 = dl1dp1 * (1 / dl1_link)
+                        dl2_deta2 = (
+                            dl2dp2 * dl1_link - dl1dp1 * dl2_link
+                        ) / dl1_link**3
 
-                    wt = np.fmax(-dl2_deta2, 1e-10)
-                    wv = eta[:, k] + dl1_deta1 / wt
+                        weights = np.fmax(-dl2_deta2, 1e-10)
+                        working_response = eta[:, k] + dl1_deta1 / weights
 
                     # Create the more arrays
                     x = make_model_array(
@@ -1010,17 +1134,19 @@ class MultivariateOnlineDistributionalRegressionPath(
                             np.linalg.matrix_rank(x),
                         )
 
+                    # x_gram = G = X^T W X ; y_gram = h = X^T W z
+                    # (weighted-LS statistics; shared by the copula and marginal paths)
                     self._x_gram[p][k][a] = self._method[p][k].init_x_gram(
                         X=x,
-                        weights=wt ** self._weight_delta[p],
+                        weights=weights ** self._weight_delta[p],
                         forget=self._forget[p],
                     )
                     self._y_gram[p][k][a] = (
                         self._method[p][k]
                         .init_y_gram(
                             X=x,
-                            y=wv,
-                            weights=wt ** self._weight_delta[p],
+                            y=working_response,
+                            weights=weights ** self._weight_delta[p],
                             forget=self._forget[p],
                         )
                         .squeeze()
@@ -1032,10 +1158,61 @@ class MultivariateOnlineDistributionalRegressionPath(
                             y_gram=self._y_gram[p][k][a][:, None],
                             is_regularized=self.is_regularized_[p][k],
                         )
+
                         eta_elem = x @ self.coef_path_[p][k][a].T
-                        theta_elem = self.distribution.element_link_inverse(
-                            eta_elem, param=p, k=k, d=self.dim_
-                        )
+
+                        if issubclass(self.distribution.__class__, CopulaMixin):
+                            if isinstance(
+                                self.distribution,
+                                (BivariateCopulaClayton, BivariateCopulaGumbel),
+                            ):
+                                # Numerical stability
+                                eta_elem = np.sign(eta_elem) * np.minimum(
+                                    np.abs(eta_elem), 200
+                                )
+                                # Inverse Fisher z-transformation
+                                tau_elem = np.tanh(eta_elem / 2) * (1 - 1e-5)
+                                # Numerical stability
+                                tau_elem = np.sign(eta_elem * (1 - 1e-5)) * np.minimum(
+                                    np.abs(tau_elem * (1 - 1e-5)), 200
+                                )
+                                # Fisher z-transformation
+                                eta_elem = 2 * np.arctanh(tau_elem)
+
+                                theta_elem = np.sign(
+                                    self.distribution.param_link_inverse(
+                                        (tau_elem) * (1 - 1e-5), p
+                                    )
+                                    * (1 - 1e-5)
+                                ) * np.minimum(
+                                    np.abs(
+                                        self.distribution.param_link_inverse(
+                                            (tau_elem) * (1 - 1e-5), p
+                                        )
+                                        * (1 - 1e-5)
+                                    ),
+                                    200,
+                                )
+
+                            else:
+                                tau_elem = (1 - 1e-5) * self.distribution.link_inverse(
+                                    eta_elem, param=p
+                                )
+
+                                eta_elem = self.distribution.link_function(
+                                    tau_elem, param=p
+                                )
+
+                                theta_elem = self.distribution.param_link_inverse(
+                                    tau_elem, param=p
+                                )
+
+                        else:
+                            eta_elem = self.distribution.flat_to_cube(eta_elem, param=p)
+
+                            theta_elem = self.distribution.element_link_inverse(
+                                eta_elem, param=p, k=k, d=self.dim_
+                            )
 
                         opt_ic = self._fit_model_selection(
                             y=y,
@@ -1047,11 +1224,13 @@ class MultivariateOnlineDistributionalRegressionPath(
                             k=k,
                             param=p,
                         )
+
                         # select optimal beta and theta
                         self.coef_[p][k][a] = self.coef_path_[p][k][a][opt_ic, :]
                         theta[a] = self.distribution.set_theta_element(
                             theta[a], theta_elem[:, opt_ic], param=p, k=k
                         )
+
                     else:
                         self.coef_path_[p][k][a] = None
                         self.coef_[p][k][a] = self._method[p][k].fit_beta(
@@ -1060,16 +1239,72 @@ class MultivariateOnlineDistributionalRegressionPath(
                             is_regularized=self.is_regularized_[p][k],
                         )
 
-                    eta[:, k] = self.get_dampened_prediction(
-                        prediction=np.squeeze(x @ self.coef_[p][k][a]),
-                        eta=eta[:, k],
-                        inner_iteration=inner_iteration,
-                        outer_iteration=outer_iteration,
-                        param=p,
-                    )
-                    theta[a][p] = self.distribution.link_inverse(
-                        self.distribution.flat_to_cube(eta, param=p), param=p
-                    )
+                    if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
+                        eta[a][p] = self.get_dampened_prediction(
+                            prediction=np.squeeze(x @ self.coef_[p][k][a]),
+                            eta=eta[a][p],
+                            inner_iteration=inner_iteration,
+                            outer_iteration=outer_iteration,
+                            param=p,
+                        ).reshape(-1, 1)
+
+                        if isinstance(
+                            self.distribution,
+                            (BivariateCopulaClayton, BivariateCopulaGumbel),
+                        ):
+                            # Numerical stability
+                            eta[a][p] = np.sign(eta[a][p]) * np.minimum(
+                                np.abs(eta[a][p]), 200
+                            )
+                            # Inverse Fisher z-transformation
+                            tau[a][p] = np.tanh(eta[a][p] / 2) * (1 - 1e-5)
+                            # Numerical stability
+                            tau[a][p] = np.sign(eta[a][p] * (1 - 1e-5)) * np.minimum(
+                                np.abs(tau[a][p] * (1 - 1e-5)), 200
+                            )
+                            # Fisher z-transformation
+                            eta[a][p] = 2 * np.arctanh(tau[a][p])
+
+                            theta[a][p] = np.sign(
+                                self.distribution.param_link_inverse(
+                                    (tau[a][p]) * (1 - 1e-5), p
+                                )
+                                * (1 - 1e-5)
+                            ) * np.minimum(
+                                np.abs(
+                                    self.distribution.param_link_inverse(
+                                        (tau[a][p]) * (1 - 1e-5), p
+                                    )
+                                    * (1 - 1e-5)
+                                ),
+                                200,
+                            )
+
+                        else:
+                            tau[a][p] = np.clip(
+                                self.distribution.link_inverse(eta[a][p], p),
+                                -1 + 1e-5,
+                                1 - 1e-5,
+                            )
+
+                            eta[a][p] = self.distribution.link_function(tau[a][p], p)
+
+                            theta[a][p] = self.distribution.param_link_inverse(
+                                tau[a][p], p
+                            ) * (1 - 1e-5)
+
+                    else:
+                        eta[:, k] = self.get_dampened_prediction(
+                            prediction=np.squeeze(x @ self.coef_[p][k][a]),
+                            eta=eta[:, k],
+                            inner_iteration=inner_iteration,
+                            outer_iteration=outer_iteration,
+                            param=p,
+                        )
+
+                        theta[a][p] = self.distribution.link_inverse(
+                            self.distribution.flat_to_cube(eta, param=p), param=p
+                        )
                     if (self._overshoot_correction[p] is not None) and (
                         inner_iteration + outer_iteration < 1
                     ):
@@ -1079,7 +1314,6 @@ class MultivariateOnlineDistributionalRegressionPath(
                             param=p,
                             k=k,
                         )
-
                 self._current_likelihood[a] = (
                     self.distribution.logpdf(y, theta=theta[a]) * weights_forget
                 ).sum()
@@ -1114,7 +1348,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                     old_likelihood = self._current_likelihood[a]
 
             # If the LL is decreasing, we're resetting to the previous iteration
-            if ((outer_iteration > 0) | (inner_iteration > 1)) & decreasing:
+            if ((outer_iteration >= 0) | (inner_iteration > 1)) & decreasing:
                 warnings.warn("Likelihood is decreasing. Breaking.")
                 # Reset to values from the previous iteration
                 theta = prev_theta
@@ -1173,20 +1407,42 @@ class MultivariateOnlineDistributionalRegressionPath(
                         * weights_forget
                     )
 
-            # Count number of nonzero coefficients
-            # 1) Count all non-zero coefficients
-            # 2) Subtract previously fitted beta if already fitted
-            # 3) Add non-zero coefficients in the path
-            # 4) Add all coefficients that are to be fitted for p > param
-            nonzero = self.count_nonzero_coef(self.coef_, adr=a)
-            nonzero -= int(np.sum(self.coef_[param][k][a, :] != 0))
-            nonzero += np.sum(self.coef_path_[param][k][a, :] != 0, axis=1)
-            nonzero += self.count_coef_to_be_fitted(
-                outer_iteration, inner_iteration, adr=a, param=param, k=k
-            )
+            # Effective parameters.
+            # For copula models (CopulaMixin) with scalar dependence
+            # (n_params == 1 and a single element), we use the EDF
+            # trace formula from Umlauf et al. 2018a instead of the
+            # raw non-zero count, because shrinkage along the path
+            # means nonzero coefficients do not contribute one full
+            # degree of freedom each. For all other cases we keep
+            # the original non-zero count.
+            if (
+                issubclass(self.distribution.__class__, CopulaMixin)
+                and self.distribution.n_params == 1
+                and self.n_dist_elements_[param] == 1
+            ):
+                n_parameters = self._method[param][k].compute_edf(
+                    x_gram=self._x_gram[param][k][a],
+                    beta_path=self.coef_path_[param][k][a],
+                    is_regularized=self.is_regularized_[param][k],
+                )
+                nonzero = n_parameters
+            else:
+                # Count number of nonzero coefficients
+                # 1) Count all non-zero coefficients
+                # 2) Subtract previously fitted beta if already fitted
+                # 3) Add non-zero coefficients in the path
+                # 4) Add all coefficients that are to be fitted for p > param
+                nonzero = self.count_nonzero_coef(self.coef_, adr=a)
+                nonzero -= int(np.sum(self.coef_[param][k][a, :] != 0))
+                nonzero += np.sum(self.coef_path_[param][k][a, :] != 0, axis=1)
+                nonzero += self.count_coef_to_be_fitted(
+                    outer_iteration, inner_iteration, adr=a, param=param, k=k
+                )
+                n_parameters = nonzero
+
             ic = InformationCriterion(
                 n_observations=self.n_observations_,
-                n_parameters=nonzero,
+                n_parameters=n_parameters,
                 criterion=self.ic,
             ).from_ll(log_likelihood=approx_ll)
             self._model_selection[param][a][k] = {
@@ -1194,6 +1450,7 @@ class MultivariateOnlineDistributionalRegressionPath(
                 "non_zero": nonzero,
                 "ic": ic,
             }
+
             opt_ic = np.argmin(ic)
 
         return opt_ic
@@ -1257,20 +1514,37 @@ class MultivariateOnlineDistributionalRegressionPath(
                 self._model_selection_old[param][a][k]["ll"]
                 * (1 - self.learning_rate) ** self.n_observations_step_
             )
-            # Count number of nonzero coefficients
-            # 1) Count all non-zero coefficients
-            # 2) Subtract previously fitted beta if already fitted
-            # 3) Add non-zero coefficients in the path
-            # 4) Add all coefficients that are to be fitted for p > param
-            nonzero = self.count_nonzero_coef(self.coef_, adr=a)
-            nonzero -= int(np.sum(self.coef_[param][k][a, :] != 0))
-            nonzero += np.sum(self.coef_path_[param][k][a, :] != 0, axis=1)
-            nonzero += self.count_coef_to_be_fitted(
-                outer_iteration, inner_iteration, adr=a, param=param, k=k
-            )
+            # Effective parameters.
+            # See _fit_model_selection for rationale: for scalar-parameter
+            # copulas (CopulaMixin) we use the EDF trace formula from
+            # Umlauf et al. 2018a; otherwise we keep the raw non-zero count.
+            if (
+                issubclass(self.distribution.__class__, CopulaMixin)
+                and self.distribution.n_params == 1
+                and self.n_dist_elements_[param] == 1
+            ):
+                n_parameters = self._method[param][k].compute_edf(
+                    x_gram=self._x_gram[param][k][a],
+                    beta_path=self.coef_path_[param][k][a],
+                    is_regularized=self.is_regularized_[param][k],
+                )
+                nonzero = n_parameters
+            else:
+                # Count number of nonzero coefficients
+                # 1) Count all non-zero coefficients
+                # 2) Subtract previously fitted beta if already fitted
+                # 3) Add non-zero coefficients in the path
+                # 4) Add all coefficients that are to be fitted for p > param
+                nonzero = self.count_nonzero_coef(self.coef_, adr=a)
+                nonzero -= int(np.sum(self.coef_[param][k][a, :] != 0))
+                nonzero += np.sum(self.coef_path_[param][k][a, :] != 0, axis=1)
+                nonzero += self.count_coef_to_be_fitted(
+                    outer_iteration, inner_iteration, adr=a, param=param, k=k
+                )
+                n_parameters = nonzero
             ic = InformationCriterion(
                 n_observations=self.n_observations_,
-                n_parameters=nonzero,
+                n_parameters=n_parameters,
                 criterion=self.ic,
             ).from_ll(log_likelihood=approx_ll)
             opt_ic = np.argmin(ic)
@@ -1318,8 +1592,14 @@ class MultivariateOnlineDistributionalRegressionPath(
                 )
                 @ self.coef_[0][k][self.optimal_adr_, :]
             ).squeeze()
+
         out = self.distribution.flat_to_cube(array, 0)
-        out = self.distribution.link_inverse(out, 0)
+        # out = self.distribution.link_inverse(out, 0)
+        out = np.tanh(out / 2) * (1 - 1e-8)
+        if issubclass(self.distribution.__class__, CopulaMixin):
+            out = self.distribution.param_link_inverse(out * (1 - 1e-8), param=0) * (
+               1 - 1e-8
+            )
         return out
 
     # Different UV - MV
@@ -1365,7 +1645,16 @@ class MultivariateOnlineDistributionalRegressionPath(
                     @ self.coef_[p][k][self.optimal_adr_, :]
                 ).squeeze()
             out[p] = self.distribution.flat_to_cube(array, p)
-            out[p] = self.distribution.link_inverse(out[p], p)
+            if not issubclass(self.distribution.__class__, CopulaMixin) or (
+                issubclass(self.distribution.__class__, CopulaMixin) and p == 1
+            ):
+                out[p] = self.distribution.link_inverse(out[p], p)
+            if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
+                out[p] = np.tanh(out[p] / 2) * (1 - 1e-8)
+                out[p] = self.distribution.param_link_inverse(
+                    out[p] * (1 - 1e-8), param=0
+                ) * (1 - 1e-8)
+
         return out
 
     def predict_all_adr(
@@ -1408,9 +1697,40 @@ class MultivariateOnlineDistributionalRegressionPath(
                             @ self.coef_[p][k][a, :]
                         ).squeeze()
                     out[a][p] = self.distribution.flat_to_cube(array, p)
-                    out[a][p] = self.distribution.link_inverse(out[a][p], p)
+
+                    if not issubclass(self.distribution.__class__, CopulaMixin) or (
+                        issubclass(self.distribution.__class__, CopulaMixin) and p == 1
+                    ):
+                        out[a][p] = self.distribution.link_inverse(out[a][p], p)
+                    if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
+                        out[a][p] = np.tanh(out[a][p] / 2) * (1 - 1e-8)
+                        out[a][p] = self.distribution.param_link_inverse(
+                            out[a][p] * (1 - 1e-8), param=0
+                        ) * (1 - 1e-8)
             else:
                 out[a] = copy.deepcopy(out[self.optimal_adr_])
+            for p in range(self.distribution.n_params):
+                array = np.zeros((N, self.n_dist_elements_[p]))
+                for k in range(self.n_dist_elements_[p]):
+                    array[:, k] = (
+                        make_model_array(
+                            X=X_scaled,
+                            eq=self._equation[p][k],
+                            fit_intercept=self._fit_intercept[p],
+                        )
+                        @ self.coef_[p][k][a, :]
+                    ).squeeze()
+
+                    out[a][p] = self.distribution.flat_to_cube(array, p)
+                    if not issubclass(self.distribution.__class__, CopulaMixin) or (
+                        issubclass(self.distribution.__class__, CopulaMixin) and p == 1
+                    ):
+                        out[a][p] = self.distribution.link_inverse(out[a][p], p)
+                    if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
+                        out[a][p] = np.tanh(out[a][p] / 2) * (1 - 1e-8)
+                        out[a][p] = self.distribution.param_link_inverse(
+                            out[a][p] * (1 - 1e-8), param=0
+                        ) * (1 - 1e-8)
 
         return out
 
@@ -1516,6 +1836,7 @@ class MultivariateOnlineDistributionalRegressionPath(
         for inner_iteration in range(self.max_iterations_inner):
             # If the likelihood is at some point decreasing, we're breaking
             # Hence we need to store previous iteration values:
+
             if (inner_iteration > 0) | (outer_iteration > 0):
                 prev_theta = copy.copy(theta)
                 prev_x_gram = copy.copy(self._x_gram[p])
@@ -1523,6 +1844,11 @@ class MultivariateOnlineDistributionalRegressionPath(
                 prev_model_selection = copy.copy(self._model_selection)
                 prev_beta = copy.copy(self.coef_)
                 prev_beta_path = copy.copy(self.coef_path_)
+
+            # This will check if we
+            if (inner_iteration == 0) and (outer_iteration == 0) & (a == 0):
+                theta[a] = self.distribution.set_initial_guess(y, theta[a], p)
+                theta = self._handle_path_regularization(theta=theta, p=p, a=a)
 
             for k in self._iter_index[p]:
                 # Handle AD-R Regularization
@@ -1537,30 +1863,126 @@ class MultivariateOnlineDistributionalRegressionPath(
                     eta = self.distribution.link_function(theta[a][p], p)
                     eta = self.distribution.cube_to_flat(eta, param=p)
 
-                    # Derivatives wrt to the parameter
-                    dl1dp1 = self.distribution.element_dl1_dp1(
-                        y, theta=theta[a], param=p, k=k
-                    )
-                    dl2dp2 = self.distribution.element_dl2_dp2(
-                        y, theta=theta[a], param=p, k=k
-                    )
+                    if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
+                        eta = self._make_initial_eta(theta)
+                        tau = self._make_initial_eta(theta)
 
-                    dl1_link = self.distribution.link_function_derivative(
-                        theta[a][p], p
-                    )
-                    dl2_link = self.distribution.link_function_second_derivative(
-                        theta[a][p], p
-                    )
-                    dl1_link = self.distribution.cube_to_flat(dl1_link, param=p)
-                    dl1_link = dl1_link[:, k]
-                    dl2_link = self.distribution.cube_to_flat(dl2_link, param=p)
-                    dl2_link = dl2_link[:, k]
+                        tau[a][p] = self.distribution.param_link_function(
+                            theta[a][p], p
+                        )
+                        # Fisher z-transformation for the tau to get the eta
+                        eta[a][p] = 2.0 * np.arctanh(
+                            np.clip(tau[a][p], -1 + 1e-12, 1 - 1e-12)
+                        )
 
-                    dl1_deta1 = dl1dp1 * (1 / dl1_link)
-                    dl2_deta2 = (dl2dp2 * dl1_link - dl1dp1 * dl2_link) / dl1_link**3
+                        dl1dp1 = self.distribution.element_dl1_dp1(
+                            y, theta=theta[a], param=p, k=k
+                        )
 
-                    wt = np.fmax(-dl2_deta2, 1e-10)
-                    wv = eta[:, k] + dl1_deta1 / wt
+                        dl2dp2 = self.distribution.element_dl2_dp2(
+                            y, theta=theta[a], param=p, k=k
+                        )
+
+                        # cap z to avoid cosh overflow warnings; does not change values meaningfully
+                        eta_half = np.clip(eta[a][p] / 2.0, -700.0, 700.0)
+                        sech2 = 1.0 / np.cosh(eta_half) ** 2
+                        # first and second derivative of the inverse Fisher z-transformation
+                        dl1_link = (0.5 * sech2).squeeze()
+                        dl2_link = (-0.5 * np.tanh(eta_half) * sech2).squeeze()
+
+                        dp = self.distribution.pdf(y=y, theta=theta[a])
+                        score = dl1dp1 * dl1_link
+                        score = (
+                            score
+                            * self.distribution.param_link_function_derivative(
+                                tau[a][p], param=p
+                            ).squeeze()
+                        )
+                        # weights W = -d^2(loglik)/d(eta)^2 (paper Alg. 1)
+                        weights = -(
+                            self.distribution.param_link_function_derivative(
+                                tau[a][p], param=p
+                            ).squeeze()
+                            ** 2
+                            * dl1_link**2
+                            * (dl2dp2 / dp - dl1dp1**2)
+                            + self.distribution.param_link_function_derivative(
+                                tau[a][p], param=p
+                            ).squeeze()
+                            * dl2_link
+                            * dl1dp1
+                            + self.distribution.param_link_function_second_derivative(
+                                tau[a][p], param=p
+                            ).squeeze()
+                            * dl1dp1
+                            * dl1_link**2
+                        )
+
+                        sel = (~np.isnan(weights)) & (weights > 0)
+
+                        if np.isscalar(weights) or weights.size == 1:
+                            # Handle scalar case
+                            if not sel or weights <= 0 or np.isnan(weights):
+                                weights = (
+                                    _expected_information(self.distribution, theta[a][p])
+                                ).squeeze()
+                                weights = (
+                                    dl1_link
+                                    * self.distribution.param_link_function_derivative(
+                                        tau[a][p], param=p
+                                    ).squeeze()
+                                ) ** 2 * weights
+                        else:
+                            # Handle array case
+                            if not np.any(sel):
+                                weights = (
+                                    _expected_information(self.distribution, theta[a][p])
+                                ).squeeze()
+                                weights = (
+                                    dl1_link
+                                    * self.distribution.param_link_function_derivative(
+                                        tau[a][p], param=p
+                                    ).squeeze()
+                                ) ** 2 * weights
+                            else:
+                                weights[~sel] = np.mean(weights[sel])
+
+                        # Compute quantiles for clipping
+                        w_inv_score = score / weights
+                        qq = np.quantile(w_inv_score, [0.025, 0.975])
+
+                        # Clip w_inv_score to the quantiles
+                        clipped = np.clip(w_inv_score, qq[0], qq[1])
+                        # working response z = eta + W^{-1} s (paper Alg. 1)
+                        working_response = eta[a][p].squeeze() + clipped
+
+                    else:
+                        dl1dp1 = self.distribution.element_dl1_dp1(
+                            y, theta=theta[a], param=p, k=k
+                        )
+
+                        dl2dp2 = self.distribution.element_dl2_dp2(
+                            y, theta=theta[a], param=p, k=k
+                        )
+
+                        dl1_link = self.distribution.link_function_derivative(
+                            theta[a][p], p
+                        )
+                        dl2_link = self.distribution.link_function_second_derivative(
+                            theta[a][p], p
+                        )
+                        dl1_link = self.distribution.cube_to_flat(dl1_link, param=p)
+                        dl1_link = dl1_link[:, k]
+                        dl2_link = self.distribution.cube_to_flat(dl2_link, param=p)
+                        dl2_link = dl2_link[:, k]
+
+                        dl1_deta1 = dl1dp1 * (1 / dl1_link)
+                        dl2_deta2 = (
+                            dl2dp2 * dl1_link - dl1dp1 * dl2_link
+                        ) / dl1_link**3
+
+                        weights = np.fmax(-dl2_deta2, 1e-10)
+                        working_response = eta[:, k] + dl1_deta1 / weights
 
                     # Make model arrays
                     x = make_model_array(
@@ -1568,10 +1990,12 @@ class MultivariateOnlineDistributionalRegressionPath(
                         eq=self._equation[p][k],
                         fit_intercept=self._fit_intercept[p],
                     )
+                    # x_gram = G = X^T W X ; y_gram = h = X^T W z
+                    # (weighted-LS statistics; shared by the copula and marginal paths)
                     self._x_gram[p][k][a] = self._method[p][k].update_x_gram(
                         gram=self._x_gram_old[p][k][a],
                         X=x,
-                        weights=wt ** self._weight_delta[p],
+                        weights=weights ** self._weight_delta[p],
                         forget=self._forget[p],
                     )
                     self._y_gram[p][k][a] = (
@@ -1579,8 +2003,8 @@ class MultivariateOnlineDistributionalRegressionPath(
                         .update_y_gram(
                             gram=np.expand_dims(self._y_gram_old[p][k][a], -1),
                             X=x,
-                            y=wv,
-                            weights=wt ** self._weight_delta[p],
+                            y=working_response,
+                            weights=weights ** self._weight_delta[p],
                             forget=self._forget[p],
                         )
                         .squeeze()
@@ -1593,9 +2017,61 @@ class MultivariateOnlineDistributionalRegressionPath(
                             is_regularized=self.is_regularized_[p][k],
                         )
                         eta_elem = x @ self.coef_path_[p][k][a].T
-                        theta_elem = self.distribution.element_link_inverse(
-                            eta_elem, param=p, k=k, d=self.dim_
-                        )
+
+                        if issubclass(self.distribution.__class__, CopulaMixin):
+                            if isinstance(
+                                self.distribution,
+                                (BivariateCopulaClayton, BivariateCopulaGumbel),
+                            ):
+                                # Numerical stability
+                                eta_elem = np.sign(eta_elem) * np.minimum(
+                                    np.abs(eta_elem), 200
+                                )
+
+                                # Inverse Fisher z-transformation
+                                tau_elem = np.tanh(eta_elem / 2) * (1 - 1e-5)
+
+                                # Numerical stability
+                                tau_elem = np.sign(eta_elem * (1 - 1e-5)) * np.minimum(
+                                    np.abs(tau_elem * (1 - 1e-5)), 200
+                                )
+
+                                # Fisher z-transformation
+                                eta_elem = 2 * np.arctanh(tau_elem)
+
+                                theta_elem = np.sign(
+                                    self.distribution.param_link_inverse(
+                                        (tau_elem) * (1 - 1e-5), p
+                                    )
+                                    * (1 - 1e-5)
+                                ) * np.minimum(
+                                    np.abs(
+                                        self.distribution.param_link_inverse(
+                                            (tau_elem) * (1 - 1e-5), p
+                                        )
+                                        * (1 - 1e-5)
+                                    ),
+                                    200,
+                                )
+
+                            else:
+                                tau_elem = (1 - 1e-5) * self.distribution.link_inverse(
+                                    eta_elem, param=p
+                                )
+
+                                eta_elem = self.distribution.link_function(
+                                    tau_elem, param=p
+                                )
+
+                                theta_elem = self.distribution.param_link_inverse(
+                                    tau_elem, param=p
+                                )
+                        else:
+                            eta_elem = self.distribution.flat_to_cube(eta_elem, param=p)
+
+                            theta_elem = self.distribution.element_link_inverse(
+                                eta_elem, param=p, k=k, d=self.dim_
+                            )
 
                         opt_ic = self._update_model_selection(
                             y=y,
@@ -1624,12 +2100,76 @@ class MultivariateOnlineDistributionalRegressionPath(
                             self._x_gram[p][k][a] @ self._y_gram[p][k][a]
                         )
 
-                    # Calculate the other stuff
-                    eta[:, k] = np.squeeze(x @ self.coef_[p][k][a])
-                    theta[a][p] = self.distribution.link_inverse(
-                        self.distribution.flat_to_cube(eta, param=p), param=p
-                    )
+                    if issubclass(self.distribution.__class__, CopulaMixin) and p == 0:
+                        eta[a][p] = self.get_dampened_prediction(
+                            prediction=np.squeeze(x @ self.coef_[p][k][a]),
+                            eta=eta[a][p],
+                            inner_iteration=inner_iteration,
+                            outer_iteration=outer_iteration,
+                            param=p,
+                        ).reshape(-1, 1)
 
+                        if isinstance(
+                            self.distribution,
+                            (BivariateCopulaClayton, BivariateCopulaGumbel),
+                        ):
+                            # Numerical stability
+                            eta[a][p] = np.sign(eta[a][p]) * np.minimum(
+                                np.abs(eta[a][p]), 200
+                            )
+                            # Inverse Fisher z-transformation
+                            tau[a][p] = np.tanh(eta[a][p] / 2) * (1 - 1e-5)
+                            # Numerical stability
+                            tau[a][p] = np.sign(eta[a][p] * (1 - 1e-5)) * np.minimum(
+                                np.abs(tau[a][p] * (1 - 1e-5)), 200
+                            )
+                            # Fisher z-transformation
+                            eta[a][p] = 2 * np.arctanh(tau[a][p])
+
+                            theta[a][p] = np.sign(
+                                self.distribution.param_link_inverse(
+                                    (tau[a][p]) * (1 - 1e-5), p
+                                )
+                                * (1 - 1e-5)
+                            ) * np.minimum(
+                                np.abs(
+                                    self.distribution.param_link_inverse(
+                                        (tau[a][p]) * (1 - 1e-5), p
+                                    )
+                                    * (1 - 1e-5)
+                                ),
+                                200,
+                            )
+
+                        else:
+                            tau[a][p] = np.clip(
+                                np.tanh(
+                                    self.distribution.flat_to_cube(eta[a][p], param=p)
+                                    / 2
+                                ),
+                                -1 + 1e-5,
+                                1 - 1e-5,
+                            )
+                            eta[a][p] = 2 * np.arctanh(
+                                self.distribution.flat_to_cube(tau[a][p], param=p)
+                            )
+                            theta[a][p] = self.distribution.param_link_inverse(
+                                self.distribution.flat_to_cube(tau[a][p], param=p),
+                                param=p,
+                            ) * (1 - 1e-5)
+
+                    else:
+                        eta[:, k] = self.get_dampened_prediction(
+                            prediction=np.squeeze(x @ self.coef_[p][k][a]),
+                            eta=eta[:, k],
+                            inner_iteration=inner_iteration,
+                            outer_iteration=outer_iteration,
+                            param=p,
+                        )
+
+                        theta[a][p] = self.distribution.link_inverse(
+                            self.distribution.flat_to_cube(eta, param=p), param=p
+                        )
                 self._current_likelihood[a] = (
                     np.sum(self.distribution.logpdf(y, theta=theta[a]) * weights_forget)
                     + self._old_likelihood_discounted[a]
@@ -1808,3 +2348,78 @@ class MultivariateOnlineDistributionalRegressionPath(
         self.theta_ = theta
         self.optimal_theta_ = self.theta_[self.optimal_adr_]
         self.last_fit_adr_max_ = self.optimal_adr_
+
+
+# Expected (Fisher) information of the native copula parameter, used as the
+# working weight when the observed information is non-positive. Mirrors
+# gamCopula's FisherBiCop, which dispatches on the family; the Gaussian form
+# alone is wrong for Gumbel/Clayton, whose parameters cross |theta| = 1.
+# Gaussian: elementary. Gumbel: Schepsmeier & Stober (2012). Clayton: Oakes (1982).
+_FISHER_K0 = 5.0 / 6.0 - np.pi**2 / 18.0
+
+
+def _e1_scaled(x):
+    """E1(x) * exp(x); asymptotic branch for large x, where the two factors
+    computed separately give 0 * inf = nan."""
+    from scipy.special import exp1
+
+    x = np.asarray(x, dtype=float)
+    out = np.empty_like(x)
+    lo = x <= 20.0
+    if np.any(lo):
+        out[lo] = exp1(x[lo]) * np.exp(x[lo])
+    hi = ~lo
+    if np.any(hi):
+        z = 1.0 / x[hi]
+        out[hi] = z * (1.0 - z * (1.0 - z * (2.0 - z * (6.0 - z * 24.0))))
+    return out
+
+
+def _expected_information(distribution, theta):
+    """I(theta) for the family of `distribution`; Gaussian expression for any
+    family without a closed form here (e.g. Student-t), as before."""
+    from scipy.special import polygamma
+
+    name = type(distribution).__name__
+    th = np.asarray(theta, dtype=float)
+    absth = np.abs(th)
+
+    if "Gumbel" in name:
+        t = np.clip(absth, 1.0 + 1e-10, 1e8)
+        info = (1.0 / t**4) * (
+            t**2 * (-2.0 / 3.0 + np.pi**2 / 9.0)
+            - t
+            + 2.0 * _FISHER_K0 / t
+            + (
+                t**3
+                + t**2
+                + (_FISHER_K0 - 1.0) * t
+                - 2.0 * _FISHER_K0
+                + _FISHER_K0 / t
+            )
+            * _e1_scaled(t - 1.0)
+        )
+    elif "Clayton" in name:
+        t = np.clip(absth, 1e-10, 1e8)
+        pp_ = t + 1.0
+        d = 2.0 * (pp_ - 1.0)
+        v1 = polygamma(1, 1.0 / d)
+        v2 = polygamma(1, pp_ / d)
+        v3 = polygamma(1, (2.0 * pp_ - 1.0) / d)
+        qq = (
+            1.0
+            / ((3.0 * pp_ - 2.0) * (2.0 * pp_ - 1.0))
+            * (1.0 + pp_ / d * (v1 - v2) + 1.0 / d * (v2 - v3))
+        )
+        info = (
+            1.0 / pp_**2
+            + 2.0 / (pp_ * (pp_ - 1.0) * (2.0 * pp_ - 1.0))
+            + 4.0 * pp_ / (3.0 * pp_ - 2.0)
+            - 2.0 * (2.0 * pp_ - 1.0) * qq / (pp_ - 1.0)
+        )
+    else:  # Gaussian and anything else
+        r = np.clip(absth, 0.0, 1.0 - 1e-10)
+        info = (1.0 + r**2) / (1.0 - r**2) ** 2
+
+    # the IRLS step needs a strictly positive weight
+    return np.where(np.isfinite(info) & (info > 0.0), info, 1e-10)

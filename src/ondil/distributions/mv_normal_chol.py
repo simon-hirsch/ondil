@@ -51,7 +51,7 @@ class MultivariateNormalInverseCholesky(MultivariateDistributionMixin, Distribut
             links={
                 0: loc_link,
                 1: scale_link,
-            }
+            },
         )
         self._regularization_allowed = {0: False, 1: True}
 

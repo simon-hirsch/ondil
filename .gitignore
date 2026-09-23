@@ -24,3 +24,5 @@ gist.githubusercontent*
 default.nix
 *.vscode
 *.vsls.json
+AGENTS.md
+CLAUDE.md

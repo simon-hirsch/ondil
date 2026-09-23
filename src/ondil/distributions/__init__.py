@@ -1,6 +1,10 @@
 from .beta import Beta
 from .betainflated import BetaInflated
 from .betainflatedzero import BetaInflatedZero
+from .bicop_clayton import BivariateCopulaClayton
+from .bicop_gumbel import BivariateCopulaGumbel
+from .bicop_normal import BivariateCopulaNormal
+from .bicop_studentt import BivariateCopulaStudentT
 from .exponential import Exponential
 from .gamma import Gamma
 from .gumbel import Gumbel
@@ -53,5 +57,9 @@ __all__ = [
     "MultivariateStudentTInverseModifiedCholesky",
     "BetaInflatedZero",
     "ZeroAdjustedGamma",
+    "BivariateCopulaNormal",
+    "BivariateCopulaGumbel",
+    "BivariateCopulaClayton",
+    "BivariateCopulaStudentT",
     "Weibull",
 ]
